@@ -1,14 +1,11 @@
 import React, { useState } from 'react'
 import Navbar from './commonComponent/Navbar'
-import Main from './commonComponent/Main'
+import Routes from './Routers/Routes';
 
 const App = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   return (
     <div className='w-screen flex'>
-      <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}/>
-      <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}/>
+      <Routes/>
     </div>
   )
 }

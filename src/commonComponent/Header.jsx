@@ -16,7 +16,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const iconSize = "text-lg md:text-xl"; // Smaller on mobile
 
   return (
-    <header className={`flex w-screen lg:w-[84vw] items-center justify-between px-4 md:px-6 py-3 bg-black border-b border-white shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700] transition-all duration-300 ease-in-out ${isSidebarOpen && 'min-w-screen'}`}>
+    <header className={`flex w-screen h-[10vh] lg:w-[84vw] items-center justify-between px-4 md:px-6 py-3 bg-black border-b border-white shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700] transition-all duration-300 ease-in-out ${isSidebarOpen && 'min-w-screen'}`}>
       
       {/* Left: Hamburger / X Button */}
       <button

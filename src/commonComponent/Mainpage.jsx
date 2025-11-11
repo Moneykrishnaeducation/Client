@@ -5,7 +5,7 @@ const Main = ({ isSidebarOpen, setIsSidebarOpen, children }) => {
   return (
     <div className={`w-full transition-all duration-300 ${!isSidebarOpen ? 'lg:ml-[16vw]' : ''}`}>
       <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-      <div>{children}</div>
+      <div className='overflow-auto h-[90vh]'>{children}</div>
     </div>
   );
 };
