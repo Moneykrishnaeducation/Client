@@ -1,9 +1,11 @@
 import React from 'react'
 import Header from './mainComponent/Header'
+import Navbar from './mainComponent/Navbar'
 
 const App = () => {
   return (
-    <div>
+    <div className='flex items-start'>
+      <Navbar/>
       <Header/>
     </div>
   )
