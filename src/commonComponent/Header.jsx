@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { FaMoon, FaSun, FaBell, FaSignOutAlt, FaUserCircle } from "react-icons/fa";
 
-const Header = () => {
+const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -17,12 +16,12 @@ const Header = () => {
   const iconSize = "text-lg md:text-xl"; // Smaller on mobile
 
   return (
-    <header className="flex w-screen items-center justify-between px-4 md:px-6 py-3 bg-black border-b border-white shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700] transition-all duration-300 ease-in-out">
+    <header className={`flex w-screen lg:w-[84vw] items-center justify-between px-4 md:px-6 py-3 bg-black border-b border-white shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700] transition-all duration-300 ease-in-out ${isSidebarOpen && 'min-w-screen'}`}>
       
       {/* Left: Hamburger / X Button */}
       <button
         onClick={toggleSidebar}
-        className="relative w-6 h-6 md:w-6 md:h-6 flex flex-col justify-between items-center mr-3 md:mr-4"
+        className="z-100 relative w-6 h-6 md:w-6 md:h-6 flex flex-col justify-between items-center mr-3 md:mr-4"
       >
         <span
           className={`block h-0.5 w-6 bg-white rounded transform transition duration-300 ease-in-out ${
@@ -69,9 +68,10 @@ const Header = () => {
         {/* Profile */}
         <div className="flex items-center space-x-1">
           <FaUserCircle className={`${iconSize} text-white`} />
-          <span className="text-white font-medium text-xs md:text-sm">
-            John Doe
-          </span>
+         <span className="hidden md:inline text-white font-medium text-xs md:text-sm">
+  John Doe
+</span>
+
         </div>
 
         {/* Exit Button */}

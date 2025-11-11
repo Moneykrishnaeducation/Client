@@ -1,76 +1,55 @@
-import React from 'react'
+import React from "react";
 
-const Navbar = () => {
+const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
-   <nav className="bg-black text-white px-10 h-screen" id="sidebar">
-        <div class="logo" id="logo">
-          <img class="logo-img-main" src="https://vtindex.com/img/logo/logo.svg" alt="logo" href="#" onclick="loadpage('dashboard')" />
+    <>
+      {/* Sidebar */}
+      <nav
+        id="sidebar"
+        className={`fixed top-0 left-0 h-full w-[80vw] md:w-[40vw] lg:w-[16vw] bg-black text-white px-1 py-8 transform transition-transform duration-300 z-50
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          ${isSidebarOpen ? "lg:hidden" : "lg:translate-x-0"}`}
+      >
+        {/* Logo */}
+        <div id="logo" className="mb-10">
+          <img
+            className="w-40 mx-auto cursor-pointer"
+            src="https://vtindex.com/img/logo/logo.svg"
+            alt="logo"
+            onClick={() => console.log("Load dashboard")}
+          />
         </div>
 
-        <div class="flex flex-col gap-10  my-5" id="nav-content">
-          <a href="#" onclick="loadpage('dashboard')" aria-label="Go to Dashboard">
-            <div class="nav-item" id="dashboard">
-              <i class="fa-solid fa-house"></i>
-              <span>Dashboard</span>
-            </div>
-          </a>
+        {/* Nav links */}
+        <div id="nav-content" className="flex flex-col gap-6">
+          {[
+            { id: "dashboard", icon: "fa-house", label: "Dashboard" },
+            { id: "tradingaccounts", icon: "fa-wallet", label: "Trading Accounts" },
+            { id: "socialtrading", icon: "fa-people-group", label: "Social Trading" },
+            { id: "partnership", icon: "fa-handshake", label: "Partnership" },
+            { id: "platform", icon: "fa-desktop", label: "Platform" },
+            { id: "tickers", icon: "fa-ticket", label: "Ticket" },
+            { id: "transactions", icon: "fa-arrow-right-arrow-left", label: "Transactions" },
+            { id: "economic-calendar", icon: "fa-calendar-days", label: "Economic Calendar" },
+            { id: "support", icon: "fa-headset", label: "Terms & Conditions" },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => console.log(`Load ${item.id}`)}
+              className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-800 px-4 py-2 rounded-md transition"
+            >
+              <i className={`fa-solid ${item.icon}`}></i>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+    </>
+  );
+};
 
-          <a href="#" onclick="loadpage('trading')" aria-label="View Trading Accounts">
-            <div class="nav-item" id="tradingaccounts">
-              <i class="fa-solid fa-wallet"></i>
-              <span>Trading Accounts</span>
-            </div>
-          </a>
-
-          <a href="#" onclick="loadpage('social')" aria-label="View Social Trading">
-            <div class="nav-item" id="socialtrading">
-              <i class="fa-solid fa-people-group"></i>
-              <span>Social Trading</span>
-            </div>
-          </a>
-
-          <a href="#" onclick="loadpage('partnership')" aria-label="View Partnership">
-            <div class="nav-item" id="partnership">
-              <i class="fa-solid fa-handshake"></i>
-              <span>Partnership</span>
-            </div>
-          </a>
-
-
-          <a href="#" onclick="loadpage('platform')" aria-label="View Platform">
-            <div class="nav-item" id="platform">
-              <i class="fa-solid fa-desktop"></i>
-              <span>Platform</span>
-            </div>
-          </a>
-                    <a href="#" onclick="loadpage('tickers')" aria-label="View tickers">
-            <div class="nav-item" id="tickers">
-              <i class="fa-solid fa-ticket"></i>
-              <span>Ticket</span>
-            </div>
-            </a>
-                    <a href="#" onclick="loadpage('transactions')" aria-label="View transactions">
-            <div class="nav-item" id="transactions">
-              <i class="fa-solid fa-arrow-right-arrow-left"></i>
-              <span>Transactions</span>
-            </div>
-          </a>
-          <a href="#" onclick="loadpage('economic')" aria-label="View Economic Calendar">
-            <div class="nav-item" id="economic-calendar">
-              <i class="fa-solid fa-calendar-days"></i>
-              <span>Economic Calendar</span>
-            </div>
-          </a>
-
-            <a href="#" onclick="loadpage('support')" aria-label="View Support">
-            <div class="nav-item" id="support">
-                <i class="fa-solid fa-headset"></i>
-                <span>Terms & Conditions</span>
-            </div>
-            </a>
-          </div>
-  </nav>
-  )
-}
-
-export default Navbar
+export default Navbar;
