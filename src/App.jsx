@@ -1,12 +1,14 @@
-import React from 'react'
-import Header from './mainComponent/Header'
-import Navbar from './mainComponent/Navbar'
+import React, { useState } from 'react'
+import Navbar from './commonComponent/Navbar'
+import Main from './commonComponent/Main'
 
 const App = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className='flex items-start'>
-      <Navbar/>
-      <Header/>
+    <div className='w-screen flex'>
+      <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}/>
+      <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}/>
     </div>
   )
 }
