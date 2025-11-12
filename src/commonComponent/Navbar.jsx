@@ -1,30 +1,30 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  FaHome,
-  FaWallet,
-  FaUsers,
-  FaHandshake,
-  FaDesktop,
-  FaTicketAlt,
-  FaExchangeAlt,
-  FaCalendarAlt,
-  FaHeadset,
-} from "react-icons/fa";
+  Home,
+  CreditCard,
+  Users,
+  Handshake,
+  Monitor,
+  Ticket,
+  Repeat,
+  Calendar,
+  Headphones,
+} from "lucide-react";
 
 const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const location = useLocation();
 
   const menuItems = [
-    { path: "/dashboard", icon: FaHome, label: "Dashboard" },
-    { path: "/tradingaccounts", icon: FaWallet, label: "Trading Accounts" },
-    { path: "/socialtrading", icon: FaUsers, label: "Social Trading" },
-    { path: "/partnership", icon: FaHandshake, label: "Partnership" },
-    { path: "/platform", icon: FaDesktop, label: "Platform" },
-    { path: "/tickets", icon: FaTicketAlt, label: "Ticket" },
-    { path: "/transactions", icon: FaExchangeAlt, label: "Transactions" },
-    { path: "/economic-calendar", icon: FaCalendarAlt, label: "Economic Calendar" },
-    { path: "/support", icon: FaHeadset, label: "Terms & Conditions" },
+    { path: "/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/tradingaccounts", icon: CreditCard, label: "Trading Accounts" },
+    { path: "/socialtrading", icon: Users, label: "Social Trading" },
+    { path: "/partnership", icon: Handshake, label: "Partnership" },
+    { path: "/platform", icon: Monitor, label: "Platform" },
+    { path: "/tickets", icon: Ticket, label: "Ticket" },
+    { path: "/transactions", icon: Repeat, label: "Transactions" },
+    { path: "/economic-calendar", icon: Calendar, label: "Economic Calendar" },
+    { path: "/support", icon: Headphones, label: "Terms & Conditions" },
   ];
 
   return (
