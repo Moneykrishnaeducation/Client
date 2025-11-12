@@ -1,46 +1,79 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  FaHome,
+  FaWallet,
+  FaUsers,
+  FaHandshake,
+  FaDesktop,
+  FaTicketAlt,
+  FaExchangeAlt,
+  FaCalendarAlt,
+  FaHeadset,
+} from "react-icons/fa";
 
 const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
+  const location = useLocation();
+
   const menuItems = [
-    { path: "/dashboard", icon: "fa-house", label: "Dashboard" },
-    { path: "/tradingaccounts", icon: "fa-wallet", label: "Trading Accounts" },
-    { path: "/socialtrading", icon: "fa-people-group", label: "Social Trading" },
-    { path: "/partnership", icon: "fa-handshake", label: "Partnership" },
-    { path: "/platform", icon: "fa-desktop", label: "Platform" },
-    { path: "/tickers", icon: "fa-ticket", label: "Ticket" },
-    { path: "/transactions", icon: "fa-arrow-right-arrow-left", label: "Transactions" },
-    { path: "/economic-calendar", icon: "fa-calendar-days", label: "Economic Calendar" },
-    { path: "/support", icon: "fa-headset", label: "Terms & Conditions" },
+    { path: "/dashboard", icon: FaHome, label: "Dashboard" },
+    { path: "/tradingaccounts", icon: FaWallet, label: "Trading Accounts" },
+    { path: "/socialtrading", icon: FaUsers, label: "Social Trading" },
+    { path: "/partnership", icon: FaHandshake, label: "Partnership" },
+    { path: "/platform", icon: FaDesktop, label: "Platform" },
+    { path: "/tickets", icon: FaTicketAlt, label: "Ticket" },
+    { path: "/transactions", icon: FaExchangeAlt, label: "Transactions" },
+    { path: "/economic-calendar", icon: FaCalendarAlt, label: "Economic Calendar" },
+    { path: "/support", icon: FaHeadset, label: "Terms & Conditions" },
   ];
 
   return (
     <nav
-      className={`fixed top-0 left-0 h-full w-[80vw] md:w-[40vw] lg:w-[16vw] bg-black text-white px-1 py-8 transform transition-transform duration-300 z-50
+      className={`fixed top-0 left-0 h-full w-[60vw] md:w-[40vw] lg:w-[16vw] bg-black text-white px-3 py-5 transform transition-transform duration-300 z-50 shadow-lg
       ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       ${isSidebarOpen ? "lg:hidden" : "lg:translate-x-0"}`}
     >
+      {/* Logo */}
       <div id="logo" className="mb-10">
-        <Link to="/dashboard">
+        <Link to="/dashboard" onClick={() => setIsSidebarOpen(false)}>
           <img
-            className="w-40 mx-auto cursor-pointer"
+            className="h-10 object-contain mx-auto cursor-pointer hover:scale-105 transition-transform duration-300"
             src="https://vtindex.com/img/logo/logo.svg"
             alt="logo"
           />
         </Link>
       </div>
 
-      <div id="nav-content" className="flex flex-col gap-6">
-        {menuItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-800 px-4 py-2 rounded-md transition"
-          >
-            <i className={`fa-solid ${item.icon}`}></i>
-            <span>{item.label}</span>
-          </Link>
-        ))}
+      {/* Navigation Links */}
+      <div id="nav-content" className="flex flex-col gap-3">
+        {menuItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setIsSidebarOpen(false)}
+              className={`flex items-center gap-4 px-5 py-3 rounded-md text-sm font-medium transition-all duration-300 relative
+              ${
+                isActive
+                  ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 text-black shadow-[0_0_20px_#FFD700]"
+                  : "text-gray-300 hover:text-yellow-400 hover:bg-gray-900"
+              }`}
+            >
+              {/* White Border on Hover */}
+              <span className="absolute inset-0 rounded-md border-2 border-transparent hover:border-white pointer-events-none transition-all duration-300"></span>
+
+              <Icon
+                className={`text-lg relative z-10 ${
+                  isActive ? "text-black" : "text-yellow-400"
+                } transition-all duration-300`}
+              />
+              <span className="relative z-10">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
