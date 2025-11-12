@@ -63,7 +63,7 @@ const Tickets = () => {
 
         {/* CREATE TICKET PAGE */}
         {activePage === "create" && (
-          <div className="p-28 rounded-lg border border-gray-800 bg-black shadow-md">
+          <div className="p-5 rounded-lg border border-gray-800 bg-black shadow-md">
             <h2 className="text-xl font-semibold text-center mb-4 text-yellow-400">
               Raise a New Ticket
             </h2>
