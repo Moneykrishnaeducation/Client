@@ -38,7 +38,7 @@ const DownloadCards = () => {
   ];
 
   return (
-    <div className="min-h-[90vh] bg-gray-900 flex flex-col justify-start items-center py-16 px-6">
+    <div className="min-h-[90vh] bg-black-900 flex flex-col justify-start items-center py-16 px-6">
       <h2 className="text-3xl font-bold text-center text-white mb-12">
         Download Our App
       </h2>
@@ -50,7 +50,7 @@ const DownloadCards = () => {
             href={card.link}
             target="_blank" // Open in a new tab
             rel="noopener noreferrer" // Security for target="_blank"
-            className="group bg-gray-800 border border-gray-700 rounded-xl p-8 flex flex-col items-center text-center 
+            className="group bg-black-800 border border-gray-700 rounded-xl p-8 flex flex-col items-center text-center 
                        hover:shadow-lg hover:shadow-yellow-500/40 hover:drop-shadow-[0_0_10px_white] transition-transform duration-300 hover:-translate-y-2"
           >
             {card.icon}

@@ -9,6 +9,7 @@ import SocialTrading from '../pages/SocialTrading';
 import Tickets from '../pages/tickets';
 import EconomicCalendarWidget from '../pages/EconomicCalendarWidget';
 import Platform from '../pages/Platform';
+import Partnership from '../pages/Partnership';
 
 const Routers = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,7 +24,7 @@ const Routers = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tradingaccounts" element={<TradingAccounts />} />
             <Route path="/socialtrading" element={<SocialTrading />} />
-            <Route path="/partnership" element={<div className="p-8 text-white">Partnership Page</div>} />
+            <Route path="/partnership" element={<Partnership/>} />
             <Route path="/platform" element={<Platform/>} />
             <Route path="/tickets" element={<Tickets />}  />
             <Route path="/transactions" element={<div className="p-8 text-white">Transactions Page</div>} />
