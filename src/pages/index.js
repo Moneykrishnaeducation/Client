@@ -4,6 +4,8 @@ import Supports from './Termspage';
 import Tickets from './tickets';
 import EconomicCalendarWidget from './EconomicCalendarWidget';
 import SocialTrading from './SocialTrading';
+import Partnership from './Partnership';
+import Transactions from './Transactions';
 
 export const pages = {
   dashboard: Dashboard,
@@ -12,4 +14,6 @@ export const pages = {
   tickets: Tickets,
   economicCalendarWidgetts: EconomicCalendarWidget,
   socialTrading: SocialTrading,
+  partnership: Partnership,
+  transactions: Transactions,
 };

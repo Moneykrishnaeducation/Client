@@ -27,7 +27,7 @@ const Tickets = () => {
 
   return (
     <div className="min-h-[90vh] p-6 bg-black text-white">
-      <div className="max-w-5xl mx-auto p-6 rounded-xl border border-gray-800 bg-black shadow-lg">
+      <div className="max-w-5xl mx-auto p-6 rounded-xl   bg-black shadow-lg">
         {/* Header */}
         <header className="text-center mb-6">
           <h2 className="text-2xl font-bold text-yellow-400">
@@ -63,7 +63,7 @@ const Tickets = () => {
 
         {/* CREATE TICKET PAGE */}
         {activePage === "create" && (
-          <div className="p-5 rounded-lg border border-gray-800 bg-black shadow-md">
+          <div className="p-5 rounded-lg  bg-black border border-gray-800 shadow-md">
             <h2 className="text-xl font-semibold text-center mb-4 text-yellow-400">
               Raise a New Ticket
             </h2>
@@ -82,7 +82,7 @@ const Tickets = () => {
                   type="text"
                   placeholder="Enter ticket subject"
                   required
-                  className="w-full p-2 rounded-md bg-gray-900 border border-gray-700 text-white placeholder-gray-400"
+                  className="w-full p-2 rounded-md bg-gray-900 border border--700 text-white placeholder-gray-400"
                 />
               </div>
 
@@ -129,7 +129,7 @@ const Tickets = () => {
 
         {/* VIEW TICKETS PAGE */}
         {activePage === "view" && (
-          <div className="p-6 rounded-lg border border-gray-800 bg-black shadow-md">
+          <div className="p-6 rounded-lg border border-gray-800  bg-black shadow-md">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
               <h2 className="text-xl font-semibold text-yellow-400">
                 Your Tickets
