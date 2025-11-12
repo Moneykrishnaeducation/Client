@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "./Transactions.css"; // <-- Add this line (we’ll include small CSS fix below)
 
 const Transactions = () => {
   const [typeFilter, setTypeFilter] = useState("all");

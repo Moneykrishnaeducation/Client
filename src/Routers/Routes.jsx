@@ -6,7 +6,7 @@ import Dashboard from '../pages/Dashboard';
 import TradingAccounts from '../pages/TradingAccounts';
 import TermsPage from '../pages/Termspage';
 import SocialTrading from '../pages/SocialTrading';
-import Tickets from '../pages/tickets';
+import Tickets from '../pages/Tickets';
 import EconomicCalendarWidget from '../pages/EconomicCalendarWidget';
 import Platform from '../pages/Platform';
 import Partnership from '../pages/Partnership';
