@@ -18,6 +18,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
       credit: "0.00",
       equity: "1180.00",
       margin: "0.00",
+      freeMargin:"132.0"
     },
     {
       id: 2,
@@ -28,6 +29,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
       credit: "0.00",
       equity: "2550.25",
       margin: "0.00",
+      freeMargin:"311.0"
     },
     {
       id: 3,
@@ -38,17 +40,23 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
       credit: "0.00",
       equity: "4895.00",
       margin: "0.00",
+      freeMargin:"281.0"
     },
   ];
 
   // Auto convert USD → INR (mock rate 1 USD = 83.25 INR)
   React.useEffect(() => {
-    if (currency === "USD" && cheeseAmount) {
-      setConvertedAmount((cheeseAmount * 83.25).toFixed(2));
+    if (cheeseAmount) {
+      if (currency === "USD") {
+        setConvertedAmount((cheeseAmount * 83.25).toFixed(2)); // USD → INR
+      } else if (currency === "INR") {
+        setConvertedAmount((cheeseAmount / 83.25).toFixed(2)); // INR → USD
+      }
     } else {
       setConvertedAmount("");
     }
   }, [cheeseAmount, currency]);
+
 
   return (
     <div className="min-h-[90vh] bg-black text-white font-sans flex flex-col items-center">
@@ -167,6 +175,8 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                   <Info label="Leverage" value={selectedAccount.leverage} />
                   <Info label="Balance" value={`$${selectedAccount.balance}`} />
                   <Info label="Equity" value={`$${selectedAccount.equity}`} />
+                  <Info label="Margin level" value={`${selectedAccount.margin}%`} />
+                  <Info label="Free Margin" value={`$${selectedAccount.freeMargin}`} />
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-4 pt-2">
@@ -182,6 +192,12 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                   <button className="bg-gold text-black w-30 px-4 py-2 rounded hover:bg-white transition">
                     Withdraw
                   </button>
+                  <button className="bg-gold text-black w-30 px-4 py-2 rounded hover:bg-white transition">
+                    Trades
+                  </button>
+                  <button className="bg-gold text-black w-30 px-4 py-2 rounded hover:bg-white transition">
+                    Settings
+                  </button>
                 </div>
               </div>
             </div>
@@ -190,7 +206,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
           {/* Deposit Modal */}
           {showDepositModal && (
             <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-              <div className="bg-[#111] border border-[#FFD700] rounded-2xl w-[90%] max-w-2xl p-6 relative shadow-2xl">
+              <div className="bg-[#111] border border-[#FFD700] rounded-2xl w-[90%] max-w-xl p-6 relative shadow-2xl">
                 {/* Close Button */}
                 <button
                   onClick={() => setShowDepositModal(false)}
@@ -275,20 +291,25 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                         />
                       </div>
 
-                      {currency === "USD" && (
+                      {convertedAmount && (
                         <div>
                           <label className="block text-sm text-gray-400 mb-1">
-                            Converted (INR)
+                            {currency === "USD" ? "Converted (INR)" : "Converted (USD)"}
                           </label>
                           <input
                             type="text"
                             readOnly
-                            value={convertedAmount ? `₹ ${convertedAmount}` : ""}
+                            value={
+                              currency === "USD"
+                                ? `₹ ${convertedAmount}`
+                                : `$ ${convertedAmount}`
+                            }
                             placeholder="Auto converted amount"
                             className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700]/60 text-gray-300 rounded-lg cursor-not-allowed"
                           />
                         </div>
                       )}
+
 
                       <button
                         type="submit"
@@ -339,20 +360,25 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                         />
                       </div>
 
-                      {currency === "USD" && (
+                      {convertedAmount && (
                         <div>
                           <label className="block text-sm text-gray-400 mb-1">
-                            Converted (INR)
+                            {currency === "USD" ? "Converted (INR)" : "Converted (USD)"}
                           </label>
                           <input
                             type="text"
                             readOnly
-                            value={convertedAmount ? `₹ ${convertedAmount}` : ""}
+                            value={
+                              currency === "USD"
+                                ? `₹ ${convertedAmount}`
+                                : `$ ${convertedAmount}`
+                            }
                             placeholder="Auto converted amount"
                             className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700]/60 text-gray-300 rounded-lg cursor-not-allowed"
                           />
                         </div>
                       )}
+
 
                       <input
                         type="file"
