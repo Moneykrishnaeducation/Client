@@ -98,7 +98,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="h-[100vh] bg-black text-white flex flex-col w-full text-[18px] overflow-hidden">
+    <div className="bg-black text-white flex flex-col w-full text-[18px] overflow-hidden">
       {/* Scrollable content area */}
       <main className="flex-1 p-4 bg-black mt-[20px] w-full overflow-y-auto sm:overflow-y-visible">
         {/* Top Buttons */}

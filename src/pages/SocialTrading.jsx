@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Info, X } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // ✅ Add this line
 
 const MAMManager = () => {
   const [showInfo, setShowInfo] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [animateTitle, setAnimateTitle] = useState(false);
+  const navigate = useNavigate(); // ✅ Hook for navigation
 
   // Form data
   const [form, setForm] = useState({
@@ -31,7 +33,6 @@ const MAMManager = () => {
     alert("✅ New MAM Account Created Successfully!");
     setShowModal(false);
 
-    // Reset form
     setForm({
       accountName: "",
       profitPercentage: "",
@@ -99,35 +100,39 @@ const MAMManager = () => {
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-6 justify-center mb-8 mt-[20px]">
+          {/* Create Account Button */}
           <button
             className="bg-yellow-400 text-black font-semibold py-3 px-4 rounded-md w-full sm:w-1/2 hover:bg-yellow-300 transition-all duration-200"
             onClick={() => setShowModal(true)}
           >
             + Create New MAM Manager Account
           </button>
-          <button className="bg-yellow-400 text-black font-semibold py-3 px-4 rounded-md w-full sm:w-1/2 hover:bg-yellow-300 transition-all duration-200">
+
+          {/* ✅ Navigate to MAMInvestments page */}
+          <button
+            onClick={() => navigate("/mam-investments")}
+            className="bg-yellow-400 text-black font-semibold py-3 px-4 rounded-md w-full sm:w-1/2 hover:bg-yellow-300 transition-all duration-200"
+          >
             + Invest in a MAM Account
           </button>
         </div>
 
-        {/* ✅ Always show this border box (no account data) */}
-        {/* No Accounts Section */}
-<div className="text-center border-2 border-dashed border-yellow-400 rounded-md p-4 mt-4 animate-border-glow">
-  <p className="font-semibold text-[16px] mb-1 text-white">
-    No MAM Accounts Found
-  </p>
-  <p className="text-sm text-gray-300">
-    Click{" "}
-    <span
-      onClick={() => setShowModal(true)} // 👈 Add this line
-      className="text-yellow-400 font-semibold cursor-pointer hover:underline"
-    >
-      “Create New MAM Account”
-    </span>{" "}
-    to create your first MAM account.
-  </p>
-</div>
-
+        {/* No Accounts Box */}
+        <div className="text-center border-2 border-dashed border-yellow-400 rounded-md p-4 mt-4 animate-border-glow">
+          <p className="font-semibold text-[16px] mb-1 text-white">
+            No MAM Accounts Found
+          </p>
+          <p className="text-sm text-gray-300">
+            Click{" "}
+            <span
+              onClick={() => setShowModal(true)}
+              className="text-yellow-400 font-semibold cursor-pointer hover:underline"
+            >
+              “Create New MAM Account”
+            </span>{" "}
+            to create your first MAM account.
+          </p>
+        </div>
       </div>
 
       {/* Modal */}
