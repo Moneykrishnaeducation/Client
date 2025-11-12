@@ -98,15 +98,16 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-h-[90vh] bg-black text-white flex flex-col w-full text-[18px] overflow-hidden">
-      <main className="flex-1 p-6 bg-black mt-[30px] w-full">
+    <div className="h-[100vh] bg-black text-white flex flex-col w-full text-[18px] overflow-hidden">
+      {/* Scrollable content area */}
+      <main className="flex-1 p-4 bg-black mt-[20px] w-full overflow-y-auto sm:overflow-y-visible">
         {/* Top Buttons */}
-        <div className="flex justify-center gap-4 mb-6 flex-wrap">
+        <div className="flex justify-center gap-3 mb-6 flex-wrap">
           {buttonSet.map((btn, i) => (
             <button
               key={i}
               onClick={() => openModal(btn.action)}
-              className="bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md hover:bg-yellow-400 shadow-sm hover:shadow-[0_0_10px_rgba(255,215,0,0.6)] h-[46px] w-[150px] text-[16px] transition-all duration-200 flex items-center justify-center gap-2"
+              className="bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md hover:bg-yellow-400 shadow-sm hover:shadow-[0_0_10px_rgba(255,215,0,0.6)] h-[46px] w-[140px] text-[15px] transition-all duration-200 flex items-center justify-center gap-2"
             >
               <btn.icon className="w-5 h-5 text-black" />
               {btn.label}
@@ -115,11 +116,11 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {statItems.map((box, i) => (
             <div
               key={i}
-              className="rounded-lg p-4 text-center bg-gradient-to-b from-gray-900 to-black shadow-md h-[120px] w-[90%] mx-auto hover:shadow-[0_0_12px_rgba(255,215,0,0.5)] transition-all duration-200 flex flex-col items-center justify-center"
+              className="rounded-lg p-4 text-center bg-gradient-to-b from-gray-900 to-black shadow-md h-[120px] w-full mx-auto hover:shadow-[0_0_12px_rgba(255,215,0,0.5)] transition-all duration-200 flex flex-col items-center justify-center"
             >
               <box.icon className="w-8 h-8 mb-2 text-yellow-400" />
               <strong className="block text-sm text-gray-300">{box.label}</strong>
@@ -131,7 +132,7 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="mt-8 pl-4 w-[90%] mx-auto">
+        <div className="mt-8 pl-2 w-full mx-auto">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-lg font-semibold text-yellow-400">Recent Activity</h3>
             <button
@@ -142,11 +143,9 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <div className="bg-gray-900 rounded-md shadow-md p-4 space-y-3 text-[16px]">
-            {[
-              { type: "Deposit", color: "text-green-400", amount: "+$100.00" },
-              { type: "Withdraw", color: "text-red-400", amount: "-$50.50" },
-            ].map((item, i) => (
+          <div className="bg-gray-900 rounded-md shadow-md p-4 space-y-3 text-[15px]">
+            {[{ type: "Deposit", color: "text-green-400", amount: "+$100.00" },
+              { type: "Withdraw", color: "text-red-400", amount: "-$50.50" }].map((item, i) => (
               <div
                 key={i}
                 className="bg-gray-800 p-3 rounded-md hover:shadow-[0_0_10px_rgba(255,215,0,0.4)] transition-all duration-200 flex justify-between items-center"
