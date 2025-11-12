@@ -23,7 +23,7 @@ function EconomicCalendarWidget() {
         flexDirection: 'column',
         alignItems: 'center', // center horizontally
         justifyContent: 'flex-start', // align content at top
-        height: '680px', // fixed height
+        height: '90vh', // fixed height
         width: '100%',
         boxSizing: 'border-box',
       }}
@@ -35,15 +35,6 @@ function EconomicCalendarWidget() {
           height: '500px', // height for the widget itself
         }}
       ></div>
-      <div style={{ marginTop: '10px' }}>
-        <a
-          href="https://www.mql5.com/?utm_source=calendar.widget&utm_medium=link&utm_term=economic.calendar&utm_content=visit.mql5.calendar&utm_campaign=202.calendar.widget"
-          rel="noopener nofollow"
-          target="_blank"
-        >
-          MQL5 Algo Trading Community
-        </a>
-      </div>
     </div>
   );
 }

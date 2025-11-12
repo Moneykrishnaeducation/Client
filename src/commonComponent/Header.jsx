@@ -23,7 +23,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   {/* Mobile / Tablet Button */}
   <button
     onClick={toggleSidebar}
-    className="lg:hidden relative w-6 h-6 flex flex-col justify-between items-center mr-3 md:mr-4 z-100"
+    className="lg:hidden relative w-6 h-6 flex flex-col justify-between items-center mr-3 md:mr-4"
   >
     {/* Hamburger animation */}
     <span className={`block h-0.5 w-6 bg-white rounded transform transition duration-300 ease-in-out ${isSidebarOpen ? "rotate-45 translate-y-2" : ""}`} />
