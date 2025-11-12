@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FaMoon, FaSun, FaBell, FaSignOutAlt, FaUserCircle } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -16,7 +17,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const iconSize = "text-lg md:text-xl"; // Smaller on mobile
 
   return (
-    <header className={`flex w-screen h-[10vh] lg:w-[84vw] items-center justify-between px-4 md:px-6 py-3 bg-black border-b border-white shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700] transition-all duration-300 ease-in-out ${isSidebarOpen && 'min-w-screen'}`}>
+    <header className={`flex h-[10vh] items-center justify-between px-4 md:px-6 py-3 bg-black border-b border-gray-900 shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700]`}>
       
       {/* Left: Hamburger / X Button */}
       <>
@@ -55,12 +56,14 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 </>
 
       {/* Center: Logo */}
-      <div className="flex-1 flex justify-center">
-        <img
-          src="https://vtindex.com/img/logo/logo.svg"
-          alt="Logo"
-          className="h-8 md:h-10 object-contain"
-        />
+      <div id="logo" className="flex-1 flex justify-center">
+        <Link to="/dashboard">
+          <img
+            className="h-10 object-contain mx-auto cursor-pointer hover:scale-105 transition-transform duration-300"
+            src="https://vtindex.com/img/logo/logo.svg"
+            alt="logo"
+          />
+        </Link>
       </div>
 
       {/* Right: Notification, Mode, Profile, Exit */}
