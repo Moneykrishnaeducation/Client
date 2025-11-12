@@ -43,33 +43,35 @@ const DownloadCards = () => {
         Download Our App
       </h2>
 
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
-        {cards.map((card, index) => (
-          <a
-            key={index}
-            href={card.link}
-            target="_blank" // Open in a new tab
-            rel="noopener noreferrer" // Security for target="_blank"
-            className="group bg-black-800 border border-gray-700 rounded-xl p-8 flex flex-col items-center text-center 
-                       hover:shadow-lg hover:shadow-yellow-500/40 hover:drop-shadow-[0_0_10px_white] transition-transform duration-300 hover:-translate-y-2"
-          >
-            {card.icon}
-            <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-yellow-400 group-hover:drop-shadow-[0_0_5px_white]">
-              {card.title}
-            </h3>
-            <p className="text-gray-400 mb-6 group-hover:text-yellow-300 group-hover:drop-shadow-[0_0_3px_white]">
-              {card.subtitle}
-            </p>
+     <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+  {cards.map((card, index) => (
+    <a
+      key={index}
+      href={card.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group bg-black-800 border border-gray-700 rounded-xl p-8 flex flex-col items-center text-center
+                 shadow-md transition-transform duration-300 hover:-translate-y-2"
+    >
+      {/* Icon without shadow */}
+      <div className="mb-4">{card.icon}</div>
 
-            {/* Download Button (This button does not need a link since the <a> tag already handles that) */}
-            <button className="px-6 py-2 bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all duration-300
-                               hover:bg-yellow-400 hover:text-white hover:shadow-lg hover:shadow-yellow-500/50 hover:drop-shadow-[0_0_5px_white]">
-              Download
-            </button>
-          </a>
-        ))}
-      </div>
-    </div>
+      <h3 className="text-xl font-semibold text-white mb-2">
+        {card.title}
+      </h3>
+      <p className="text-gray-400 mb-6">
+        {card.subtitle}
+      </p>
+
+      {/* Download Button */}
+      <button className="px-6 py-2 bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all duration-300
+                         hover:bg-yellow-400 hover:text-white">
+        Download
+      </button>
+    </a>
+  ))}
+</div>
+</div>
   );
 };
 

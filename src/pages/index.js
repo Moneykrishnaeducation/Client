@@ -6,6 +6,7 @@ import EconomicCalendarWidget from './EconomicCalendarWidget';
 import SocialTrading from './SocialTrading';
 import Partnership from './Partnership';
 import Transactions from './Transactions';
+import Maminvestments from './Maminvestments';
 
 export const pages = {
   dashboard: Dashboard,
@@ -16,4 +17,5 @@ export const pages = {
   socialTrading: SocialTrading,
   partnership: Partnership,
   transactions: Transactions,
+  maminvestments: Maminvestments,
 };
