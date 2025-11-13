@@ -45,7 +45,13 @@ const Header = () => {
     setNotifications(notifications.filter((notif) => notif.id !== id));
   };
 
-  useEffect(() => {
+  // Mark all notifications as read
+  const markAllAsRead = () => {
+    setNotifications([]);
+  };
+
+
+   useEffect(() => {
     function handleClickOutside(event) {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
         setShowNotifications(false);
@@ -56,6 +62,7 @@ const Header = () => {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showNotifications]);
+
 
   return (
     <header className="flex h-[10vh] items-center justify-between px-4 md:px-6 py-3 bg-black border-b border-gray-900 shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700]">
@@ -72,7 +79,7 @@ const Header = () => {
         </Link>
       </div>
 
-      {/* Right-side buttons */}
+       {/* Right-side buttons */}
       <div className="flex items-center space-x-3 md:space-x-5">
         {/* Notification Button */}
         <button
@@ -84,6 +91,7 @@ const Header = () => {
             <span className="absolute top-0 right-0 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
           )}
         </button>
+
 
         {/* Mode Button */}
         <button
@@ -109,23 +117,38 @@ const Header = () => {
         </button>
       </div>
 
-      {/* Notification Panel */}
+       {/* Notification Panel */}
       {showNotifications && (
         <div
           ref={panelRef}
           className="fixed top-16 right-3 w-[90%] sm:w-[22rem] md:w-[24rem] bg-black border border-yellow-500 rounded-lg shadow-[0_0_20px_#FFD700] text-white p-4 animate-slideIn z-50"
         >
           <div className="flex justify-between items-center border-b border-gray-800 pb-2 mb-3">
-            <h2 className="text-lg font-semibold text-yellow-400">
-              Notifications
-            </h2>
-            <button
-              onClick={() => setShowNotifications(false)}
-              className="text-gray-400 hover:text-yellow-400 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+  <h2 className="text-lg font-semibold text-yellow-400">
+    Notifications
+  </h2>
+
+  <div className="flex items-center space-x-2">
+    {/* Small Mark All as Read Button */}
+    {notifications.length > 0 && (
+      <button
+        onClick={markAllAsRead}
+        className="text-xs px-2 py-1 bg-yellow-500 text-black rounded hover:bg-yellow-400 transition"
+      >
+        Mark All
+      </button>
+    )}
+
+    {/* Close Button */}
+    <button
+      onClick={() => setShowNotifications(false)}
+      className="text-gray-400 hover:text-yellow-400 transition"
+    >
+      <X className="w-5 h-5" />
+    </button>
+  </div>
+</div>
+
 
           <div className="space-y-3 max-h-[65vh] overflow-y-auto">
             {notifications.length > 0 ? (
@@ -155,5 +178,6 @@ const Header = () => {
     </header>
   );
 };
+
 
 export default Header;
