@@ -7,9 +7,10 @@ import {
 } from "react-icons/fa";
 import { Bell, X, CheckCircle, Info, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDarkMode, toggleMode } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
     {
@@ -31,10 +32,6 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   const panelRef = useRef(null);
 
-  const toggleMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.body.classList.toggle("dark", !isDarkMode);
-  };
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   }
@@ -64,8 +61,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   }, [showNotifications]);
 
   return (
-    <header className="flex h-[10vh] items-center justify-between px-4 md:px-6 py-3 bg-black border-b border-gray-900 shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700] transition-shadow duration-300">
-      
+    <header className={`flex h-[10vh] items-center justify-between px-4 md:px-6 py-3 ${isDarkMode ? 'bg-black border-b border-gray-900' : 'bg-white border-b border-gray-300'} shadow-[0_4px_6px_#FFD700] hover:shadow-[0_0_20px_#FFD700] transition-shadow duration-300`}>
+
        <>
         {/* Mobile / Tablet Button */}
         <button
@@ -73,9 +70,9 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
           className="lg:hidden relative w-6 h-6 flex flex-col justify-between items-center mr-3 md:mr-4"
         >
           {/* Hamburger animation */}
-          <span className={`block h-0.5 w-6 bg-white rounded transform transition duration-300 ease-in-out ${isSidebarOpen ? "rotate-45 translate-y-2" : ""}`} />
-          <span className={`block h-0.5 w-6 bg-white rounded transition duration-300 ease-in-out ${isSidebarOpen ? "opacity-0" : ""}`} />
-          <span className={`block h-0.5 w-6 bg-white rounded transform transition duration-300 ease-in-out ${isSidebarOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+          <span className={`block h-0.5 w-6 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded transform transition duration-300 ease-in-out ${isSidebarOpen ? "rotate-45 translate-y-2" : ""}`} />
+          <span className={`block h-0.5 w-6 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded transition duration-300 ease-in-out ${isSidebarOpen ? "opacity-0" : ""}`} />
+          <span className={`block h-0.5 w-6 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded transform transition duration-300 ease-in-out ${isSidebarOpen ? "-rotate-45 -translate-y-2" : ""}`} />
         </button>
 
         {/* Desktop Button (example: a simple arrow toggle) */}
@@ -84,20 +81,20 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
           className="hidden lg:flex relative w-6 h-6 flex flex-col justify-between items-center mr-3 md:mr-4"
         >
           <span
-            className={`block h-0.5 w-6 bg-white rounded transform transition duration-300 ease-in-out ${!isSidebarOpen ? "rotate-45 translate-y-2" : ""
+            className={`block h-0.5 w-6 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded transform transition duration-300 ease-in-out ${!isSidebarOpen ? "rotate-45 translate-y-2" : ""
               }`}
           />
           <span
-            className={`block h-0.5 w-6 bg-white rounded transition duration-300 ease-in-out ${!isSidebarOpen ? "opacity-0" : ""
+            className={`block h-0.5 w-6 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded transition duration-300 ease-in-out ${!isSidebarOpen ? "opacity-0" : ""
               }`}
           />
           <span
-            className={`block h-0.5 w-6 bg-white rounded transform transition duration-300 ease-in-out ${!isSidebarOpen ? "-rotate-45 -translate-y-2" : ""
+            className={`block h-0.5 w-6 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded transform transition duration-300 ease-in-out ${!isSidebarOpen ? "-rotate-45 -translate-y-2" : ""
               }`}
           />
         </button>
       </>
-      
+
       {/* Center: Logo */}
       <div id="logo" className="flex-1 flex justify-center">
         <Link to="/dashboard">
@@ -114,7 +111,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         {/* Notification Button */}
         <button
           onClick={() => setShowNotifications(!showNotifications)}
-          className={`${iconSize} relative text-white hover:text-yellow-300 transition-colors`}
+          className={`${iconSize} relative ${isDarkMode ? 'text-white' : 'text-black'} hover:text-yellow-300 transition-colors`}
         >
           <Bell className="w-5 h-5" />
           {notifications.length > 0 && (
@@ -125,7 +122,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         {/* Mode Button */}
         <button
           onClick={toggleMode}
-          className={`${iconSize} text-white hover:text-yellow-300 transition-colors`}
+          className={`${iconSize} ${isDarkMode ? 'text-white' : 'text-black'} hover:text-yellow-300 transition-colors`}
         >
           {isDarkMode ? <FaSun /> : <FaMoon />}
         </button>
@@ -133,8 +130,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         {/* Profile Link */}
         <div className="flex items-center space-x-1">
           <Link to="/profile" className="flex items-center space-x-1 hover:opacity-80">
-            <FaUserCircle className={`${iconSize} text-white`} />
-            <span className="hidden md:inline text-white font-medium text-xs md:text-sm">
+            <FaUserCircle className={`${iconSize} ${isDarkMode ? 'text-white' : 'text-black'}`} />
+            <span className={`hidden md:inline ${isDarkMode ? 'text-white' : 'text-black'} font-medium text-xs md:text-sm`}>
               John Doe
             </span>
           </Link>
@@ -142,7 +139,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
         {/* Exit Button */}
         <button
-          className={`${iconSize} text-white hover:text-red-500 transition-colors`}
+          className={`${iconSize} ${isDarkMode ? 'text-white' : 'text-black'} hover:text-red-500 transition-colors`}
         >
           <FaSignOutAlt />
         </button>
@@ -152,10 +149,10 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       {showNotifications && (
         <div
           ref={panelRef}
-          className="fixed top-16 right-3 w-[90%] sm:w-[22rem] md:w-[24rem] bg-black border border-yellow-500 rounded-lg shadow-[0_0_20px_#FFD700] text-white p-4 animate-slideIn z-50"
+          className={`fixed top-16 right-3 w-[90%] sm:w-[22rem] md:w-[24rem] ${isDarkMode ? 'bg-black border border-yellow-500' : 'bg-white border border-yellow-500'} rounded-lg shadow-[0_0_20px_#FFD700] ${isDarkMode ? 'text-white' : 'text-black'} p-4 animate-slideIn z-50`}
         >
           {/* Header with small 'Mark All' button */}
-          <div className="flex justify-between items-center border-b border-gray-800 pb-2 mb-3">
+          <div className={`flex justify-between items-center border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-300'} pb-2 mb-3`}>
             <h2 className="text-lg font-semibold text-yellow-400">
               Notifications
             </h2>
@@ -170,7 +167,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
               )}
               <button
                 onClick={() => setShowNotifications(false)}
-                className="text-gray-400 hover:text-yellow-400 transition"
+                className={`${isDarkMode ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-600 hover:text-yellow-400'} transition`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -183,11 +180,11 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
               notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  className="flex items-center justify-between space-x-3 bg-gray-900 p-3 rounded-md hover:bg-gray-800 transition"
+                  className={`flex items-center justify-between space-x-3 ${isDarkMode ? 'bg-gray-900 hover:bg-gray-800' : 'bg-gray-100 hover:bg-gray-200'} p-3 rounded-md transition`}
                 >
                   <div className="flex items-center space-x-3">
                     {notif.icon}
-                    <p className="text-sm text-gray-300">{notif.message}</p>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{notif.message}</p>
                   </div>
                   <button
                     onClick={() => markAsRead(notif.id)}
@@ -198,7 +195,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 </div>
               ))
             ) : (
-              <p className="text-gray-400 text-center">No new notifications</p>
+              <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center`}>No new notifications</p>
             )}
           </div>
         </div>

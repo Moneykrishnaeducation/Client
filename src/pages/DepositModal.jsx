@@ -12,6 +12,7 @@ export default function DepositModal({
   setCurrency,
   convertedAmount,
   selectedDepositAccount,
+  isDarkMode,
 }) {
   const handleCopy = async () => {
     try {
@@ -24,8 +25,8 @@ export default function DepositModal({
   return (
     <>
       {showDepositModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 ">
-          <div className="bg-[#111] border border-[#FFD700] rounded-2xl w-[90%] max-w-xl p-6 relative shadow-2xl">
+        <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/50' : 'bg-white/70'} flex items-center justify-center z-50`}>
+          <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-white'} border border-[#FFD700] rounded-2xl w-[90%] max-w-xl p-6 relative shadow-2xl`}>
             {/* Close Button */}
             <button
               onClick={() => setShowDepositModal(false)}
@@ -48,7 +49,7 @@ export default function DepositModal({
                   className={`pb-3 px-5 font-semibold text-sm uppercase tracking-wide transition-all duration-300 ${
                     activeTab === tab
                       ? "text-[#FFD700] border-b-2 border-[#FFD700]"
-                      : "text-gray-400 hover:text-white"
+                      : isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-black"
                   }`}
                 >
                   {tab === "cheesepay"
@@ -62,19 +63,19 @@ export default function DepositModal({
 
             {/* Deposit Account Select (Common) */}
             <div className="mb-5">
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
                 Account ID
               </label>
               <input
                 type="text"
                 value={selectedDepositAccount || "No account selected"}
                 readOnly
-                className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700] text-gray-300 rounded-lg cursor-not-allowed"
+                className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700] rounded-lg cursor-not-allowed`}
               />
             </div>
 
             {/* Tab Content */}
-            <div className="text-white space-y-5">
+            <div className={`${isDarkMode ? 'text-white' : 'text-black'} space-y-5`}>
               {/* CheesePay Section */}
               {activeTab === "cheesepay" && (
                 <form className="space-y-4">
@@ -84,7 +85,7 @@ export default function DepositModal({
                       <label
                         key={curr}
                         className={`flex items-center gap-2 cursor-pointer select-none ${
-                          currency === curr ? "text-[#FFD700]" : "text-gray-400"
+                          currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
                         <input
@@ -108,13 +109,13 @@ export default function DepositModal({
                       placeholder="Enter amount"
                       value={cheeseAmount}
                       onChange={(e) => setCheeseAmount(e.target.value)}
-                      className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition"
+                      className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
                     />
                   </div>
 
                   {convertedAmount && (
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">
+                      <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
                         {currency === "USD" ? "Converted (INR)" : "Converted (USD)"}
                       </label>
                       <input
@@ -126,7 +127,7 @@ export default function DepositModal({
                             : `$ ${convertedAmount}`
                         }
                         placeholder="Auto converted amount"
-                        className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700]/60 text-gray-300 rounded-lg cursor-not-allowed"
+                        className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700]/60 rounded-lg cursor-not-allowed`}
                       />
                     </div>
                   )}
@@ -143,7 +144,7 @@ export default function DepositModal({
               {/* Manual Deposit Section */}
               {activeTab === "manual" && (
                 <form className="space-y-4">
-                  <p className="text-gray-400 text-center">
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-700'} text-center`}>
                     Contact <span className="text-[#FFD700]">Support</span> for Bank
                     Details.
                   </p>
@@ -153,7 +154,7 @@ export default function DepositModal({
                       <label
                         key={curr}
                         className={`flex items-center gap-2 cursor-pointer select-none ${
-                          currency === curr ? "text-[#FFD700]" : "text-gray-400"
+                          currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
                         <input
@@ -177,13 +178,13 @@ export default function DepositModal({
                       placeholder="Enter amount"
                       value={cheeseAmount}
                       onChange={(e) => setCheeseAmount(e.target.value)}
-                      className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition"
+                      className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
                     />
                   </div>
 
                   {convertedAmount && (
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">
+                      <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
                         {currency === "USD" ? "Converted (INR)" : "Converted (USD)"}
                       </label>
                       <input
@@ -195,14 +196,14 @@ export default function DepositModal({
                             : `$ ${convertedAmount}`
                         }
                         placeholder="Auto converted amount"
-                        className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700]/60 text-gray-300 rounded-lg cursor-not-allowed"
+                        className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700]/60 rounded-lg cursor-not-allowed`}
                       />
                     </div>
                   )}
 
                   <input
                     type="file"
-                    className="w-full text-gray-400 file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition"
+                    className={`w-full ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition`}
                   />
 
                   <button
@@ -217,11 +218,11 @@ export default function DepositModal({
               {/* USDT Section */}
               {activeTab === "usdt" && (
                 <form className="space-y-4">
-                  <p className="text-gray-300">
+                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Send <span className="text-[#FFD700]">USDT (TRC20)</span> to this
                     address:
                   </p>
-                  <div className="relative p-3 border border-[#FFD700] rounded-lg text-center text-sm break-all bg-[#1a1a1a]">
+                  <div className={`relative p-3 border border-[#FFD700] rounded-lg text-center text-sm break-all ${isDarkMode ? 'bg-[#1a1a1a]' : 'bg-gray-100'}`}>
                     TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs
                     <button
                       onClick={handleCopy}
@@ -235,13 +236,13 @@ export default function DepositModal({
                   <input
                     type="number"
                     placeholder="Enter USDT amount"
-                    className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg"
+                    className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg`}
                   />
 
                   <input
                     type="file"
                     required
-                    className="w-full text-gray-400 file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition"
+                    className={`w-full ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition`}
                   />
 
                   <button

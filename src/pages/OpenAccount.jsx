@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react"; // adjust path if needed
+import { useTheme } from "../context/ThemeContext";
 import { ModalWrapper } from "./Dashboard";
 
 function OpenAccount({ onClose }) {
-  const generatePassword = (length = 12) => {
+  const { isDarkMode } = useTheme();
+  const generatePassword = (length = 8) => {
     const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const lowercase = "abcdefghijklmnopqrstuvwxyz";
     const numbers = "0123456789";
@@ -54,11 +56,11 @@ function OpenAccount({ onClose }) {
   };
 
   return (
-    <ModalWrapper title="Create New Trading Account" onClose={onClose}>
+    <ModalWrapper title="Create New Trading Account" onClose={onClose} isDarkMode={isDarkMode}>
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Account Name */}
         <div>
-          <label className="block text-sm mb-1 text-gray-300">
+          <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             <span className="text-red-500">*</span> Account Name
           </label>
           <input
@@ -68,13 +70,13 @@ function OpenAccount({ onClose }) {
             onChange={handleChange}
             required
             placeholder="Enter account name"
-            className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-md focus:ring-2 focus:ring-[#FFD700]"
+            className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-md focus:ring-2 focus:ring-[#FFD700]`}
           />
         </div>
 
         {/* Leverage */}
         <div>
-          <label className="block text-sm mb-1 text-gray-300">
+          <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             <span className="text-red-500">*</span> Leverage
           </label>
           <select
@@ -82,7 +84,7 @@ function OpenAccount({ onClose }) {
             value={formData.leverage}
             onChange={handleChange}
             required
-            className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-md focus:ring-2 focus:ring-[#FFD700]"
+            className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-md focus:ring-2 focus:ring-[#FFD700]`}
           >
             <option value="">Select leverage</option>
             {leverages.map((lev, idx) => (
@@ -95,7 +97,7 @@ function OpenAccount({ onClose }) {
 
         {/* Group */}
         <div>
-          <label className="block text-sm mb-1 text-gray-300">
+          <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             <span className="text-red-500">*</span> Group
           </label>
           <select
@@ -103,7 +105,7 @@ function OpenAccount({ onClose }) {
             value={formData.group}
             onChange={handleChange}
             required
-            className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-md focus:ring-2 focus:ring-[#FFD700]"
+            className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-md focus:ring-2 focus:ring-[#FFD700]`}
           >
             <option value="">Select group</option>
             {groups.map((grp, idx) => (
@@ -116,7 +118,7 @@ function OpenAccount({ onClose }) {
 
         {/* Master Password */}
         <div>
-          <label className="block text-sm mb-1 text-gray-300">
+          <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             <span className="text-red-500">*</span> Master Password
           </label>
           <div className="relative">
@@ -128,7 +130,7 @@ function OpenAccount({ onClose }) {
               placeholder="Auto-generated secure password"
               required
               minLength={8}
-              className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-md pr-10 focus:ring-2 focus:ring-[#FFD700]"
+              className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-md pr-10 focus:ring-2 focus:ring-[#FFD700]`}
             />
             <button
               type="button"
@@ -139,15 +141,15 @@ function OpenAccount({ onClose }) {
               {showMasterPwd ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
-            The master password allows full control of the trading account.  
+          <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+            The master password allows full control of the trading account.
             Must be at least 8 characters and contain Abcd@123.
           </p>
         </div>
 
         {/* Investor Password */}
         <div>
-          <label className="block text-sm mb-1 text-gray-300">
+          <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             <span className="text-red-500">*</span> Investor Password
           </label>
           <div className="relative">
@@ -159,7 +161,7 @@ function OpenAccount({ onClose }) {
               placeholder="Auto-generated secure password"
               required
               minLength={8}
-              className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-md pr-10 focus:ring-2 focus:ring-[#FFD700]"
+              className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-md pr-10 focus:ring-2 focus:ring-[#FFD700]`}
             />
             <button
               type="button"
@@ -170,8 +172,8 @@ function OpenAccount({ onClose }) {
               {showInvestorPwd ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
-            The investor password allows read-only access.  
+          <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+            The investor password allows read-only access.
             Must be at least 8 characters and contain Abcd@123.
           </p>
         </div>

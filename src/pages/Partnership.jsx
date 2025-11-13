@@ -10,6 +10,7 @@ import {
   ChevronRight,
   UserPlus
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 // Main Tree Component
 const ClientTree = ({ clients, level = 1 }) => {
@@ -24,6 +25,7 @@ const ClientTree = ({ clients, level = 1 }) => {
 
 // Individual Client Component
 const ClientItem = ({ client, level }) => {
+  const { isDarkMode } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const contentRef = useRef(null);
@@ -68,7 +70,7 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   ];
 
   return (
-    <div className="border-b border-yellow-200 rounded-md p-3 bg-black shadow-sm hover:shadow-lg transition-shadow duration-300">
+    <div className={`border-b border-yellow-200 rounded-md p-3 ${isDarkMode ? 'bg-black' : 'bg-white'} shadow-sm hover:shadow-lg transition-shadow duration-300`}>
       {/* Client Header */}
       <div
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer hover:bg-yellow-500/10 p-2 rounded-md transition-all"
@@ -76,9 +78,9 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
       >
         {/* Client Info */}
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center w-full">
-          <span className="text-yellow-300 font-semibold">{client.username}</span>
-          <span className="text-yellow-200 text-sm">{client.email}</span>
-          <span className="text-yellow-200 text-sm">{client.phone}</span>
+          <span className={`${isDarkMode ? 'text-yellow-300' : 'text-black'} font-semibold`}>{client.username}</span>
+          <span className={`${isDarkMode ? 'text-yellow-200' : 'text-gray-600'} text-sm`}>{client.email}</span>
+          <span className={`${isDarkMode ? 'text-yellow-200' : 'text-gray-600'} text-sm`}>{client.phone}</span>
         </div>
 
         {/* Level and Expand/Collapse / Modal */}
@@ -275,6 +277,7 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 };
 
 const App = () => {
+  const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [showAddUserForm, setShowAddUserForm] = useState(false);
 
@@ -337,13 +340,13 @@ const App = () => {
   ];
 
   return (
-    <div className=" bg-black text-gray-100 p-6">
+    <div className={`p-6 ${isDarkMode ? 'bg-black text-gray-100' : 'bg-white text-gray-900'}`}>
       {/* Inline Scrollbar Styles */}
       <style>{`
         ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background-color: #FFD700; border-radius: 10px; border: 2px solid #111; }
-        * { scrollbar-width: thin; scrollbar-color: #FFD700 #111; }
+        ::-webkit-scrollbar-track { background: ${isDarkMode ? '#111' : '#f0f0f0'}; }
+        ::-webkit-scrollbar-thumb { background-color: #FFD700; border-radius: 10px; border: 2px solid ${isDarkMode ? '#111' : '#f0f0f0'}; }
+        * { scrollbar-width: thin; scrollbar-color: #FFD700 ${isDarkMode ? '#111' : '#f0f0f0'}; }
       `}</style>
 
       {/* Tabs */}
@@ -355,7 +358,7 @@ const App = () => {
             className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-md font-semibold transition-all shadow-lg w-full sm:w-auto
               ${activeTab === tab.name
                 ? 'bg-yellow-500 text-black'
-                : 'bg-black text-yellow-500 hover:bg-yellow-500 hover:text-black'
+                : `${isDarkMode ? 'bg-black' : 'bg-white'} text-yellow-500 hover:bg-yellow-500 hover:text-black`
               }`}
           >
             {tab.icon}

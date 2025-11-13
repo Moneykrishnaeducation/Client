@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 import {
   X,
   CheckCircle,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 
 export default function DemoAccountsPage() {
+  const { isDarkMode } = useTheme();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -79,7 +81,7 @@ export default function DemoAccountsPage() {
   };
 
   return (
-    <div className="min-h-[90vh] bg-gradient-to-br from-black via-neutral-900 to-black text-white font-sans flex flex-col items-center py-10">
+    <div className={`min-h-[90vh] ${isDarkMode ? 'bg-gradient-to-br from-black via-neutral-900 to-black text-white' : 'bg-gradient-to-br from-white via-gray-100 to-gray-200 text-black'} font-sans flex flex-col items-center py-10`}>
       {/* Top Buttons */}
       <div className="w-full max-w-5xl flex justify-between items-center px-6 mb-8">
         <button

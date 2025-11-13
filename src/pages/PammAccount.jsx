@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaEye, FaEyeSlash, FaCopy, FaCheckCircle, FaInfoCircle, FaExclamationTriangle, FaUserCircle, FaCog, FaSignOutAlt, FaMoon, FaSun, FaBell, FaTimes } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const PammAccount = () => {
-  // Theme state
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem("theme");
-    return savedTheme === "dark";
-  });
+  const { isDarkMode } = useTheme();
 
   // Tab state
   const [activeTab, setActiveTab] = useState('manager');
@@ -216,22 +213,22 @@ const PammAccount = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-    
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+
       {/* Main Content */}
       <div className="container max-w-7xl mx-auto px-4 py-8">
         <div className="title text-center text-2xl font-bold mb-6">PAMM — Client Portal</div>
 
         {/* Tabs */}
-        <div className="tabs flex gap-2 border-b border-gray-700 pb-2 mb-6">
+        <div className={`tabs flex gap-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} pb-2 mb-6`}>
           <button
-            className={`px-4 py-2 rounded-t-lg ${activeTab === 'manager' ? 'bg-yellow-500 text-black font-bold' : 'bg-gray-800 text-gray-300'}`}
+            className={`px-4 py-2 rounded-t-lg ${activeTab === 'manager' ? 'bg-yellow-500 text-black font-bold' : isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-200 text-gray-700'}`}
             onClick={() => setActiveTab('manager')}
           >
             PAMM Manager Accounts
           </button>
           <button
-            className={`px-4 py-2 rounded-t-lg ${activeTab === 'available' ? 'bg-yellow-500 text-black font-bold' : 'bg-gray-800 text-gray-300'}`}
+            className={`px-4 py-2 rounded-t-lg ${activeTab === 'available' ? 'bg-yellow-500 text-black font-bold' : isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-200 text-gray-700'}`}
             onClick={() => setActiveTab('available')}
           >
             Available PAMM Accounts
@@ -248,7 +245,7 @@ const PammAccount = () => {
                 value={mgrSearch}
                 onChange={(e) => setMgrSearch(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && loadManagerList(mgrSearch)}
-                className="flex-1 bg-gray-800 border border-gray-600 text-white px-4 py-2 rounded-lg"
+                className={`flex-1 ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-100 border-gray-300 text-black'} border px-4 py-2 rounded-lg`}
               />
               <button
                 onClick={() => setShowCreateModal(true)}
@@ -273,26 +270,26 @@ const PammAccount = () => {
                 </div>
               ) : (
                 managerList.map((item) => (
-                  <div key={item.id} className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+                  <div key={item.id} className={`${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-300'} p-6 rounded-lg border`}>
                     <div className="mb-4">
                       <div className="font-bold text-lg">{item.name}</div>
-                      <div className="text-gray-400">MT5 Account: {item.mt5_login || 'Pending'}</div>
+                      <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>MT5 Account: {item.mt5_login || 'Pending'}</div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
-                        <div className="text-sm text-gray-400">Profit Sharing</div>
+                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Profit Sharing</div>
                         <div className="font-bold">{item.profit_share}%</div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-400">Pool Balance</div>
+                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Pool Balance</div>
                         <div className="font-bold">${item.pool_balance}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-400">Total Profit</div>
+                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Profit</div>
                         <div className="font-bold">${item.total_profit}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-400">Leverage</div>
+                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Leverage</div>
                         <div className="font-bold">{item.leverage}x</div>
                       </div>
                     </div>
@@ -320,7 +317,7 @@ const PammAccount = () => {
                 value={invSearch}
                 onChange={(e) => setInvSearch(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (showInvestments ? loadInvestmentList(invSearch) : loadAvailableList(invSearch))}
-                className="flex-1 bg-gray-800 border border-gray-600 text-white px-4 py-2 rounded-lg"
+                className={`flex-1 ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-100 border-gray-300 text-black'} border px-4 py-2 rounded-lg`}
               />
               <button
                 onClick={() => setShowInvestments(!showInvestments)}
@@ -346,26 +343,26 @@ const PammAccount = () => {
                   </div>
                 ) : (
                   availableList.map((item) => (
-                    <div key={item.id} className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+                    <div key={item.id} className={`${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-300'} p-6 rounded-lg border`}>
                       <div className="mb-4">
                         <div className="font-bold text-lg">Manager: {item.name}</div>
-                        <div className="text-gray-400">MT5 Account: {item.mt5_login || 'Pending'}</div>
+                        <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>MT5 Account: {item.mt5_login || 'Pending'}</div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                          <div className="text-sm text-gray-400">Profit Sharing</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Profit Sharing</div>
                           <div className="font-bold">{item.profit_share}%</div>
                         </div>
                         <div>
-                          <div className="text-sm text-gray-400">Pool Balance</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Pool Balance</div>
                           <div className="font-bold">${item.pool_balance}</div>
                         </div>
                         <div>
-                          <div className="text-sm text-gray-400">Leverage</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Leverage</div>
                           <div className="font-bold">{item.leverage}x</div>
                         </div>
                         <div>
-                          <div className="text-sm text-gray-400">Status</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Status</div>
                           <div className="font-bold">{item.enabled ? 'Open' : 'Closed'}</div>
                         </div>
                       </div>
@@ -379,7 +376,7 @@ const PammAccount = () => {
                         >
                           Invest
                         </button>
-                        <button className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500">View</button>
+                        <button className={`${isDarkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} px-4 py-2 rounded`}>View</button>
                       </div>
                     </div>
                   ))
@@ -401,24 +398,24 @@ const PammAccount = () => {
                   </div>
                 ) : (
                   investmentList.map((item) => (
-                    <div key={item.id} className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+                    <div key={item.id} className={`${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-300'} p-6 rounded-lg border`}>
                       <div className="flex justify-between items-center mb-4">
                         <div>
                           <div className="font-bold text-lg">Manager: {item.pam_account_name}</div>
-                          <div className="text-gray-400">MT5 Account: {item.pamm_mt5_login || 'Pending'}</div>
+                          <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>MT5 Account: {item.pamm_mt5_login || 'Pending'}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm text-gray-400">Investment</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Investment</div>
                           <div className="font-bold">${item.amount}</div>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                          <div className="text-sm text-gray-400">Profit Share</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Profit Share</div>
                           <div className="font-bold">{item.profit_share}%</div>
                         </div>
                         <div>
-                          <div className="text-sm text-gray-400">Allocation</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Allocation</div>
                           <div className="font-bold">{item.allocation_percentage}%</div>
                         </div>
                       </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 import {
   Home,
   CreditCard,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
+  const { isDarkMode } = useTheme();
   const location = useLocation();
 
   const menuItems = [
@@ -29,7 +31,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 h-[100vh] w-[60vw] md:w-[40vw] lg:w-[16vw] bg-black text-white px-3 py-5 transform transition-transform duration-300 z-50 shadow-lg
+      className={`fixed top-0 left-0 h-[100vh] w-[60vw] md:w-[40vw] lg:w-[16vw] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} px-3 py-5 transform transition-transform duration-300 z-50 shadow-lg
       ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       ${isSidebarOpen ? "lg:hidden" : "lg:translate-x-0"}`}
     >
@@ -59,11 +61,11 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
               ${
                 isActive
                   ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 text-black shadow-[0_0_20px_#FFD700]"
-                  : "text-gray-300 hover:text-yellow-400 hover:bg-gray-900"
+                  : `${isDarkMode ? 'text-gray-300 hover:text-yellow-400 hover:bg-gray-900' : 'text-gray-700 hover:text-yellow-400 hover:bg-gray-100'}`
               }`}
             >
-              {/* White Border on Hover */}
-              <span className="absolute inset-0 rounded-md border-2 border-transparent hover:border-white pointer-events-none transition-all duration-300"></span>
+              {/* Border on Hover */}
+              <span className={`absolute inset-0 rounded-md border-2 border-transparent hover:border-${isDarkMode ? 'white' : 'black'} pointer-events-none transition-all duration-300`}></span>
 
               <Icon
                 className={`text-lg relative z-10 ${

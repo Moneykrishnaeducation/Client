@@ -6,8 +6,10 @@ import DepositModal from "./DepositModal";
 import TradesModal from "./TradesModal";
 import SettingsModal from "./SettingsModal";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 export default function TradingAccounts({ showDepositModal, setShowDepositModal }) {
+  const { isDarkMode } = useTheme();
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [activeTab, setActiveTab] = useState("cheesepay");
   const [cheeseAmount, setCheeseAmount] = useState("");
@@ -121,8 +123,8 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   }, [cheeseAmount, currency]);
 
   const Modal = ({ title, onClose, children }) => (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-gray-900 text-white p-6 rounded-lg shadow-lg w-[90%] max-w-lg relative">
+    <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} flex items-center justify-center z-50`}>
+      <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-lg w-[90%] max-w-lg relative`}>
         <h3 className="text-lg font-semibold mb-3 text-[#FFD700] text-center">
           {title}
         </h3>
@@ -138,9 +140,9 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   );
 
   return (
-    <div className="min-h-[90vh] bg-black text-white font-sans flex flex-col items-center">
+    <div className={`min-h-[90vh] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} font-sans flex flex-col items-center`}>
       {/* Header */}
-      <header className="w-full bg-black py-2 mt-6">
+      <header className={`w-full ${isDarkMode ? 'bg-black' : 'bg-white'} py-2 mt-6`}>
         <div className="max-w-[1100px] mx-auto flex flex-wrap gap-3 justify-around items-center px-4">
           <button
             className="bg-gold  w-80 text-black px-4 py-2 rounded hover:bg-white transition"
@@ -175,12 +177,12 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
          ======================= */}
           {/* Internal Transaction Modal */}
           {activeComponent === "internalTransaction" && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-              <div className="bg-black text-white p-6 rounded-lg w-full max-w-md relative shadow-xl border-2 border-gold">
+            <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} z-50`}>
+              <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} p-6 rounded-lg w-full max-w-md relative shadow-xl border-2 border-gold`}>
                 {/* Close Button */}
                 <button
                   onClick={closeComponent}
-                  className="absolute top-3 right-3 text-white hover:text-gold text-2xl transition"
+                  className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gold' : 'text-black hover:text-gold'} text-2xl transition`}
                 >
                   &times;
                 </button>
@@ -193,14 +195,14 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* From Account */}
                   <div>
-                    <label className="block mb-1 font-medium text-white">
+                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                       <span className="text-red-500">*</span> From Account:
                     </label>
                     <select
                       value={fromAccount}
                       onChange={(e) => setFromAccount(e.target.value)}
                       required
-                      className="w-full bg-black text-white border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
+                      className={`w-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold`}
                     >
                       <option value="" disabled>
                         Select Account
@@ -215,14 +217,14 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
 
                   {/* To Account */}
                   <div>
-                    <label className="block mb-1 font-medium text-white">
+                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                       <span className="text-red-500">*</span> To Account:
                     </label>
                     <select
                       value={toAccount}
                       onChange={(e) => setToAccount(e.target.value)}
                       required
-                      className="w-full bg-black text-white border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
+                      className={`w-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold`}
                     >
                       <option value="" disabled>
                         Select Account
@@ -237,10 +239,10 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
 
                   {/* Amount */}
                   <div>
-                    <label className="block mb-1 font-medium text-white">
+                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                       <span className="text-red-500">*</span> Amount:
                     </label>
-                    <div className="flex items-center bg-black border border-gold rounded px-3 py-2 focus-within:ring-2 focus-within:ring-gold">
+                    <div className={`flex items-center ${isDarkMode ? 'bg-black' : 'bg-white'} border border-gold rounded px-3 py-2 focus-within:ring-2 focus-within:ring-gold`}>
                       <span className="mr-2 text-gold">$</span>
                       <input
                         type="number"
@@ -248,7 +250,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                         onChange={(e) => setAmount(e.target.value)}
                         required
                         placeholder="Enter amount"
-                        className="flex-1 bg-black text-white outline-none"
+                        className={`flex-1 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} outline-none`}
                       />
                     </div>
                     {insufficientBalance && (
@@ -270,7 +272,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                     <button
                       type="button"
                       onClick={closeComponent}
-                      className="px-4 py-2 rounded bg-yellow-600 text-white hover:bg-yellow-700 transition"
+                      className={`px-4 py-2 rounded ${isDarkMode ? 'bg-yellow-600 text-white hover:bg-yellow-700' : 'bg-gray-300 text-black hover:bg-gray-400'} transition`}
                     >
                       Cancel
                     </button>
@@ -307,16 +309,16 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
               Account Overview
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-[#111] border border-gold rounded-lg p-4 text-center">
-                <p className="text-gray-300 text-sm">Total Balance</p>
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Balance</p>
                 <p className="text-2xl font-bold text-gold">$8,631.25</p>
               </div>
-              <div className="bg-[#111] border border-gold rounded-lg p-4 text-center">
-                <p className="text-gray-300 text-sm">Total Equity</p>
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Equity</p>
                 <p className="text-2xl font-bold text-gold">$8,625.25</p>
               </div>
-              <div className="bg-[#111] border border-gold rounded-lg p-4 text-center">
-                <p className="text-gray-300 text-sm">Total Accounts</p>
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Accounts</p>
                 <p className="text-2xl font-bold text-gold">{accounts.length}</p>
               </div>
             </div>
@@ -329,9 +331,9 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                 Active Accounts
               </h3>
               <div className="overflow-x-auto">
-                <table className="min-w-full border-collapse text-sm text-gray-200">
+                <table className={`min-w-full border-collapse text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                   <thead>
-                    <tr className="bg-[#111] text-gold border-b border-gold">
+                    <tr className={`${isDarkMode ? 'bg-[#111] text-gold' : 'bg-gray-200 text-black'} border-b ${isDarkMode ? 'border-gold' : 'border-gray-300'}`}>
                       <th className="p-3 text-left">Type</th>
                       <th className="p-3 text-left">Login</th>
                       <th className="p-3 text-left">Leverage</th>
@@ -344,7 +346,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                     {accounts.map((acc) => (
                       <tr
                         key={acc.id}
-                        className="border-b border-[#333] hover:bg-[#1a1a1a] transition"
+                        className={`border-b ${isDarkMode ? 'border-[#333] hover:bg-[#1a1a1a]' : 'border-gray-300 hover:bg-gray-100'} transition`}
                       >
                         <td className="p-3">{acc.type}</td>
                         <td className="p-3">{acc.login}</td>
@@ -392,15 +394,15 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                 </button>
               </div>
 
-              <div className="bg-[#111] border border-gold rounded-lg p-6 space-y-4">
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-6 space-y-4`}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Info label="Account Type" value={selectedAccount.type} />
-                  <Info label="Platform Login" value={selectedAccount.login} />
-                  <Info label="Leverage" value={selectedAccount.leverage} />
-                  <Info label="Balance" value={`$${selectedAccount.balance}`} />
-                  <Info label="Equity" value={`$${selectedAccount.equity}`} />
-                  <Info label="Margin level" value={`${selectedAccount.margin}%`} />
-                  <Info label="Free Margin" value={`$${selectedAccount.freeMargin}`} />
+                  <Info label="Account Type" value={selectedAccount.type} isDarkMode={isDarkMode} />
+                  <Info label="Platform Login" value={selectedAccount.login} isDarkMode={isDarkMode} />
+                  <Info label="Leverage" value={selectedAccount.leverage} isDarkMode={isDarkMode} />
+                  <Info label="Balance" value={`$${selectedAccount.balance}`} isDarkMode={isDarkMode} />
+                  <Info label="Equity" value={`$${selectedAccount.equity}`} isDarkMode={isDarkMode} />
+                  <Info label="Margin level" value={`${selectedAccount.margin}%`} isDarkMode={isDarkMode} />
+                  <Info label="Free Margin" value={`$${selectedAccount.freeMargin}`} isDarkMode={isDarkMode} />
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-4 pt-2">
@@ -487,10 +489,10 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   );
 }
 
-function Info({ label, value }) {
+function Info({ label, value, isDarkMode }) {
   return (
-    <div className="p-3 bg-black border border-[#333] rounded-lg">
-      <p className="text-gray-400 text-xs mb-1">{label}</p>
+    <div className={`p-3 ${isDarkMode ? 'bg-black border-[#333]' : 'bg-white border-gray-300'} border rounded-lg`}>
+      <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{label}</p>
       <p className="text-gold text-base font-semibold">{value}</p>
     </div>
   );
