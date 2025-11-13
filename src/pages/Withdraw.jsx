@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { ModalWrapper } from "./Dashboard"; // Make sure ModalWrapper is exported
-import { X } from "lucide-react";
 
 const Withdraw = ({ onClose }) => {
   const [selectedAccount, setSelectedAccount] = useState("");
@@ -131,7 +130,7 @@ const Withdraw = ({ onClose }) => {
             onClick={onClose}
             className="flex-1 py-3 rounded-lg bg-gray-700 text-white font-semibold hover:bg-gray-600 shadow-md transition-all"
           >
-            <X/>
+            Close
           </button>
           <button
             onClick={handleWithdraw}

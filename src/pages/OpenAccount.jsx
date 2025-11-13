@@ -3,18 +3,41 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"; // adjust path if needed
 import { ModalWrapper } from "./Dashboard";
 
 function OpenAccount({ onClose }) {
+  const generatePassword = (length = 12) => {
+    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+    let password = "";
+    password += uppercase[Math.floor(Math.random() * uppercase.length)];
+    password += lowercase[Math.floor(Math.random() * lowercase.length)];
+    password += numbers[Math.floor(Math.random() * numbers.length)];
+    password += symbols[Math.floor(Math.random() * symbols.length)];
+
+    const allChars = uppercase + lowercase + numbers + symbols;
+    for (let i = 4; i < length; i++) {
+      password += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+
+    // Shuffle the password to randomize order
+    password = password.split('').sort(() => Math.random() - 0.5).join('');
+
+    return password;
+  };
+
   const [formData, setFormData] = useState({
     accountName: "",
     leverage: "",
     group: "",
-    masterPassword: "",
-    investorPassword: "",
+    masterPassword: generatePassword(),
+    investorPassword: generatePassword(),
   });
   const [showMasterPwd, setShowMasterPwd] = useState(false);
   const [showInvestorPwd, setShowInvestorPwd] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const leverages = ["1:50", "1:100", "1:200", "1:500"];
+  const leverages = ["1:50", "1:100", "1:200", "1:500", "1:1000"];
   const groups = ["Standard", "Pro", "ECN", "VIP"];
 
   const handleChange = (e) =>

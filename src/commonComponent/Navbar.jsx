@@ -29,7 +29,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 h-full w-[60vw] md:w-[40vw] lg:w-[16vw] bg-black text-white px-3 py-5 transform transition-transform duration-300 z-50 shadow-lg
+      className={`fixed top-0 left-0 h-[100vh] w-[60vw] md:w-[40vw] lg:w-[16vw] bg-black text-white px-3 py-5 transform transition-transform duration-300 z-50 shadow-lg
       ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       ${isSidebarOpen ? "lg:hidden" : "lg:translate-x-0"}`}
     >

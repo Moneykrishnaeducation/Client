@@ -1,12 +1,13 @@
 import Dashboard from './Dashboard';
 import TradingAccounts from './TradingAccounts';
 import Supports from './Termspage';
-import Tickets from './tickets';
+import Tickets from './Tickets';
 import EconomicCalendarWidget from './EconomicCalendarWidget';
 import SocialTrading from './SocialTrading';
 import Partnership from './Partnership';
 import Transactions from './Transactions';
-import Maminvestments from './Maminvestments';
+import Maminvestments from './MAMInvestments';
+import DemoAccountsPage from './DemoAccountsPage';
 
 export const pages = {
   dashboard: Dashboard,
@@ -18,4 +19,5 @@ export const pages = {
   partnership: Partnership,
   transactions: Transactions,
   maminvestments: Maminvestments,
+  demoAccounts:DemoAccountsPage,
 };
