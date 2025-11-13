@@ -93,15 +93,14 @@ const Header = () => {
           {isDarkMode ? <FaSun /> : <FaMoon />}
         </button>
 
-        {/* Profile */}
-        <div className="flex items-center space-x-1">
-          <FaUserCircle className={`${iconSize} text-white`} />
-          <span className="hidden md:inline text-white font-medium text-xs md:text-sm">
-            John Doe
-          </span>
-
-        </div>
-
+    <div className="flex items-center space-x-1">
+      <Link to="/profile" className="flex items-center space-x-1 hover:opacity-80">
+        <FaUserCircle className={`${iconSize} text-white`} />
+        <span className="hidden md:inline text-white font-medium text-xs md:text-sm">
+          John Doe
+        </span>
+      </Link>
+    </div>);
         {/* Exit Button */}
         <button
           className={`${iconSize} text-white hover:text-red-500 transition-colors`}

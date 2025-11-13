@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, X, Eye } from "lucide-react";
+import { Search, Filter, X, Plus } from "lucide-react";
 
 const Tickets = () => {
-  const [activePage, setActivePage] = useState("create");
+  const [activePage, setActivePage] = useState("view");
   const [userId, setUserId] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-
   const [filters, setFilters] = useState({
     status: "",
     priority: "",
@@ -25,53 +24,117 @@ const Tickets = () => {
     setShowFilters(false);
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert("Ticket submitted successfully!");
+    setActivePage("view");
+  };
+
   return (
-    <div className="min-h-[90vh] p-6 bg-black text-white">
-      <div className="max-w-5xl mx-auto p-6 rounded-xl   bg-black shadow-lg">
-        {/* Header */}
-        <header className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-yellow-400">
-            Support Tickets
-          </h2>
-        </header>
+    <div className="min-h-screen bg-black text-white px-4 py-6 md:px-8">
+      {/* ===================== PAGE HEADER ===================== */}
+      <header className="text-center mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold text-yellow-400">
+          Support Tickets
+        </h2>
+      </header>
 
-        {/* Page Navigation */}
-        <nav className="flex justify-center gap-4 mb-6 flex-wrap">
-          <button
-            onClick={() => setActivePage("create")}
-            className={`px-6 py-2 rounded-md font-semibold transition-all ${
-              activePage === "create"
-                ? "bg-yellow-400 text-black"
-                : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-            }`}
-          >
-            Create Ticket
-          </button>
-
-          <button
-            onClick={() => setActivePage("view")}
-            className={`px-6 py-2 rounded-md font-semibold transition-all flex items-center gap-2 ${
-              activePage === "view"
-                ? "bg-yellow-400 text-black"
-                : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-            }`}
-          >
-            <Eye size={18} />
-            View Tickets
-          </button>
-        </nav>
-
-        {/* CREATE TICKET PAGE */}
-        {activePage === "create" && (
-          <div className="p-5 rounded-lg  bg-black border border-gray-800 shadow-md">
-            <h2 className="text-xl font-semibold text-center mb-4 text-yellow-400">
-              Raise a New Ticket
+      {/* ===================== VIEW TICKETS PAGE ===================== */}
+      {activePage === "view" && (
+        <div className="rounded-lg border border-gray-800 bg-black shadow-md p-4 w-full">
+          {/* Search + Buttons Row */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h2 className="text-lg md:text-xl font-semibold text-yellow-400">
+              Your Tickets
             </h2>
 
-            <form className="space-y-4 relative pb-20">
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 w-full md:w-auto">
+              {/* Search Input */}
+              <div className="flex items-center gap-2 bg-black border border-yellow-500 rounded-md px-3 py-2 w-full sm:w-72 hover:bg-gray-900 transition">
+                <Search size={18} className="text-yellow-400" />
+                <input
+                  type="text"
+                  placeholder="Search tickets..."
+                  className="bg-transparent text-yellow-300 placeholder-yellow-400 focus:outline-none w-full text-sm sm:text-base"
+                />
+              </div>
+
+              {/* Filter & Create Ticket Buttons */}
+              <div className="flex flex-wrap justify-start sm:justify-end gap-2 w-full sm:w-auto">
+                {/* Filter Button */}
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md transition text-sm sm:text-base w-full sm:w-auto"
+                >
+                  <Filter size={18} />
+                  Filters
+                </button>
+
+                {/* Create Ticket Button */}
+                <button
+                  onClick={() => setActivePage("create")}
+                  className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md transition text-sm sm:text-base w-full sm:w-auto"
+                >
+                  <Plus size={18} />
+                  Create Ticket
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Ticket Table */}
+          <div className="overflow-x-auto rounded-lg border border-gray-700">
+            <table className="min-w-full text-sm md:text-base text-left border-collapse">
+              <thead className="bg-gray-800 text-yellow-400">
+                <tr>
+                  <th className="p-2 border border-gray-700">Created Date</th>
+                  <th className="p-2 border border-gray-700">Ticket ID</th>
+                  <th className="p-2 border border-gray-700">User Id</th>
+                  <th className="p-2 border border-gray-700">Username</th>
+                  <th className="p-2 border border-gray-700">Subject</th>
+                  <th className="p-2 border border-gray-700">Status</th>
+                  <th className="p-2 border border-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="text-center py-4 text-gray-400 whitespace-nowrap"
+                  >
+                    No tickets found.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== CREATE TICKET PAGE ===================== */}
+      {activePage === "create" && (
+        <div className="flex justify-center items-center">
+          <div className="w-full max-w-2xl rounded-lg border border-gray-800 bg-black shadow-md p-5">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-yellow-400">
+                Raise a New Ticket
+              </h2>
+              <button
+                onClick={() => setActivePage("view")}
+                className="text-gray-300 hover:text-white transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="font-semibold text-yellow-400">User Id</label>
-                <div className="font-bold mt-1 text-white">{userId}</div>
+                <div className="font-bold mt-1 text-white break-all">
+                  {userId}
+                </div>
               </div>
 
               <div>
@@ -82,7 +145,7 @@ const Tickets = () => {
                   type="text"
                   placeholder="Enter ticket subject"
                   required
-                  className="w-full p-2 rounded-md bg-gray-900 border border--700 text-white placeholder-gray-400"
+                  className="w-full p-2 rounded-md bg-gray-900 border border-gray-700 text-white placeholder-gray-400"
                 />
               </div>
 
@@ -115,7 +178,7 @@ const Tickets = () => {
                 </div>
               </div>
 
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+              <div className="flex justify-center">
                 <button
                   type="submit"
                   className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-2 rounded-md shadow-md transition duration-200"
@@ -125,78 +188,20 @@ const Tickets = () => {
               </div>
             </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* VIEW TICKETS PAGE */}
-        {activePage === "view" && (
-          <div className="p-6 rounded-lg border border-gray-800  bg-black shadow-md">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-              <h2 className="text-xl font-semibold text-yellow-400">
-                Your Tickets
-              </h2>
-
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <input
-                    type="text"
-                    placeholder="Search tickets..."
-                    className="w-full p-2 pl-10 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400"
-                  />
-                  <Search
-                    size={18}
-                    className="absolute left-3 top-2.5 text-yellow-400"
-                  />
-                </div>
-                <button
-                  onClick={() => setShowFilters(true)}
-                  className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md transition"
-                >
-                  <Filter size={18} />
-                  Filters
-                </button>
-              </div>
-            </div>
-
-            {/* Ticket Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-700 text-white text-sm sm:text-base">
-                <thead>
-                  <tr className="bg-gray-800 text-yellow-400">
-                    <th className="p-2 border border-gray-700">Created Date</th>
-                    <th className="p-2 border border-gray-700">Ticket ID</th>
-                    <th className="p-2 border border-gray-700">User Id</th>
-                    <th className="p-2 border border-gray-700">Username</th>
-                    <th className="p-2 border border-gray-700">Subject</th>
-                    <th className="p-2 border border-gray-700">Status</th>
-                    <th className="p-2 border border-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colSpan="7" className="text-center py-4 text-gray-400">
-                      No tickets found.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Filter Modal */}
+      {/* ===================== FILTER MODAL ===================== */}
       {showFilters && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-        >
-          <div className="max-w-md w-full p-6 rounded-xl shadow-2xl border border-gray-700 bg-black text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md p-6 rounded-xl shadow-2xl border border-gray-700 bg-black text-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-yellow-400">
                 Filter Tickets
               </h3>
               <button
                 onClick={() => setShowFilters(false)}
-                className="text-gray-400 hover:text-red-500"
+                className="text-gray-300 hover:text-white transition"
               >
                 <X size={20} />
               </button>
