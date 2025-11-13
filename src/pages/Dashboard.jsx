@@ -11,6 +11,7 @@ import {
   CreditCard,
   Banknote,
   ArrowRight,
+  Copy,
 } from "lucide-react";
 import OpenAccount from "./OpenAccount";
 import Withdraw from "./Withdraw";
@@ -61,6 +62,15 @@ const DepositModal = ({ onClose }) => {
       setConvertedAmount("");
     }
   }, [cheeseAmount, currency]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText("TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs");
+      alert("Address copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+    }
+  };
 
   return (
     <ModalWrapper title="💰 Deposit Funds" onClose={onClose}>
@@ -249,8 +259,15 @@ const DepositModal = ({ onClose }) => {
           <p className="text-gray-300 text-center">
             Send <span className="text-[#FFD700]">USDT (TRC20)</span> to:
           </p>
-          <div className="p-3 border border-[#FFD700] rounded-lg text-center text-sm break-all bg-[#1a1a1a]">
+          <div className="relative p-3 border border-[#FFD700] rounded-lg text-center text-sm break-all bg-[#1a1a1a]">
             TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs
+            <button
+              onClick={handleCopy}
+              className="absolute top-2 right-2 text-[#FFD700] hover:text-white transition-colors"
+              title="Copy address"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
           </div>
 
           <input
