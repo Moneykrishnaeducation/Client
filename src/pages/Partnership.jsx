@@ -337,7 +337,7 @@ const App = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 p-6">
+    <div className=" bg-black text-gray-100 p-6">
       {/* Inline Scrollbar Styles */}
       <style>{`
         ::-webkit-scrollbar { width: 10px; }
@@ -639,26 +639,31 @@ const App = () => {
       </style>
     </div>
 
-    {/* Trading Account Select + Amount */}
-    <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
-      <select className="bg-black text-yellow-300 p-3 rounded-md border border-yellow-500 w-full sm:w-1/3 hover:bg-gray-900 transition-colors">
-        <option value="">Select Trading Account</option>
-        <option value="acc1">Account 1</option>
-        <option value="acc2">Account 2</option>
-        <option value="acc3">Account 3</option>
-      </select>
+ {/* Trading Account Select + Amount */}
+<div className="flex flex-col sm:flex-row items-center w-full gap-4 sm:gap-0 justify-between">
+  {/* Left: Select */}
+  <div className="w-full sm:w-1/3">
+    <select className="bg-black text-yellow-300 p-3 rounded-md border border-yellow-500 w-full hover:bg-gray-900 transition-colors">
+      <option value="">Select Trading Account</option>
+      <option value="acc1">Account 1</option>
+      <option value="acc2">Account 2</option>
+      <option value="acc3">Account 3</option>
+    </select>
+  </div>
 
-      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-        <input
-          type="number"
-          placeholder="Amount"
-          className="bg-black text-yellow-300 p-3 rounded-md border border-yellow-500 w-full focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-        />
-        <button className="bg-yellow-500 text-black px-6 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all">
-          Submit
-        </button>
-      </div>
-    </div>
+  {/* Right: Input + Button */}
+  <div className="flex gap-2 w-full sm:w-1/3 items-stretch ml-auto">
+    <input
+      type="number"
+      placeholder="Amount"
+      className="flex-1 bg-black text-yellow-300 p-3 rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+    />
+    <button className="bg-yellow-500 text-black px-4 py-2 text-sm rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all">
+      Submit
+    </button>
+  </div>
+</div>
+
 
     {/* Pending / History Buttons */}
     <div className="flex flex-wrap justify-center gap-4">

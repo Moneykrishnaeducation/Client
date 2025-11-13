@@ -43,7 +43,7 @@ const Tickets = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-6 md:px-8">
+    <div className=" bg-black text-white px-4 py-6 md:px-8">
       {/* ===================== PAGE HEADER ===================== */}
       <header className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-yellow-400">
