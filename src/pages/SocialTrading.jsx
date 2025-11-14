@@ -7,7 +7,8 @@ import {
   CreditCard,
   Banknote,
   X,
-  RefreshCw,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,18 +16,11 @@ export default function MamDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [mamAccounts, setMamAccounts] = useState([]);
+  const [showPasswords, setShowPasswords] = useState({
+    master: false,
+    investor: false,
+  });
   const navigate = useNavigate();
-
-  // Function to generate random passwords
-  const generatePassword = () => {
-    const chars =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-    let password = "";
-    for (let i = 0; i < 10; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-  };
 
   const [form, setForm] = useState({
     accountName: "",
@@ -38,27 +32,14 @@ export default function MamDashboard() {
     investorPassword: "",
   });
 
-  // Auto-generate passwords when modal opens
-  const handleOpenModal = () => {
-    setForm((prev) => ({
-      ...prev,
-      masterPassword: generatePassword(),
-      investorPassword: generatePassword(),
-    }));
-    setShowModal(true);
-  };
+  const handleOpenModal = () => setShowModal(true);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.id]: e.target.value });
   };
 
-  const togglePassword = (fieldId) => {
-    const input = document.getElementById(fieldId);
-    if (input) input.type = input.type === "password" ? "text" : "password";
-  };
-
-  const regeneratePassword = (field) => {
-    setForm({ ...form, [field]: generatePassword() });
+  const togglePassword = (field) => {
+    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   const handleSubmit = (e) => {
@@ -71,7 +52,6 @@ export default function MamDashboard() {
     };
 
     setMamAccounts((prev) => [...prev, newAccount]);
-
     setForm({
       accountName: "",
       profitPercentage: "",
@@ -246,6 +226,7 @@ export default function MamDashboard() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
+              {/* Account Name */}
               <div>
                 <label className="block text-sm mb-1">Account Name</label>
                 <input
@@ -258,6 +239,7 @@ export default function MamDashboard() {
                 />
               </div>
 
+              {/* Profit Sharing */}
               <div>
                 <label className="block text-sm mb-1">Profit Sharing (%)</label>
                 <input
@@ -270,6 +252,7 @@ export default function MamDashboard() {
                 />
               </div>
 
+              {/* Risk Level */}
               <div>
                 <label className="block text-sm mb-1">Risk Level</label>
                 <select
@@ -284,6 +267,7 @@ export default function MamDashboard() {
                 </select>
               </div>
 
+              {/* Leverage */}
               <div>
                 <label className="block text-sm mb-1">Leverage</label>
                 <select
@@ -299,6 +283,7 @@ export default function MamDashboard() {
                 </select>
               </div>
 
+              {/* Payout Frequency */}
               <div>
                 <label className="block text-sm mb-1">Payout Frequency</label>
                 <select
@@ -319,26 +304,25 @@ export default function MamDashboard() {
                 <label className="block text-sm mb-1">Master Password</label>
                 <div className="flex items-center bg-gray-800 border border-gray-700 rounded">
                   <input
-                    type="password"
+                    type={showPasswords.master ? "text" : "password"}
                     id="masterPassword"
                     value={form.masterPassword}
-                    readOnly
+                    onChange={handleChange}
                     className="w-full p-2 bg-transparent outline-none text-white"
                   />
                   <button
                     type="button"
-                    onClick={() => togglePassword("masterPassword")}
-                    className="px-2 text-yellow-400 hover:text-yellow-300"
+                    onClick={() => togglePassword("master")}
+                    className="p-2 hover:bg-[#222] rounded-r-md transition"
+                    title={
+                      showPasswords.master ? "Hide Password" : "Show Password"
+                    }
                   >
-                    👁
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => regeneratePassword("masterPassword")}
-                    className="px-2 text-blue-400 hover:text-blue-300"
-                    title="Regenerate Password"
-                  >
-                    <RefreshCw className="w-4 h-4" />
+                    {showPasswords.master ? (
+                      <EyeOff className="w-5 h-5 text-yellow-400" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-yellow-400" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -348,30 +332,30 @@ export default function MamDashboard() {
                 <label className="block text-sm mb-1">Investor Password</label>
                 <div className="flex items-center bg-gray-800 border border-gray-700 rounded">
                   <input
-                    type="password"
+                    type={showPasswords.investor ? "text" : "password"}
                     id="investorPassword"
                     value={form.investorPassword}
-                    readOnly
+                    onChange={handleChange}
                     className="w-full p-2 bg-transparent outline-none text-white"
                   />
                   <button
                     type="button"
-                    onClick={() => togglePassword("investorPassword")}
-                    className="px-2 text-yellow-400 hover:text-yellow-300"
+                    onClick={() => togglePassword("investor")}
+                    className="p-2 hover:bg-[#222] rounded-r-md transition"
+                    title={
+                      showPasswords.investor ? "Hide Password" : "Show Password"
+                    }
                   >
-                    👁
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => regeneratePassword("investorPassword")}
-                    className="px-2 text-blue-400 hover:text-blue-300"
-                    title="Regenerate Password"
-                  >
-                    <RefreshCw className="w-4 h-4" />
+                    {showPasswords.investor ? (
+                      <EyeOff className="w-5 h-5 text-yellow-400" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-yellow-400" />
+                    )}
                   </button>
                 </div>
               </div>
 
+              {/* Action Buttons */}
               <div className="flex justify-end gap-2 mt-4">
                 <button
                   type="button"

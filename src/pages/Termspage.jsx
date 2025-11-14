@@ -130,12 +130,16 @@ const TermsPage = () => {
       title: "Contact Us",
       content: (
         <div>
-          <p>Email: <span className="text-yellow-400">support@vtindex.com</span></p>
+          <p>
+            Email: <span className="text-yellow-400">support@vtindex.com</span>
+          </p>
           <p className="mt-2">
-            <strong>Registered Address:</strong> Suite #1705, Festival Tower, Dubai Festival City, Dubai, UAE
+            <strong>Registered Address:</strong> Suite #1705, Festival Tower,
+            Dubai Festival City, Dubai, UAE
           </p>
           <p>
-            <strong>Operational Address:</strong> Suite #1705, Festival Tower, Dubai Festival City, Dubai, UAE
+            <strong>Operational Address:</strong> Suite #1705, Festival Tower,
+            Dubai Festival City, Dubai, UAE
           </p>
         </div>
       ),
@@ -143,9 +147,35 @@ const TermsPage = () => {
   ];
 
   return (
-    <div className="w-full bg-black min-h-screen text-white px-6 py-12">
+    <div className="w-full bg-black min-h-screen text-white pt-8 pb-16 px-6 overflow-y-auto relative">
+      {/* Inline Scrollbar Styles */}
+      <style>{`
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+          width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #111; 
+        }
+        ::-webkit-scrollbar-thumb {
+          background-color: #FFD700; 
+          border-radius: 10px;
+          border: 2px solid #111;
+        }
+        /* Firefox */
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: #FFD700 #111;
+        }
+      `}</style>
+
       {/* Header */}
-      <h1 className="text-4xl md:text-5xl font-extrabold text-center bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent animate-pulse drop-shadow-[0_0_15px_#FFD700] mb-12">
+      <h1
+        className="text-3xl md:text-4xl font-extrabold text-center
+                 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600
+                 bg-clip-text text-transparent animate-pulse
+                 drop-shadow-[0_0_15px_#FFD700] mb-12"
+      >
         VTIndex — Empower Your Trading
       </h1>
 

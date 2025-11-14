@@ -8,6 +8,7 @@ import Partnership from './Partnership';
 import Transactions from './Transactions';
 import Maminvestments from './MAMInvestments';
 import DemoAccountsPage from './DemoAccountsPage';
+import PammAccount from './PammAccount';
 
 export const pages = {
   dashboard: Dashboard,
@@ -20,4 +21,5 @@ export const pages = {
   transactions: Transactions,
   maminvestments: Maminvestments,
   demoAccounts:DemoAccountsPage,
+  pammAccount:PammAccount,
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTheme } from "../context/ThemeContext";
 import {
   UserPlus,
   Wallet,
@@ -11,14 +12,19 @@ import {
   CreditCard,
   Banknote,
   ArrowRight,
+  Copy,
+  CheckCircle,
+  AlertTriangle,
+  X,
+  Info,
 } from "lucide-react";
 import OpenAccount from "./OpenAccount";
 import Withdraw from "./Withdraw";
 
 /* --------------------- Modal Wrapper --------------------- */
-export const ModalWrapper = ({ title, children, onClose }) => (
-  <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50">
-    <div className="bg-gray-900 text-white p-6 rounded-lg shadow-lg w-[90%] max-w-lg relative">
+export const ModalWrapper = ({ title, children, onClose, isDarkMode }) => (
+  <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} flex items-center justify-center z-50`}>
+    <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-lg w-[90%] max-w-lg relative`}>
       <h3 className="text-lg font-semibold mb-3 text-[#FFD700] text-center">
         {title}
       </h3>
@@ -34,14 +40,15 @@ export const ModalWrapper = ({ title, children, onClose }) => (
 );
 
 /* --------------------- Deposit Modal --------------------- */
-const DepositModal = ({ onClose }) => {
+const DepositModal = ({ onClose, showToast }) => {
+  const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState("cheesepay");
   const [currency, setCurrency] = useState("INR");
   const [cheeseAmount, setCheeseAmount] = useState("");
   const [convertedAmount, setConvertedAmount] = useState("");
   const [selectedDepositAccount, setSelectedDepositAccount] = useState("902165"); // Example ID
 
-  
+
   const accounts = [
     { id: "902165", name: "Account 902165" },
     { id: "902166", name: "Account 902166" },
@@ -62,8 +69,18 @@ const DepositModal = ({ onClose }) => {
     }
   }, [cheeseAmount, currency]);
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText("TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs");
+      showToast("Address copied to clipboard!", "success");
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+      showToast("Failed to copy address!", "error");
+    }
+  };
+
   return (
-    <ModalWrapper title="💰 Deposit Funds" onClose={onClose}>
+    <ModalWrapper title="💰 Deposit Funds" onClose={onClose} isDarkMode={isDarkMode}>
       {/* Tabs */}
       <div className="flex justify-center gap-4 border-b border-[#FFD700] mb-6">
         {["cheesepay", "manual", "usdt"].map((tab) => (
@@ -73,7 +90,7 @@ const DepositModal = ({ onClose }) => {
             className={`pb-3 px-5 font-semibold text-sm uppercase tracking-wide transition-all duration-300 ${
               activeTab === tab
                 ? "text-[#FFD700] border-b-2 border-[#FFD700]"
-                : "text-gray-400 hover:text-white"
+                : isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-black"
             }`}
           >
             {tab === "cheesepay"
@@ -87,13 +104,13 @@ const DepositModal = ({ onClose }) => {
 
       {/* Selected Account */}
       <div className="mb-5">
-        <label className="block text-sm text-gray-400 mb-2">
+        <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
           Select Account
         </label>
         <select
           value={selectedDepositAccount}
           onChange={(e) => setSelectedDepositAccount(e.target.value)}
-          className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700] text-gray-300 rounded-lg"
+          className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700] rounded-lg`}
         >
           <option value="">-- Choose Account --</option>
           {accounts.map((acc) => (
@@ -113,7 +130,7 @@ const DepositModal = ({ onClose }) => {
               <label
                 key={curr}
                 className={`flex items-center gap-2 cursor-pointer select-none ${
-                  currency === curr ? "text-[#FFD700]" : "text-gray-400"
+                  currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
                 <input
@@ -122,8 +139,8 @@ const DepositModal = ({ onClose }) => {
                   value={curr}
                   checked={currency === curr}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="appearance-none w-5 h-5 border-2 border-[#FFD700] rounded-full 
-                    checked:bg-[#FFD700] transition-all duration-200 
+                  className="appearance-none w-5 h-5 border-2 border-[#FFD700] rounded-full
+                    checked:bg-[#FFD700] transition-all duration-200
                     focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50"
                 />
                 <span className="font-medium">{curr}</span>
@@ -137,13 +154,13 @@ const DepositModal = ({ onClose }) => {
             placeholder="Enter amount"
             value={cheeseAmount}
             onChange={(e) => setCheeseAmount(e.target.value)}
-            className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition"
+            className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
           />
 
           {/* Converted */}
           {convertedAmount && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
+              <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
                 {currency === "USD"
                   ? "Converted (INR)"
                   : "Converted (USD)"}
@@ -156,9 +173,9 @@ const DepositModal = ({ onClose }) => {
                     ? `₹ ${convertedAmount}`
                     : `$ ${convertedAmount}`
                 }
-                className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700]/60 text-gray-300 rounded-lg cursor-not-allowed"
+                className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700]/60 rounded-lg cursor-not-allowed`}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'} mt-1`}>
                 Conversion rate: 1 USD = 83.25 INR
               </p>
             </div>
@@ -175,7 +192,7 @@ const DepositModal = ({ onClose }) => {
 
       {activeTab === "manual" && (
         <form className="space-y-4">
-          <p className="text-gray-400 text-center">
+          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-700'} text-center`}>
             Contact <span className="text-[#FFD700]">Support</span> for Bank Details.
           </p>
 
@@ -184,7 +201,7 @@ const DepositModal = ({ onClose }) => {
               <label
                 key={curr}
                 className={`flex items-center gap-2 cursor-pointer select-none ${
-                  currency === curr ? "text-[#FFD700]" : "text-gray-400"
+                  currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
                 <input
@@ -193,8 +210,8 @@ const DepositModal = ({ onClose }) => {
                   value={curr}
                   checked={currency === curr}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="appearance-none w-5 h-5 border-2 border-[#FFD700] rounded-full 
-                    checked:bg-[#FFD700] transition-all duration-200 
+                  className="appearance-none w-5 h-5 border-2 border-[#FFD700] rounded-full
+                    checked:bg-[#FFD700] transition-all duration-200
                     focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50"
                 />
                 <span className="font-medium">{curr}</span>
@@ -207,12 +224,12 @@ const DepositModal = ({ onClose }) => {
             placeholder="Enter amount"
             value={cheeseAmount}
             onChange={(e) => setCheeseAmount(e.target.value)}
-            className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition"
+            className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
           />
 
           {convertedAmount && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
+              <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
                 {currency === "INR"
                   ? "Converted (USD)"
                   : "Converted (INR)"}
@@ -225,14 +242,14 @@ const DepositModal = ({ onClose }) => {
                     ? `₹ ${convertedAmount}`
                     : `$ ${convertedAmount}`
                 }
-                className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700]/60 text-gray-300 rounded-lg cursor-not-allowed"
+                className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700]/60 rounded-lg cursor-not-allowed`}
               />
             </div>
           )}
 
           <input
             type="file"
-            className="w-full text-gray-400 file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition"
+            className={`w-full ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition`}
           />
 
           <button
@@ -246,23 +263,30 @@ const DepositModal = ({ onClose }) => {
 
       {activeTab === "usdt" && (
         <form className="space-y-4">
-          <p className="text-gray-300 text-center">
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-center`}>
             Send <span className="text-[#FFD700]">USDT (TRC20)</span> to:
           </p>
-          <div className="p-3 border border-[#FFD700] rounded-lg text-center text-sm break-all bg-[#1a1a1a]">
+          <div className={`relative p-3 border border-[#FFD700] rounded-lg text-center text-sm break-all ${isDarkMode ? 'bg-[#1a1a1a]' : 'bg-gray-100'}`}>
             TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs
+            <button
+              onClick={handleCopy}
+              className="absolute top-2 right-2 text-[#FFD700] hover:text-white transition-colors"
+              title="Copy address"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
           </div>
 
           <input
             type="number"
             placeholder="Enter USDT amount"
-            className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg"
+            className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg`}
           />
 
           <input
             type="file"
             required
-            className="w-full text-gray-400 file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition"
+            className={`w-full ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition`}
           />
 
           <button
@@ -290,7 +314,9 @@ const OpenAccountModal = ({ onClose }) => {
 
 /* --------------------- Dashboard --------------------- */
 const Dashboard = () => {
+  const { isDarkMode } = useTheme();
   const [activeModal, setActiveModal] = useState(null);
+  const [notifications, setNotifications] = useState([]);
   const [stats, setStats] = useState({
     live: 0,
     demo: 0,
@@ -322,6 +348,15 @@ const Dashboard = () => {
   const openModal = (type) => setActiveModal(type);
   const closeModal = () => setActiveModal(null);
 
+  // Toast notification
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 3200);
+  };
+
   const buttonSet = [
     { label: "Open", icon: UserPlus, action: "open" },
     { label: "Deposit", icon: Wallet, action: "deposit" },
@@ -341,17 +376,17 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="h-[100%] bg-black text-white flex flex-col w-full text-[18px] overflow-hidden">
-      <main className="flex-1 p-4 bg-black w-full overflow-y-auto sm:overflow-y-visible">
+    <div className={`h-[100%] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} flex flex-col w-full text-[18px] overflow-hidden`}>
+      <main className={`flex-1 p-4 ${isDarkMode ? 'bg-black' : 'bg-white'} w-full overflow-y-auto sm:overflow-y-visible`}>
         {/* Buttons */}
         <div className="flex justify-evenly items-center gap-3 md:flex-row flex-col mb-6 flex-wrap">
           {buttonSet.map((btn, i) => (
             <button
               key={i}
               onClick={() => openModal(btn.action)}
-              className="bg-yellow-500 w-80 text-black font-semibold px-4 py-2 rounded-md hover:bg-yellow-400 shadow-sm hover:shadow-[0_0_10px_rgba(255,215,0,0.6)] h-[46px] text-[15px] transition-all duration-200 flex items-center justify-center gap-2"
+              className={`bg-yellow-500 w-80 ${isDarkMode ? 'text-black' : 'text-white'} font-semibold px-4 py-2 rounded-md hover:bg-yellow-400 shadow-sm hover:shadow-[0_0_10px_rgba(255,215,0,0.6)] h-[46px] text-[15px] transition-all duration-200 flex items-center justify-center gap-2`}
             >
-              <btn.icon className="w-5 h-5 text-black" />
+              <btn.icon className={`w-5 h-5 ${isDarkMode ? 'text-black' : 'text-white'}`} />
               {btn.label}
             </button>
           ))}
@@ -362,10 +397,10 @@ const Dashboard = () => {
           {statItems.map((box, i) => (
             <div
               key={i}
-              className="rounded-lg p-4 text-center bg-gradient-to-b from-gray-900 to-black shadow-md h-[120px] w-full mx-auto hover:shadow-[0_0_12px_rgba(255,215,0,0.5)] transition-all duration-200 flex flex-col items-center justify-center"
+              className={`rounded-lg p-4 text-center ${isDarkMode ? 'bg-gradient-to-b from-gray-900 to-black' : 'bg-gradient-to-b from-gray-100 to-white'} shadow-md h-[120px] w-full mx-auto hover:shadow-[0_0_12px_rgba(255,215,0,0.5)] transition-all duration-200 flex flex-col items-center justify-center`}
             >
               <box.icon className="w-8 h-8 mb-2 text-yellow-400" />
-              <strong className="block text-sm text-gray-300">{box.label}</strong>
+              <strong className={`block text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{box.label}</strong>
               <span className="block text-[18px] font-semibold mt-1 text-yellow-400">
                 {box.value}
               </span>
@@ -379,18 +414,18 @@ const Dashboard = () => {
             <h3 className="text-lg font-semibold text-yellow-400">Recent Activity</h3>
             <button
               className="text-yellow-400 hover:text-yellow-300 text-sm font-medium transition-all duration-200"
-              onClick={() => alert("View more activity clicked!")}
+              onClick={() => showToast("View more activity clicked!", "info")}
             >
               View More →
             </button>
           </div>
 
-          <div className="bg-gray-900 rounded-md shadow-md p-4 space-y-3 text-[15px]">
+          <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} rounded-md shadow-md p-4 space-y-3 text-[15px]`}>
             {[{ type: "Deposit", color: "text-green-400", amount: "+$100.00" },
             { type: "Withdraw", color: "text-red-400", amount: "-$50.50" }].map((item, i) => (
               <div
                 key={i}
-                className="bg-gray-800 p-3 rounded-md hover:shadow-[0_0_10px_rgba(255,215,0,0.4)] transition-all duration-200 flex justify-between items-center"
+                className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} p-3 rounded-md hover:shadow-[0_0_10px_rgba(255,215,0,0.4)] transition-all duration-200 flex justify-between items-center`}
               >
                 <p>
                   <span className="font-bold text-yellow-400">{item.type}:</span>{" "}
@@ -404,9 +439,39 @@ const Dashboard = () => {
       </main>
 
       {/* Modals */}
-      {activeModal === "deposit" && <DepositModal onClose={closeModal} />}
+      {activeModal === "deposit" && <DepositModal onClose={closeModal} showToast={showToast} isDarkMode={isDarkMode} />}
       {activeModal === "withdraw" && <WithdrawModal onClose={closeModal} />}
       {activeModal === "open" && <OpenAccountModal onClose={closeModal} />}
+
+      {/* Toast Notifications */}
+      <div className="fixed top-20 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`flex items-center gap-3 p-4 rounded-lg shadow-lg ${isDarkMode ? 'text-white' : 'text-black'} transition-all duration-300 ${
+              notification.type === 'success'
+                ? 'bg-green-600'
+                : notification.type === 'error'
+                ? 'bg-red-600'
+                : notification.type === 'warning'
+                ? 'bg-yellow-600'
+                : 'bg-blue-600'
+            }`}
+          >
+            {notification.type === 'success' && <CheckCircle className="w-5 h-5" />}
+            {notification.type === 'error' && <X className="w-5 h-5" />}
+            {notification.type === 'warning' && <AlertTriangle className="w-5 h-5" />}
+            {notification.type === 'info' && <Info className="w-5 h-5" />}
+            <span className="text-sm font-medium">{notification.message}</span>
+            <button
+              onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+              className={`ml-auto ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-700'} transition-colors`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -2,9 +2,14 @@ import React, { useEffect, useState } from "react";
 import OpenAccount from "./OpenAccount";
 import DemoAccountList from "./DemoAccountsPage";
 import Withdraw from "./Withdraw";
+import DepositModal from "./DepositModal";
+import TradesModal from "./TradesModal";
+import SettingsModal from "./SettingsModal";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 export default function TradingAccounts({ showDepositModal, setShowDepositModal }) {
+  const { isDarkMode } = useTheme();
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [activeTab, setActiveTab] = useState("cheesepay");
   const [cheeseAmount, setCheeseAmount] = useState("");
@@ -22,6 +27,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   const [showTradesModal, setShowTradesModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [newLeverage, setNewLeverage] = useState("");
+  const [selectedPasswordType, setSelectedPasswordType] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
@@ -117,8 +123,8 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   }, [cheeseAmount, currency]);
 
   const Modal = ({ title, onClose, children }) => (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-gray-900 text-white p-6 rounded-lg shadow-lg w-[90%] max-w-lg relative">
+    <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} flex items-center justify-center z-50`}>
+      <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-lg w-[90%] max-w-lg relative`}>
         <h3 className="text-lg font-semibold mb-3 text-[#FFD700] text-center">
           {title}
         </h3>
@@ -134,9 +140,9 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   );
 
   return (
-    <div className="min-h-[90vh] bg-black text-white font-sans flex flex-col items-center">
+    <div className={`min-h-[90vh] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} font-sans flex flex-col items-center`}>
       {/* Header */}
-      <header className="w-full bg-black py-2 mt-6">
+      <header className={`w-full ${isDarkMode ? 'bg-black' : 'bg-white'} py-2 mt-6`}>
         <div className="max-w-[1100px] mx-auto flex flex-wrap gap-3 justify-around items-center px-4">
           <button
             className="bg-gold  w-80 text-black px-4 py-2 rounded hover:bg-white transition"
@@ -171,12 +177,12 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
          ======================= */}
           {/* Internal Transaction Modal */}
           {activeComponent === "internalTransaction" && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-              <div className="bg-black text-white p-6 rounded-lg w-full max-w-md relative shadow-xl border-2 border-gold">
+            <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} z-50`}>
+              <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} p-6 rounded-lg w-full max-w-md relative shadow-xl border-2 border-gold`}>
                 {/* Close Button */}
                 <button
                   onClick={closeComponent}
-                  className="absolute top-3 right-3 text-white hover:text-gold text-2xl transition"
+                  className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gold' : 'text-black hover:text-gold'} text-2xl transition`}
                 >
                   &times;
                 </button>
@@ -189,14 +195,14 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* From Account */}
                   <div>
-                    <label className="block mb-1 font-medium text-white">
+                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                       <span className="text-red-500">*</span> From Account:
                     </label>
                     <select
                       value={fromAccount}
                       onChange={(e) => setFromAccount(e.target.value)}
                       required
-                      className="w-full bg-black text-white border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
+                      className={`w-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold`}
                     >
                       <option value="" disabled>
                         Select Account
@@ -211,14 +217,14 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
 
                   {/* To Account */}
                   <div>
-                    <label className="block mb-1 font-medium text-white">
+                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                       <span className="text-red-500">*</span> To Account:
                     </label>
                     <select
                       value={toAccount}
                       onChange={(e) => setToAccount(e.target.value)}
                       required
-                      className="w-full bg-black text-white border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
+                      className={`w-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold`}
                     >
                       <option value="" disabled>
                         Select Account
@@ -233,10 +239,10 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
 
                   {/* Amount */}
                   <div>
-                    <label className="block mb-1 font-medium text-white">
+                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                       <span className="text-red-500">*</span> Amount:
                     </label>
-                    <div className="flex items-center bg-black border border-gold rounded px-3 py-2 focus-within:ring-2 focus-within:ring-gold">
+                    <div className={`flex items-center ${isDarkMode ? 'bg-black' : 'bg-white'} border border-gold rounded px-3 py-2 focus-within:ring-2 focus-within:ring-gold`}>
                       <span className="mr-2 text-gold">$</span>
                       <input
                         type="number"
@@ -244,7 +250,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                         onChange={(e) => setAmount(e.target.value)}
                         required
                         placeholder="Enter amount"
-                        className="flex-1 bg-black text-white outline-none"
+                        className={`flex-1 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} outline-none`}
                       />
                     </div>
                     {insufficientBalance && (
@@ -266,7 +272,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                     <button
                       type="button"
                       onClick={closeComponent}
-                      className="px-4 py-2 rounded bg-yellow-600 text-white hover:bg-yellow-700 transition"
+                      className={`px-4 py-2 rounded ${isDarkMode ? 'bg-yellow-600 text-white hover:bg-yellow-700' : 'bg-gray-300 text-black hover:bg-gray-400'} transition`}
                     >
                       Cancel
                     </button>
@@ -303,16 +309,16 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
               Account Overview
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-[#111] border border-gold rounded-lg p-4 text-center">
-                <p className="text-gray-300 text-sm">Total Balance</p>
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Balance</p>
                 <p className="text-2xl font-bold text-gold">$8,631.25</p>
               </div>
-              <div className="bg-[#111] border border-gold rounded-lg p-4 text-center">
-                <p className="text-gray-300 text-sm">Total Equity</p>
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Equity</p>
                 <p className="text-2xl font-bold text-gold">$8,625.25</p>
               </div>
-              <div className="bg-[#111] border border-gold rounded-lg p-4 text-center">
-                <p className="text-gray-300 text-sm">Total Accounts</p>
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Accounts</p>
                 <p className="text-2xl font-bold text-gold">{accounts.length}</p>
               </div>
             </div>
@@ -325,9 +331,9 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                 Active Accounts
               </h3>
               <div className="overflow-x-auto">
-                <table className="min-w-full border-collapse text-sm text-gray-200">
+                <table className={`min-w-full border-collapse text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                   <thead>
-                    <tr className="bg-[#111] text-gold border-b border-gold">
+                    <tr className={`${isDarkMode ? 'bg-[#111] text-gold' : 'bg-gray-200 text-black'} border-b ${isDarkMode ? 'border-gold' : 'border-gray-300'}`}>
                       <th className="p-3 text-left">Type</th>
                       <th className="p-3 text-left">Login</th>
                       <th className="p-3 text-left">Leverage</th>
@@ -340,7 +346,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                     {accounts.map((acc) => (
                       <tr
                         key={acc.id}
-                        className="border-b border-[#333] hover:bg-[#1a1a1a] transition"
+                        className={`border-b ${isDarkMode ? 'border-[#333] hover:bg-[#1a1a1a]' : 'border-gray-300 hover:bg-gray-100'} transition`}
                       >
                         <td className="p-3">{acc.type}</td>
                         <td className="p-3">{acc.login}</td>
@@ -388,15 +394,15 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                 </button>
               </div>
 
-              <div className="bg-[#111] border border-gold rounded-lg p-6 space-y-4">
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-6 space-y-4`}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Info label="Account Type" value={selectedAccount.type} />
-                  <Info label="Platform Login" value={selectedAccount.login} />
-                  <Info label="Leverage" value={selectedAccount.leverage} />
-                  <Info label="Balance" value={`$${selectedAccount.balance}`} />
-                  <Info label="Equity" value={`$${selectedAccount.equity}`} />
-                  <Info label="Margin level" value={`${selectedAccount.margin}%`} />
-                  <Info label="Free Margin" value={`$${selectedAccount.freeMargin}`} />
+                  <Info label="Account Type" value={selectedAccount.type} isDarkMode={isDarkMode} />
+                  <Info label="Platform Login" value={selectedAccount.login} isDarkMode={isDarkMode} />
+                  <Info label="Leverage" value={selectedAccount.leverage} isDarkMode={isDarkMode} />
+                  <Info label="Balance" value={`$${selectedAccount.balance}`} isDarkMode={isDarkMode} />
+                  <Info label="Equity" value={`$${selectedAccount.equity}`} isDarkMode={isDarkMode} />
+                  <Info label="Margin level" value={`${selectedAccount.margin}%`} isDarkMode={isDarkMode} />
+                  <Info label="Free Margin" value={`$${selectedAccount.freeMargin}`} isDarkMode={isDarkMode} />
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-4 pt-2">
@@ -432,411 +438,45 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
             </div>
           )}
 
-          {/* Deposit Modal */}
-          {showDepositModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 ">
-              <div className="bg-[#111] border border-[#FFD700] rounded-2xl w-[90%] max-w-xl p-6 relative shadow-2xl">
-                {/* Close Button */}
-                <button
-                  onClick={() => setShowDepositModal(false)}
-                  className="absolute top-3 right-4 text-[#FFD700] text-3xl hover:text-white transition"
-                >
-                  &times;
-                </button>
-
-                {/* Title */}
-                <h3 className="text-2xl font-bold text-[#FFD700] mb-5 text-center tracking-wide">
-                  💰 Deposit Funds
-                </h3>
-
-                {/* Tabs */}
-                <div className="flex justify-center gap-4 border-b border-[#FFD700] mb-6">
-                  {["cheesepay", "manual", "usdt"].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`pb-3 px-5 font-semibold text-sm uppercase tracking-wide transition-all duration-300 ${activeTab === tab
-                        ? "text-[#FFD700] border-b-2 border-[#FFD700]"
-                        : "text-gray-400 hover:text-white"
-                        }`}
-                    >
-                      {tab === "cheesepay"
-                        ? "CheesePay"
-                        : tab === "manual"
-                          ? "Manual Deposit"
-                          : "USDT (TRC20)"}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Deposit Account Select (Common) */}
-                <div className="mb-5">
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Account ID
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedDepositAccount || "No account selected"}
-                    readOnly
-                    className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700] text-gray-300 rounded-lg cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Tab Content */}
-                <div className="text-white space-y-5">
-                  {/* CheesePay Section */}
-                  {activeTab === "cheesepay" && (
-                    <form className="space-y-4">
-                      {/* Currency Selection (Styled Radios) */}
-                      <div className="flex gap-6 justify-center">
-                        {["USD", "INR"].map((curr) => (
-                          <label
-                            key={curr}
-                            className={`flex items-center gap-2 cursor-pointer select-none ${currency === curr ? "text-[#FFD700]" : "text-gray-400"
-                              }`}
-                          >
-                            <input
-                              type="radio"
-                              name="cp-currency"
-                              value={curr}
-                              checked={currency === curr}
-                              onChange={(e) => setCurrency(e.target.value)}
-                              className="appearance-none w-5 h-5 border-2 border-[#FFD700] rounded-full 
-                   checked:bg-[#FFD700] checked:border-[#FFD700] transition-all duration-200 
-                   focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50"
-                            />
-                            <span className="font-medium">{curr}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      <div>
-                        <input
-                          type="number"
-                          placeholder="Enter amount"
-                          value={cheeseAmount}
-                          onChange={(e) => setCheeseAmount(e.target.value)}
-                          className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition"
-                        />
-                      </div>
-
-                      {convertedAmount && (
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-1">
-                            {currency === "USD" ? "Converted (INR)" : "Converted (USD)"}
-                          </label>
-                          <input
-                            type="text"
-                            readOnly
-                            value={
-                              currency === "USD"
-                                ? `₹ ${convertedAmount}`
-                                : `$ ${convertedAmount}`
-                            }
-                            placeholder="Auto converted amount"
-                            className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700]/60 text-gray-300 rounded-lg cursor-not-allowed"
-                          />
-                        </div>
-                      )}
-
-
-                      <button
-                        type="submit"
-                        className="w-full bg-[#FFD700] text-black font-semibold py-3 rounded-lg hover:bg-white transition-all"
-                      >
-                        Confirm & Proceed
-                      </button>
-                    </form>
-                  )}
-
-                  {/* Manual Deposit Section */}
-                  {activeTab === "manual" && (
-                    <form className="space-y-4">
-                      <p className="text-gray-400 text-center">
-                        Contact <span className="text-[#FFD700]">Support</span> for Bank
-                        Details.
-                      </p>
-
-                      <div className="flex gap-6 justify-center">
-                        {["USD", "INR"].map((curr) => (
-                          <label
-                            key={curr}
-                            className={`flex items-center gap-2 cursor-pointer select-none ${currency === curr ? "text-[#FFD700]" : "text-gray-400"
-                              }`}
-                          >
-                            <input
-                              type="radio"
-                              name="cp-currency"
-                              value={curr}
-                              checked={currency === curr}
-                              onChange={(e) => setCurrency(e.target.value)}
-                              className="appearance-none w-5 h-5 border-2 border-[#FFD700] rounded-full 
-                   checked:bg-[#FFD700] checked:border-[#FFD700] transition-all duration-200 
-                   focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50"
-                            />
-                            <span className="font-medium">{curr}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      <div>
-                        <input
-                          type="number"
-                          placeholder="Enter amount"
-                          value={cheeseAmount}
-                          onChange={(e) => setCheeseAmount(e.target.value)}
-                          className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition"
-                        />
-                      </div>
-
-                      {convertedAmount && (
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-1">
-                            {currency === "USD" ? "Converted (INR)" : "Converted (USD)"}
-                          </label>
-                          <input
-                            type="text"
-                            readOnly
-                            value={
-                              currency === "USD"
-                                ? `₹ ${convertedAmount}`
-                                : `$ ${convertedAmount}`
-                            }
-                            placeholder="Auto converted amount"
-                            className="w-full p-3 bg-[#1a1a1a] border border-[#FFD700]/60 text-gray-300 rounded-lg cursor-not-allowed"
-                          />
-                        </div>
-                      )}
-
-
-                      <input
-                        type="file"
-                        className="w-full text-gray-400 file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition"
-                      />
-
-                      <button
-                        type="submit"
-                        className="w-full bg-[#FFD700] text-black font-semibold py-3 rounded-lg hover:bg-white transition-all"
-                      >
-                        Submit
-                      </button>
-                    </form>
-                  )}
-
-                  {/* USDT Section */}
-                  {activeTab === "usdt" && (
-                    <form className="space-y-4">
-                      <p className="text-gray-300">
-                        Send <span className="text-[#FFD700]">USDT (TRC20)</span> to this
-                        address:
-                      </p>
-                      <div className="p-3 border border-[#FFD700] rounded-lg text-center text-sm break-all bg-[#1a1a1a]">
-                        TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs
-                      </div>
-
-                      <input
-                        type="number"
-                        placeholder="Enter USDT amount"
-                        className="w-full p-3 bg-black border border-[#FFD700] text-white rounded-lg"
-                      />
-
-                      <input
-                        type="file"
-                        required
-                        className="w-full text-gray-400 file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition"
-                      />
-
-                      <button
-                        type="submit"
-                        className="w-full bg-[#FFD700] text-black font-semibold py-3 rounded-lg hover:bg-white transition-all"
-                      >
-                        Submit USDT Deposit
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <DepositModal
+            showDepositModal={showDepositModal}
+            setShowDepositModal={setShowDepositModal}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            cheeseAmount={cheeseAmount}
+            setCheeseAmount={setCheeseAmount}
+            currency={currency}
+            setCurrency={setCurrency}
+            convertedAmount={convertedAmount}
+            selectedDepositAccount={selectedDepositAccount}
+          />
 
           {/* Withdraw Modal */}
           {showWithdrawModal && (
             <Withdraw onClose={() => setShowWithdrawModal(false)} />
           )}
 
-          {/* Trades Modal */}
-          {showTradesModal && (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-              <div className="bg-black text-white p-6 rounded-lg w-full max-w-4xl relative shadow-xl border-2 border-gold">
-                {/* Close Button */}
-                <button
-                  onClick={() => setShowTradesModal(false)}
-                  className="absolute top-3 right-3 text-white hover:text-gold text-2xl transition"
-                >
-                  &times;
-                </button>
+          <TradesModal
+            showTradesModal={showTradesModal}
+            setShowTradesModal={setShowTradesModal}
+            selectedAccount={selectedAccount}
+          />
 
-                {/* Modal Title */}
-                <h2 className="text-2xl font-semibold mb-6 text-center text-gold">
-                  Open Positions for Account: {selectedAccount.login}
-                </h2>
-
-                {/* Table */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-collapse text-sm text-gray-200">
-                    <thead>
-                      <tr className="bg-[#111] text-gold border-b border-gold">
-                        <th className="p-3 text-left">Ticket</th>
-                        <th className="p-3 text-left">Symbol</th>
-                        <th className="p-3 text-left">Type</th>
-                        <th className="p-3 text-left">Volume</th>
-                        <th className="p-3 text-left">Open Price</th>
-                        <th className="p-3 text-left">Current Price</th>
-                        <th className="p-3 text-left">SL</th>
-                        <th className="p-3 text-left">TP</th>
-                        <th className="p-3 text-left">Profit</th>
-                        <th className="p-3 text-left">Swap</th>
-                        <th className="p-3 text-left">Open Time</th>
-                        <th className="p-3 text-left">Comment</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-[#333]">
-                        <td className="p-3 text-center" colSpan="12">
-                          No open positions found
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Settings Modal */}
-          {showSettingsModal && (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-              <div className="bg-black text-white p-6 rounded-lg w-full max-w-md relative shadow-xl border-2 border-gold">
-                {/* Close Button */}
-                <button
-                  onClick={() => setShowSettingsModal(false)}
-                  className="absolute top-3 right-3 text-white hover:text-gold text-2xl transition"
-                >
-                  &times;
-                </button>
-
-                {/* Modal Title */}
-                <h2 className="text-2xl font-semibold mb-6 text-center text-gold">
-                  ⚙️ Manage Settings
-                </h2>
-
-                <div className="space-y-6">
-                  {/* Leverage Section */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gold mb-2">Leverage</h3>
-                    <p className="text-gray-300 text-sm mb-3">
-                      Current Leverage: {selectedAccount.leverage}
-                    </p>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">
-                        Select Leverage
-                      </label>
-                      <select
-                        value={newLeverage}
-                        onChange={(e) => setNewLeverage(e.target.value)}
-                        className="w-full bg-black text-white border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
-                      >
-                        <option value="">Select new leverage</option>
-                        <option value="1:50">1:50</option>
-                        <option value="1:100">1:100</option>
-                        <option value="1:200">1:200</option>
-                        <option value="1:500">1:500</option>
-                        <option value="1:1000">1:1000</option>
-                      </select>
-                      <button
-                        onClick={() => {
-                          // Handle leverage update
-                          alert(`Leverage updated to ${newLeverage}`);
-                          setNewLeverage("");
-                        }}
-                        disabled={!newLeverage}
-                        className={`mt-2 px-4 py-2 rounded text-black transition ${
-                          newLeverage
-                            ? "bg-gold hover:bg-white"
-                            : "bg-gray-600 cursor-not-allowed"
-                        }`}
-                      >
-                        Update Leverage
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Change Password Section */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gold mb-2">Change Password</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm text-gray-400 mb-1">
-                          New Password
-                        </label>
-                        <input
-                          type={showPasswords ? "text" : "password"}
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full bg-black text-white border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
-                          placeholder="Enter new password"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-400 mb-1">
-                          Confirm Password
-                        </label>
-                        <input
-                          type={showPasswords ? "text" : "password"}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full bg-black text-white border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
-                          placeholder="Confirm new password"
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id="showPasswords"
-                          checked={showPasswords}
-                          onChange={(e) => setShowPasswords(e.target.checked)}
-                          className="mr-2"
-                        />
-                        <label htmlFor="showPasswords" className="text-sm text-gray-400">
-                          Show Passwords
-                        </label>
-                      </div>
-                      <button
-                        onClick={() => {
-                          if (newPassword !== confirmPassword) {
-                            alert("Passwords do not match");
-                            return;
-                          }
-                          // Handle password update
-                          alert("Password updated successfully");
-                          setNewPassword("");
-                          setConfirmPassword("");
-                        }}
-                        disabled={!newPassword || !confirmPassword}
-                        className={`px-4 py-2 rounded text-black transition ${
-                          newPassword && confirmPassword
-                            ? "bg-gold hover:bg-white"
-                            : "bg-gray-600 cursor-not-allowed"
-                        }`}
-                      >
-                        Update Password
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <SettingsModal
+            showSettingsModal={showSettingsModal}
+            setShowSettingsModal={setShowSettingsModal}
+            selectedAccount={selectedAccount}
+            newLeverage={newLeverage}
+            setNewLeverage={setNewLeverage}
+            selectedPasswordType={selectedPasswordType}
+            setSelectedPasswordType={setSelectedPasswordType}
+            newPassword={newPassword}
+            setNewPassword={setNewPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
+            showPasswords={showPasswords}
+            setShowPasswords={setShowPasswords}
+          />
         </div>
       </main>
 
@@ -849,10 +489,10 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   );
 }
 
-function Info({ label, value }) {
+function Info({ label, value, isDarkMode }) {
   return (
-    <div className="p-3 bg-black border border-[#333] rounded-lg">
-      <p className="text-gray-400 text-xs mb-1">{label}</p>
+    <div className={`p-3 ${isDarkMode ? 'bg-black border-[#333]' : 'bg-white border-gray-300'} border rounded-lg`}>
+      <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{label}</p>
       <p className="text-gold text-base font-semibold">{value}</p>
     </div>
   );
