@@ -1,29 +1,31 @@
 import React from "react";
+import { useTheme } from "../context/ThemeContext";
 
 export default function TradesModal({ showTradesModal, setShowTradesModal, selectedAccount }) {
+  const { isDarkMode } = useTheme();
   return (
     <>
       {showTradesModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-black text-white p-6 rounded-lg w-full max-w-4xl relative shadow-xl border-2 border-gold">
+        <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/50' : 'bg-white/70'} flex items-center justify-center z-50`}>
+          <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-white'} ${isDarkMode ? 'text-white' : 'text-black'} p-6 rounded-lg w-full max-w-4xl relative shadow-xl border-2 border-[#FFD700]`}>
             {/* Close Button */}
             <button
               onClick={() => setShowTradesModal(false)}
-              className="absolute top-3 right-3 text-white hover:text-gold text-2xl transition"
+              className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-[#FFD700]' : 'text-black hover:text-[#FFD700]'} text-2xl transition`}
             >
               &times;
             </button>
 
             {/* Modal Title */}
-            <h2 className="text-2xl font-semibold mb-6 text-center text-gold">
+            <h2 className="text-2xl font-semibold mb-6 text-center text-[#FFD700]">
               Open Positions for Account: {selectedAccount.login}
             </h2>
 
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse text-sm text-gray-200">
+              <table className="min-w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-[#111] text-gold border-b border-gold">
+                  <tr className={`${isDarkMode ? 'bg-[#111] text-[#FFD700]' : 'bg-gray-100 text-[#FFD700]'} border-b border-[#FFD700]`}>
                     <th className="p-3 text-left">Ticket</th>
                     <th className="p-3 text-left">Symbol</th>
                     <th className="p-3 text-left">Type</th>
@@ -39,7 +41,7 @@ export default function TradesModal({ showTradesModal, setShowTradesModal, selec
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-[#333]">
+                  <tr className={`border-b ${isDarkMode ? 'border-[#333]' : 'border-gray-300'}`}>
                     <td className="p-3 text-center" colSpan="12">
                       No open positions found
                     </td>

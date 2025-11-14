@@ -116,7 +116,7 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
       {/* Modal for Accounts */}
 {isModalOpen && (
   <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-    <div className="bg-black rounded-lg p-6 w-full max-w-4xl overflow-auto max-h-[80vh] relative">
+    <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-4xl overflow-auto max-h-[80vh] relative`}>
       <button
         className="absolute top-3 right-3 text-yellow-500 font-bold"
         onClick={closeModal}
@@ -141,7 +141,7 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
         </thead>
         <tbody>
           {accounts.map((acc) => (
-            <tr key={acc.id} className="border-b border-yellow-500 hover:bg-yellow-500/10 text-white">
+            <tr key={acc.id} className={`border-b border-yellow-500 hover:bg-yellow-500/10 ${isDarkMode ? 'text-white' : 'text-black'}`}>
               <td className="px-2 py-1">{acc.id}</td>
               <td className="px-2 py-1">{acc.type}</td>
               <td className="px-2 py-1">{acc.group}</td>
@@ -171,8 +171,8 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 {/* Nested Modal for Account Details */}
 {isDetailModalOpen && selectedAccount && (
   <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-60">
-    <div className="bg-black rounded-lg p-6 w-full max-w-5xl overflow-auto max-h-[80vh] relative 
-                    hover:shadow-2xl transition-shadow duration-300">
+    <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-5xl overflow-auto max-h-[80vh] relative 
+                    hover:shadow-2xl transition-shadow duration-300`}>
       {/* Close Button */}
       <button
         className="absolute top-3 right-3 text-yellow-500 font-bold"
@@ -192,9 +192,9 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
           <input
             type="text"
             placeholder="Field 1"
-            className="flex-1 min-w-[120px] px-3 py-2 border border-yellow-500 rounded-lg 
-                 bg-black text-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 
-                 transition-all duration-200"
+            className={`flex-1 min-w-[120px] px-3 py-2 border border-yellow-500 rounded-lg 
+                 ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} focus:outline-none focus:ring-2 focus:ring-yellow-400 
+                 transition-all duration-200`}
           />
           <input
             type="text"
@@ -212,15 +212,15 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
           />
         </div>
         <button
-          className="px-3 py-1 bg-black text-yellow-200 border border-yellow-500 rounded 
-                     hover:bg-yellow-500 hover:text-black hover:shadow-lg transition-all duration-200"
+          className={`px-3 py-1 ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} border border-yellow-500 rounded 
+                     hover:bg-yellow-500 hover:text-black hover:shadow-lg transition-all duration-200`}
         >
           Submit
         </button>
       </div>
 
       {/* Detail table */}
-      <table className="w-full text-yellow-200 border border-yellow-500">
+      <table className= {`w-full  ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} border border-yellow-500`}>
         <thead>
           <tr className="border-b border-yellow-500">
             <th className="px-2 py-1 text-left">Ticket</th>
@@ -384,8 +384,8 @@ const App = () => {
       ].map((item, index) => (
         <div
           key={index}
-          className="bg-black-900 p-4 rounded-md shadow-lg border border-yellow-500 flex flex-col items-center justify-center text-center
-                     transition-all transform hover:scale-105 hover:shadow-[0_0_15px_#FFD700]"
+          className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-lg border border-yellow-500 flex flex-col items-center justify-center text-center
+                     transition-all transform hover:scale-105 hover:shadow-[0_0_15px_#FFD700]`}
         >
           <h3 className="text-yellow-400 font-semibold mb-1 text-sm">{item.label}</h3>
           <p className="text-xl font-bold">{item.value}</p>
@@ -395,14 +395,14 @@ const App = () => {
 
     {/* Commission Earnings Cards */}
 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-  <div className="bg-black-800 p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center
-                 transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]">
-    <h3 className="text-white font-bold mb-1 text-sm">Monthly Commission Earnings</h3>
+  <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center
+                 transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]`}>
+    <h3 className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold mb-1 text-sm`}>Monthly Commission Earnings</h3>
     <p className="text-xl font-bold text-yellow-300">--</p>
   </div>
-  <div className="bg-black-800 p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center
-                 transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]">
-    <h3 className="text-white font-bold mb-1 text-sm">Commission Earnings Per Client</h3>
+  <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center
+                 transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]`}>
+    <h3 className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold mb-1 text-sm`}>Commission Earnings Per Client</h3>
     <p className="text-yellow-300 text-xs mb-2">Top 10 clients by commission earnings</p>
     <p className="text-xl font-bold text-yellow-300">--</p>
   </div>
@@ -432,12 +432,12 @@ const App = () => {
     {/* Search + Action Buttons */}
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 w-full">
       {/* Left: Search */}
-      <div className="flex items-center gap-2 bg-black border border-yellow-500 rounded-md px-3 py-2 w-auto max-w-[400px] sm:w-1/2">
+      <div className={`flex items-center gap-2 ${isDarkMode ? 'bg-black' : 'bg-white'} border border-yellow-500 rounded-md px-3 py-2 w-auto max-w-[400px] sm:w-1/2`}>
         <Search size={14} className="text-yellow-500" />
         <input
           type="text" 
           placeholder="Search clients..."
-          className="bg-black text-yellow-300 placeholder-yellow-400 focus:outline-none w-full text-sm py-0.5"
+          className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} placeholder-yellow-400 focus:outline-none w-full text-sm py-0.5`}
         />
       </div>
 
@@ -459,7 +459,7 @@ const App = () => {
     {/* Client Tab */}
       {activeTab === 'Client' && (
         <>
-          <div className="bg-black p-2 rounded-md border-yellow-500 shadow-md hover:shadow-[0_4px_15px_rgba(255,215,0,0.4)] transition-shadow duration-300">
+          <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-2 rounded-md border-yellow-500 shadow-md hover:shadow-[0_4px_15px_rgba(255,215,0,0.4)] transition-shadow duration-300`}>
             <h2 className="text-yellow-400 text-lg font-bold mb-4">Client Tree</h2>
             <ClientTree clients={clientData} level={1} />
           </div>
@@ -494,7 +494,7 @@ const App = () => {
     {/* Add User Form Modal */}
     {showAddUserForm && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div className="bg-black-900 p-6 rounded-md border border-yellow-500 shadow-lg w-full max-w-md relative">
+        <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-6 rounded-md border border-yellow-500 shadow-lg w-full max-w-md relative`}>
           {/* Close Button */}
           <button
             onClick={() => setShowAddUserForm(false)}
@@ -508,24 +508,24 @@ const App = () => {
             <input
               type="text"
               placeholder="Name"
-              className="px-3 py-2 rounded-md border border-yellow-500 bg-black text-yellow-300 focus:outline-none"
+              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
             />
             <input
               type="email"
               placeholder="Email"
-              className="px-3 py-2 rounded-md border border-yellow-500 bg-black text-yellow-300 focus:outline-none"
+              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
             />
             <input
               type="text"
               placeholder="Phone"
-              className="px-3 py-2 rounded-md border border-yellow-500 bg-black text-yellow-300 focus:outline-none"
+              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
             />
             <input
               type="date"
               placeholder="DOB"
-              className="px-3 py-2 rounded-md border border-yellow-500 bg-black text-yellow-300 focus:outline-none"
+              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
             />
-            <select className="px-3 py-2 rounded-md border border-yellow-500 bg-black text-yellow-300 focus:outline-none">
+            <select className={`px-3 py-2 rounded-md border border-yellow-500 focus:outline-none ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}`}>
               <option value="">Select Country</option>
               <option value="US">United States</option>
               <option value="UK">United Kingdom</option>
@@ -549,15 +549,15 @@ const App = () => {
 
       {/* Commission Tab */}
       {activeTab === 'Commission' && (
-        <div className="bg-black rounded-xl shadow-2xl border-yellow-500 p-2 space-y-4 transition-shadow">
+        <div className={`${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}rounded-xl shadow-2xl border-yellow-500 p-2 space-y-4 transition-shadow`}>
           {/* Top Controls */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-  <div className="flex items-center gap-2 bg-black border border-yellow-500 rounded-md px-3 py-2 w-auto max-w-[400px] sm:w-1/2">
+  <div className={`flex items-center gap-2 ${isDarkMode ? 'bg-black' : 'bg-white'} border border-yellow-500 rounded-md px-3 py-2 w-auto max-w-[400px] sm:w-1/2`}>
     <Search size={16} className="text-yellow-500" />
     <input
       type="text"
       placeholder="Search..."
-      className="bg-black text-yellow-300 placeholder-yellow-400 focus:outline-none w-[120px] sm:w-full"
+      className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} placeholder-yellow-400 focus:outline-none w-[120px] sm:w-full`}
     />
   </div>
 
@@ -570,9 +570,9 @@ const App = () => {
           {/* Commission Table */}
 <div className="w-full overflow-x-auto sm:px-2 px-2 mt-6">
   <div className="inline-block min-w-full border-yellow-500 rounded-md transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.6)]">
-    <table className="min-w-full border-collapse border-yellow-500 text-center">
+    <table className={`min-w-full border-collapse border-yellow-500 text-center ${isDarkMode ? 'text-yellow-300' : 'text-black'}`}>
               <thead>
-                <tr className="bg-black text-yellow-300 border-b-2 border-yellow-500">
+                <tr className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} border-b-2 border-yellow-500`}>
                   <th className="px-4 py-2">S.No</th>
                   <th className="px-4 py-2">Position ID</th>
                   <th className="px-4 py-2">Deal Ticket</th>
@@ -616,7 +616,7 @@ const App = () => {
 
       {/* Withdraw Tab */}
 {activeTab === 'Withdraw' && (
-  <div className="bg-black rounded-xl shadow-2xl border-yellow-500 p-6 space-y-6 transition-shadow">
+  <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-xl shadow-2xl border-yellow-500 p-6 space-y-6 transition-shadow`}>
     {/* Balance Display */}
     <div className="text-center flex flex-col items-center">
       <h2 className="text-xl font-bold text-yellow-400 mb-2 flex items-center gap-2">
@@ -646,7 +646,7 @@ const App = () => {
 <div className="flex flex-col sm:flex-row items-center w-full gap-4 sm:gap-0 justify-between">
   {/* Left: Select */}
   <div className="w-full sm:w-1/3">
-    <select className="bg-black text-yellow-300 p-3 rounded-md border border-yellow-500 w-full hover:bg-gray-900 transition-colors">
+    <select className={` ${isDarkMode ? 'bg-black text-yellow-300 hover:bg-gray-900' : 'bg-white text-black hover:bg-gray-100'} p-3 rounded-md border border-yellow-500 w-full transition-colors`}>
       <option value="">Select Trading Account</option>
       <option value="acc1">Account 1</option>
       <option value="acc2">Account 2</option>
@@ -659,7 +659,7 @@ const App = () => {
     <input
       type="number"
       placeholder="Amount"
-      className="flex-1 bg-black text-yellow-300 p-3 rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+      className={`flex-1 ${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} p-3 rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
     />
     <button className="bg-yellow-500 text-black px-4 py-2 text-sm rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all">
       Submit
@@ -670,19 +670,19 @@ const App = () => {
 
     {/* Pending / History Buttons */}
     <div className="flex flex-wrap justify-center gap-4">
-      <button className="px-5 py-2 rounded-md font-semibold shadow text-yellow-300 bg-black hover:bg-yellow-500 hover:text-black transition-all shadow-md hover:shadow-lg">
+      <button className={`px-5 py-2 rounded-md font-semibold shadow text-black bg-yellow-300 hover:${isDarkMode ? 'bg-black ' : 'bg-white '} hover:text-yellow-300 hover:border transition-all shadow-md hover:shadow-lg`}>
         Pending
       </button>
-      <button className="px-5 py-2 rounded-md font-semibold shadow text-yellow-300 bg-black hover:bg-yellow-500 hover:text-black transition-all shadow-md hover:shadow-lg">
+      <button className={`px-5 py-2 rounded-md font-semibold shadow text-black bg-yellow-300 hover:${isDarkMode ? 'bg-black ' : 'bg-white '} hover:text-yellow-300 hover:border transition-all shadow-md hover:shadow-lg`}>
         History
       </button>
     </div>
 
     {/* Withdrawals Table */}
     <div className="overflow-x-auto  border-yellow-500 rounded-md transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.6)]">
-      <table className="min-w-full border-collapse  border-yellow-500">
+      <table className={`min-w-full border-collapse  border-yellow-500 ${isDarkMode ? 'text-yellow-300' : 'text-black'}`}>
         <thead>
-          <tr className="bg-black text-yellow-300 border-b-2 border-yellow-500 ">
+          <tr className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} border-b-2 border-yellow-500 `}>
             {['#', 'Date', 'User', 'Type', 'Amount', 'Status'].map((header, i) => (
               <th key={i} className="px-4 py-2 text-center whitespace-nowrap">{header}</th>
             ))}
