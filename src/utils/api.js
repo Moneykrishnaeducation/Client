@@ -1,6 +1,6 @@
 // API utility functions for consistent token handling
 
-const API_BASE_URL = 'http://client.localhost:8000';
+const API_BASE_URL = 'http://client.localhost:8000/';
 
 // Get auth headers with token
 export const getAuthHeaders = () => {
