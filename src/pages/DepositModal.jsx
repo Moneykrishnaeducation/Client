@@ -1,5 +1,6 @@
 import React from "react";
 import { Copy } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 export default function DepositModal({
   showDepositModal,
@@ -12,8 +13,8 @@ export default function DepositModal({
   setCurrency,
   convertedAmount,
   selectedDepositAccount,
-  isDarkMode,
 }) {
+  const { isDarkMode } = useTheme();
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText("TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs");

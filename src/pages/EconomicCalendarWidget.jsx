@@ -1,8 +1,10 @@
 // EconomicCalendarWidget.jsx
 import { useEffect, useRef, memo } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 function EconomicCalendarWidget() {
   const container = useRef();
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -10,10 +12,10 @@ function EconomicCalendarWidget() {
     script.type = 'text/javascript';
     script.async = true;
     script.dataset.type = 'calendar-widget';
-    script.innerHTML = `{"width":"100%","height":"100%","mode":"2","fw":"react","theme":1}`;
+    script.innerHTML = `{"width":"100%","height":"100%","mode":"2","fw":"react","theme":${isDarkMode ? 2 : 1}}`;
 
     container.current?.appendChild(script);
-  }, [container]);
+  }, [container, isDarkMode]);
 
   return (
     <div
@@ -26,6 +28,8 @@ function EconomicCalendarWidget() {
         height: '90vh', // fixed height
         width: '100%',
         boxSizing: 'border-box',
+        backgroundColor: isDarkMode ? '#000000' : '#ffffff',
+        color: isDarkMode ? '#ffffff' : '#000000',
       }}
     >
       <div

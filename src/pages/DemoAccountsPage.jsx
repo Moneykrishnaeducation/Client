@@ -109,8 +109,8 @@ export default function DemoAccountsPage() {
         {/* ✅ Demo Accounts Table */}
         {demoAccounts.length > 0 ? (
           <div className="overflow-x-auto px-10">
-            <table className="min-w-full bg-[#1a1a1a] border border-gray-700 rounded-lg text-sm">
-              <thead className="bg-neutral-800 text-yellow-400">
+            <table className={`min-w-full ${isDarkMode ? 'bg-[#1a1a1a]' : 'bg-white'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm`}>
+              <thead className={`${isDarkMode ? 'bg-neutral-800' : 'bg-gray-100'} text-yellow-400`}>
                 <tr>
                   <th className="py-3 px-4 text-left">#</th>
                   <th className="py-3 px-4 text-left">Account ID</th>
@@ -123,9 +123,9 @@ export default function DemoAccountsPage() {
                 {demoAccounts.map((acc, index) => (
                   <tr
                     key={acc.id}
-                    className={`border-t border-gray-700 hover:bg-neutral-800/60 transition ${
+                    className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} ${isDarkMode ? 'hover:bg-neutral-800/60' : 'hover:bg-gray-50'} transition ${
                       selectedAccountId === acc.id
-                        ? "bg-neutral-800/80 border-yellow-400"
+                        ? `${isDarkMode ? 'bg-neutral-800/80' : 'bg-gray-100'} border-yellow-400`
                         : ""
                     }`}
                   >
@@ -136,7 +136,7 @@ export default function DemoAccountsPage() {
                     <td className="py-3 px-4 flex items-center gap-2">
                       <button
                         onClick={() => updateBalance(acc.id, "subtract")}
-                        className="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded"
+                        className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-300 hover:bg-gray-400'} px-2 py-1 rounded`}
                       >
                         <Minus size={14} />
                       </button>
@@ -144,11 +144,11 @@ export default function DemoAccountsPage() {
                         type="number"
                         value={acc.balance}
                         readOnly
-                        className="w-24 text-center bg-gray-800 text-white rounded py-1"
+                        className={`w-24 text-center ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} rounded py-1`}
                       />
                       <button
                         onClick={() => updateBalance(acc.id, "add")}
-                        className="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded"
+                        className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-300 hover:bg-gray-400'} px-2 py-1 rounded`}
                       >
                         <Plus size={14} />
                       </button>
@@ -159,7 +159,7 @@ export default function DemoAccountsPage() {
                       <select
                         value={acc.leverage}
                         onChange={(e) => updateLeverage(acc.id, e.target.value)}
-                        className="bg-gray-800 px-2 py-1 rounded text-sm focus:outline-none"
+                        className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} px-2 py-1 rounded text-sm focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
                       >
                         {["1x", "10x", "50x", "100x", "200x", "500x"].map(
                           (lev) => (
@@ -173,7 +173,7 @@ export default function DemoAccountsPage() {
                     <td className="py-3 px-4 text-center space-x-2">
                       <button
                         onClick={() => setSelectedAccountId(acc.id)}
-                        className="bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded text-sm"
+                        className={`${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400 text-black'} px-3 py-1 rounded text-sm`}
                       >
                         View
                       </button>
@@ -194,7 +194,7 @@ export default function DemoAccountsPage() {
             </table>
           </div>
         ) : (
-          <p className="text-center text-gray-400 mt-6">
+          <p className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-6`}>
             No demo accounts yet. Create one above.
           </p>
         )}
@@ -206,7 +206,7 @@ export default function DemoAccountsPage() {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           onClick={(e) => e.target === e.currentTarget && setSelectedAccountId(null)}
         >
-          <div className="bg-[#1f1f1f] rounded-lg shadow-lg p-6 w-full max-w-md text-white relative">
+          <div className={`${isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'} rounded-lg shadow-lg p-6 w-full max-w-md ${isDarkMode ? 'text-white' : 'text-black'} relative`}>
             <button
               onClick={() => setSelectedAccountId(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -255,7 +255,7 @@ export default function DemoAccountsPage() {
           className="fixed inset-0 bg-black/50 bg-opacity-60 flex items-center justify-center z-50"
           onClick={(e) => e.target === e.currentTarget && setIsOpen(false)}
         >
-          <div className="bg-[#1f1f1f] relative rounded-lg shadow-lg p-6 w-full max-w-md text-white">
+          <div className={`${isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'} relative rounded-lg shadow-lg p-6 w-full max-w-md ${isDarkMode ? 'text-white' : 'text-black'}`}>
             <button
               onClick={() => setIsOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
@@ -266,7 +266,7 @@ export default function DemoAccountsPage() {
             <h2 className="text-xl font-semibold mb-1 text-yellow-400">
               Create Demo Account
             </h2>
-            <p className="text-sm text-gray-300 mb-4">
+            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
               Set up a free demo account to explore trading without risks.
             </p>
 
@@ -282,9 +282,9 @@ export default function DemoAccountsPage() {
                   value={formData.balance}
                   onChange={handleChange}
                   placeholder="Enter balance (default: $10,000)"
-                  className="w-full px-3 py-2 bg-gray-800 rounded focus:outline-none"
+                  className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
                   Leave empty for default $10,000
                 </p>
               </div>
@@ -298,7 +298,7 @@ export default function DemoAccountsPage() {
                   name="leverage"
                   value={formData.leverage}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 rounded focus:outline-none"
+                  className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
                 >
                   {["1x", "10x", "50x", "100x", "200x", "500x"].map((lev) => (
                     <option key={lev}>{lev}</option>
@@ -318,7 +318,7 @@ export default function DemoAccountsPage() {
                   onChange={handleChange}
                   placeholder="Enter master password"
                   required
-                  className="w-full px-3 py-2 bg-gray-800 rounded focus:outline-none"
+                  className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
                 />
               </div>
 
@@ -334,7 +334,7 @@ export default function DemoAccountsPage() {
                   onChange={handleChange}
                   placeholder="Enter investor password"
                   required
-                  className="w-full px-3 py-2 bg-gray-800 rounded focus:outline-none"
+                  className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
                 />
               </div>
 
@@ -342,7 +342,7 @@ export default function DemoAccountsPage() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="bg-gray-500 px-4 py-2 rounded hover:bg-gray-600"
+                  className={`${isDarkMode ? 'bg-gray-500 hover:bg-gray-600' : 'bg-gray-300 hover:bg-gray-400 text-black'} px-4 py-2 rounded`}
                 >
                   Cancel
                 </button>

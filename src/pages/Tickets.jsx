@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Search, Filter, X, Plus, ChevronDown } from "lucide-react";
+import { useTheme } from '../context/ThemeContext';
 
 const Tickets = () => {
+  const { isDarkMode } = useTheme();
   const [activePage, setActivePage] = useState("view");
   const [userId, setUserId] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -43,7 +45,7 @@ const Tickets = () => {
   };
 
   return (
-    <div className=" bg-black text-white px-4 py-6 md:px-8">
+    <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} h-full px-4 py-6 md:px-8`}>
       {/* ===================== PAGE HEADER ===================== */}
       <header className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-yellow-400">
@@ -53,7 +55,7 @@ const Tickets = () => {
 
       {/* ===================== VIEW TICKETS PAGE ===================== */}
       {activePage === "view" && (
-        <div className="rounded-lg border border-gray-800 bg-black shadow-md p-4 w-full">
+        <div className={`rounded-lg border ${isDarkMode ? 'border-gray-800 bg-black' : 'border-gray-300 bg-white'} shadow-md p-4 w-full`}>
           {/* Search + Buttons Row */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h2 className="text-lg md:text-xl font-semibold text-yellow-400">
@@ -62,12 +64,12 @@ const Tickets = () => {
 
             <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 w-full md:w-auto">
               {/* Search Input */}
-              <div className="flex items-center gap-2 bg-black border border-yellow-500 rounded-md px-3 py-2 w-full sm:w-72 hover:bg-gray-900 transition">
+              <div className={`flex items-center gap-2 ${isDarkMode ? 'bg-black' : 'bg-white'} border border-yellow-500 rounded-md px-3 py-2 w-full sm:w-72 hover:bg-gray-900 transition`}>
                 <Search size={18} className="text-yellow-400" />
                 <input
                   type="text"
                   placeholder="Search tickets..."
-                  className="bg-transparent text-yellow-300 placeholder-yellow-400 focus:outline-none w-full text-sm sm:text-base"
+                  className={`bg-transparent ${isDarkMode ? 'text-yellow-300 placeholder-yellow-400' : 'text-black placeholder-gray-500'} focus:outline-none w-full text-sm sm:text-base`}
                 />
               </div>
 
@@ -95,24 +97,24 @@ const Tickets = () => {
           </div>
 
           {/* Ticket Table */}
-          <div className="overflow-x-auto rounded-lg border border-gray-700">
-            <table className="min-w-full text-sm md:text-base text-left border-collapse">
-              <thead className="bg-gray-800 text-yellow-400">
+          <div className="overflow-x-auto rounded-lg border border-yellow-600">
+            <table className="min-w-full text-sm md:text-base text-left border border-yellow-600 border-collapse">
+              <thead className={` ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} `}>
                 <tr>
-                  <th className="p-2 border border-gray-700">Created Date</th>
-                  <th className="p-2 border border-gray-700">Ticket ID</th>
-                  <th className="p-2 border border-gray-700">User Id</th>
-                  <th className="p-2 border border-gray-700">Username</th>
-                  <th className="p-2 border border-gray-700">Subject</th>
-                  <th className="p-2 border border-gray-700">Status</th>
-                  <th className="p-2 border border-gray-700">Actions</th>
+                  <th className="p-2 border border-yellow-600">Created Date</th>
+                  <th className="p-2 border border-yellow-600">Ticket ID</th>
+                  <th className="p-2 border border-yellow-600">User Id</th>
+                  <th className="p-2 border border-yellow-600">Username</th>
+                  <th className="p-2 border border-yellow-600">Subject</th>
+                  <th className="p-2 border border-yellow-600">Status</th>
+                  <th className="p-2 border border-yellow-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td
                     colSpan="7"
-                    className="text-center py-4 text-gray-400 whitespace-nowrap"
+                    className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
                   >
                     No tickets found.
                   </td>
@@ -126,7 +128,7 @@ const Tickets = () => {
       {/* ===================== CREATE TICKET PAGE ===================== */}
       {activePage === "create" && (
         <div className="flex justify-center items-center">
-          <div className="w-full max-w-2xl rounded-lg border border-gray-800 bg-black shadow-md p-5">
+          <div className={`w-full max-w-2xl rounded-lg border ${isDarkMode ? 'border-gray-800 bg-black' : 'border-gray-300 bg-white'} shadow-md p-5`}>
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-yellow-400">
@@ -144,7 +146,7 @@ const Tickets = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="font-semibold text-yellow-400">User Id</label>
-                <div className="font-bold mt-1 text-white break-all">
+                <div className={`font-bold mt-1 ${isDarkMode ? 'text-white' : 'text-black'} break-all`}>
                   {userId}
                 </div>
               </div>
@@ -157,7 +159,7 @@ const Tickets = () => {
                   type="text"
                   placeholder="Enter ticket subject"
                   required
-                  className="w-full p-2 rounded-md bg-gray-900 border border-gray-700 text-white placeholder-gray-400"
+                  className={`w-full p-2 rounded-md ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-400' : 'bg-gray-100 border-gray-300 text-black placeholder-gray-600'}`}
                 />
               </div>
 
@@ -168,7 +170,7 @@ const Tickets = () => {
                 <textarea
                   placeholder="Describe the issue in detail"
                   required
-                  className="w-full p-2 rounded-md bg-gray-900 border border-gray-700 text-white placeholder-gray-400 h-28"
+                  className={`w-full p-2 rounded-md ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-400' : 'bg-gray-100 border-gray-300 text-black placeholder-gray-600'} h-28`}
                 ></textarea>
               </div>
 
@@ -177,13 +179,13 @@ const Tickets = () => {
                   Supporting Documents (Optional)
                 </label>
                 <div
-                  className="border-2 border-dashed rounded-lg text-center py-6 cursor-pointer transition-all duration-200 border-gray-700 hover:border-yellow-400 hover:bg-gray-900"
+                  className={`border-2 border-dashed rounded-lg text-center py-6 cursor-pointer transition-all duration-200 ${isDarkMode ? 'border-gray-700 hover:border-yellow-400 hover:bg-gray-900' : 'border-gray-300 hover:border-yellow-400 hover:bg-gray-100'}`}
                   onClick={() => document.getElementById("fileInput").click()}
                 >
-                  <p className="text-lg font-medium text-white">
+                  <p className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                     📎 Click to attach file
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     Accepted: JPG, JPEG, PDF (Max: 1MB)
                   </p>
                   <input type="file" id="fileInput" hidden />
@@ -206,14 +208,14 @@ const Tickets = () => {
       {/* ===================== FILTER MODAL ===================== */}
 {showFilters && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-    <div className="relative w-full max-w-md p-6 rounded-xl shadow-2xl border border-gray-700 bg-black text-white">
+    <div className={`relative w-full max-w-md p-6 rounded-xl shadow-2xl border ${isDarkMode ? 'border-gray-700 bg-black text-white' : 'border-gray-300 bg-white text-black'}`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-yellow-400">
           Filter Tickets
         </h3>
         <button
           onClick={() => setShowFilters(false)}
-          className="text-gray-300 hover:text-white transition"
+          className={`transition ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'}`}
         >
           <X size={20} />
         </button>
@@ -232,7 +234,7 @@ const Tickets = () => {
               onClick={() =>
                 setOpenDropdown(openDropdown === key ? null : key)
               }
-              className="w-full flex justify-between items-center border border-gray-700 bg-gray-900 text-white rounded-md p-2"
+              className={`w-full flex justify-between items-center border border-yellow-500 rounded-md p-2 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}
             >
               <span>{filters[key] || "Select"}</span>
               <ChevronDown
@@ -244,12 +246,12 @@ const Tickets = () => {
             </button>
 
             {openDropdown === key && (
-              <div className="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+              <div className={`absolute z-20 w-full mt-1 border rounded-md shadow-lg max-h-40 overflow-y-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}`}>
                 {options[key].map((opt) => (
                   <div
                     key={opt}
                     onClick={() => handleSelect(key, opt)}
-                    className="p-2 hover:bg-gray-700 cursor-pointer"
+                    className={`p-2 cursor-pointer ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
                   >
                     {opt}
                   </div>

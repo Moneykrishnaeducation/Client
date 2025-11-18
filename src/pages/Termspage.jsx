@@ -13,8 +13,10 @@ import {
   FileText,
   Star,
 } from "lucide-react";
+import { useTheme } from '../context/ThemeContext';
 
 const TermsPage = () => {
+  const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState("benefits");
 
   const benefits = [
@@ -146,19 +148,16 @@ const TermsPage = () => {
     },
   ];
 
-  return (
-    <div className="w-full bg-black min-h-screen text-white pt-8 pb-16 px-6 overflow-y-auto relative">
-      {/* Inline Scrollbar Styles */}
-      <style>{`
+  const scrollbarStyles = isDarkMode ? `
         /* Scrollbar */
         ::-webkit-scrollbar {
           width: 10px;
         }
         ::-webkit-scrollbar-track {
-          background: #111; 
+          background: #111;
         }
         ::-webkit-scrollbar-thumb {
-          background-color: #FFD700; 
+          background-color: #FFD700;
           border-radius: 10px;
           border: 2px solid #111;
         }
@@ -167,7 +166,30 @@ const TermsPage = () => {
           scrollbar-width: thin;
           scrollbar-color: #FFD700 #111;
         }
-      `}</style>
+      ` : `
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+          width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #f0f0f0;
+        }
+        ::-webkit-scrollbar-thumb {
+          background-color: #FFD700;
+          border-radius: 10px;
+          border: 2px solid #f0f0f0;
+        }
+        /* Firefox */
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: #FFD700 #f0f0f0;
+        }
+      `;
+
+  return (
+    <div className={`w-full min-h-screen pt-8 pb-16 px-6 overflow-y-auto relative ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+      {/* Inline Scrollbar Styles */}
+      <style>{scrollbarStyles}</style>
 
       {/* Header */}
       <h1
@@ -210,7 +232,7 @@ const TermsPage = () => {
             {benefits.map((item, i) => (
               <div
                 key={i}
-                className="bg-gradient-to-b from-gray-900 to-black p-6 rounded-xl border border-yellow-500/40 shadow-[0_0_10px_#FFD70040] hover:shadow-[0_0_25px_#FFD700] transition-all duration-500 transform hover:-translate-y-2 hover:scale-105"
+                className={`p-6 rounded-xl border border-yellow-500/40 shadow-[0_0_10px_#FFD70040] hover:shadow-[0_0_25px_#FFD700] transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 ${isDarkMode ? 'bg-gradient-to-b from-gray-900 to-black' : 'bg-gradient-to-b from-gray-100 to-white'}`}
               >
                 <div className="flex items-center gap-4 mb-3">
                   {item.icon}
@@ -218,7 +240,7 @@ const TermsPage = () => {
                     {item.title}
                   </h3>
                 </div>
-                <p className="text-gray-300">{item.content}</p>
+                <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{item.content}</p>
               </div>
             ))}
           </div>
@@ -227,12 +249,12 @@ const TermsPage = () => {
             {policies.map((policy, i) => (
               <div
                 key={i}
-                className="bg-gray-900 p-6 rounded-xl border border-yellow-500/40 hover:border-yellow-500 hover:shadow-[0_0_25px_#FFD700] transition-all duration-500"
+                className={`p-6 rounded-xl border border-yellow-500/40 hover:border-yellow-500 hover:shadow-[0_0_25px_#FFD700] transition-all duration-500 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}
               >
                 <h3 className="text-2xl font-bold text-yellow-400 mb-2">
                   {policy.title}
                 </h3>
-                <div className="text-gray-300 text-sm">{policy.content}</div>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{policy.content}</div>
               </div>
             ))}
           </div>
