@@ -7,6 +7,7 @@ import TradesModal from "./TradesModal";
 import SettingsModal from "./SettingsModal";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { apiCall } from "../utils/api";
 
 export default function TradingAccounts({ showDepositModal, setShowDepositModal }) {
   const { isDarkMode } = useTheme();
@@ -31,6 +32,8 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate()
 
   const closeComponent = () => {
@@ -38,6 +41,37 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
     setTransferMessage("");
   };
 
+  const refreshAccounts = async () => {
+    try {
+      const data = await apiCall('api/user-trading-accounts/');
+      setAccounts(data.accounts || []);
+    } catch (error) {
+      console.error('Failed to refresh accounts:', error);
+    }
+  };
+
+  // Make refreshAccounts available globally for OpenAccount component
+  useEffect(() => {
+    window.refreshAccounts = refreshAccounts;
+    return () => {
+      delete window.refreshAccounts;
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const data = await apiCall('api/user-trading-accounts/');
+        setAccounts(data.accounts || []);
+      } catch (error) {
+        console.error('Failed to fetch accounts:', error);
+        setAccounts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAccounts();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -63,42 +97,6 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
       setToAccount("");
     }, 1000);
   };
-
-  const accounts = [
-    {
-      id: 1,
-      type: "Pro",
-      login: "902165",
-      leverage: "1:100",
-      balance: "1200.50",
-      credit: "0.00",
-      equity: "1180.00",
-      margin: "0.00",
-      freeMargin: "132.0"
-    },
-    {
-      id: 2,
-      type: "Standard",
-      login: "902166",
-      leverage: "1:200",
-      balance: "2540.00",
-      credit: "0.00",
-      equity: "2550.25",
-      margin: "0.00",
-      freeMargin: "311.0"
-    },
-    {
-      id: 3,
-      type: "ECN",
-      login: "902167",
-      leverage: "1:500",
-      balance: "4890.75",
-      credit: "0.00",
-      equity: "4895.00",
-      margin: "0.00",
-      freeMargin: "281.0"
-    },
-  ];
 
   useEffect(() => {
     const fromAcc = accounts.find((acc) => acc.id === fromAccount);
@@ -162,15 +160,15 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
             className="bg-gold w-80 text-black px-4 py-2 rounded hover:bg-white transition"
             onClick={() => navigate("/demoAccounts")}
           >
-            Explore Demo
+            Explore Demoe
           </button>
 
           {/* Conditional rendering for each component */}
-          {activeComponent === "openAccount" && (
+         {activeComponent === "openAccount" && (
             <Modal title="Open Account" onClose={closeComponent}>
               <OpenAccount onClose={closeComponent} />
             </Modal>
-          )}
+          )} 
 
           {/* =======================
            INTERNAL TRANSFER SECTION
