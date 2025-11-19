@@ -218,7 +218,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                       </option>
                       {accounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
-                          {acc.type} (${acc.balance})
+                          {acc.group_alias} (${acc.balance})
                         </option>
                       ))}
                     </select>
@@ -240,7 +240,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                       </option>
                       {accounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
-                          {acc.type} (${acc.balance})
+                          {acc.group_alias} (${acc.balance})
                         </option>
                       ))}
                     </select>
@@ -361,8 +361,8 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                         key={acc.id}
                         className={`border-b ${isDarkMode ? 'border-[#333] hover:bg-[#1a1a1a]' : 'border-gray-300 hover:bg-gray-100'} transition`}
                       >
-                        <td className="p-3">{acc.type}</td>
-                        <td className="p-3">{acc.login}</td>
+                        <td className="p-3">{acc.group_alias}</td>
+                        <td className="p-3">{acc.account_id}</td>
                         <td className="p-3">{acc.leverage}</td>
                         <td className="p-3">${acc.balance}</td>
                         <td className="p-3">${acc.equity}</td>
@@ -377,7 +377,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                             onClick={() => {
                               setShowDepositModal(true);
                               setActiveTab("cheesepay");
-                              setSelectedDepositAccount(acc.login);
+                              setSelectedDepositAccount(acc.account_id);
                             }}
                             className="bg-gold text-black px-3 py-1 rounded hover:bg-white transition"
                           >
@@ -409,8 +409,8 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
 
               <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-6 space-y-4`}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Info label="Account Type" value={selectedAccount.type} isDarkMode={isDarkMode} />
-                  <Info label="Platform Login" value={selectedAccount.login} isDarkMode={isDarkMode} />
+                  <Info label="Account Type" value={selectedAccount.group_alias} isDarkMode={isDarkMode} />
+                  <Info label="Platform Login" value={selectedAccount.account_id} isDarkMode={isDarkMode} />
                   <Info label="Leverage" value={selectedAccount.leverage} isDarkMode={isDarkMode} />
                   <Info label="Balance" value={`$${selectedAccount.balance}`} isDarkMode={isDarkMode} />
                   <Info label="Equity" value={`$${selectedAccount.equity}`} isDarkMode={isDarkMode} />
@@ -423,7 +423,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                     className="bg-gold text-black w-30 px-4 py-2 rounded hover:bg-white transition"
                     onClick={() => {
                       setShowDepositModal(true);
-                      setSelectedDepositAccount(selectedAccount.login);
+                      setSelectedDepositAccount(selectedAccount.account_id);
                     }}
                   >
                     Deposit
