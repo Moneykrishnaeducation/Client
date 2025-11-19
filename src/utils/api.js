@@ -21,8 +21,33 @@ export const getAuthHeaders = () => {
  * - Falls back to a direct redirect to the login page
  */
 export function handleUnauthorized() {
-  // Use the global handler for consistency
-  window.handleUnauthorized();
+  try {
+    // Immediate cleanup
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Trigger cross-tab logout if available
+    if (typeof triggerCrossTabLogout === 'function') {
+      triggerCrossTabLogout();
+    }
+
+    // Call app-defined logout if available
+    if (typeof performLogout === 'function') {
+      performLogout(); // Should handle redirect internally
+    } else {
+      // Force redirect immediately
+      window.location.replace('/');
+    }
+  } catch (error) {
+    console.error('Immediate logout failed:', error);
+    // Always redirect as last resort
+    window.location.replace('/');
+  }
+}
+
+// Define global handler for consistency - ensure it's set immediately
+if (typeof window !== 'undefined') {
+  window.handleUnauthorized = handleUnauthorized;
 }
 
 // Generic API call function with unauthorized handling
@@ -57,7 +82,7 @@ export const apiCall = async (endpoint, options = {}) => {
 
 // Login API call (doesn't need auth header)
 export const loginUser = async (email, password) => {
-  const response = await fetch(`${API_BASE_URL}/login/`, {
+  const response = await fetch(`${API_BASE_URL}login/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
