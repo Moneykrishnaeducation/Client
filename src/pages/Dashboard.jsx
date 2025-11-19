@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { apiCall } from "../utils/api";
 import {
   UserPlus,
   Wallet,
@@ -317,6 +318,7 @@ const Dashboard = () => {
   const { isDarkMode } = useTheme();
   const [activeModal, setActiveModal] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
   const [stats, setStats] = useState({
     live: 0,
     demo: 0,
@@ -330,19 +332,53 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    setTimeout(() => {
-      setStats({
-        live: 2,
-        demo: 3,
-        realBalance: 1560,
-        clients: 5,
-        deposits: 7200,
-        mamFunds: 3000,
-        mamManaged: 5000,
-        ibEarnings: 150,
-        withdrawable: 120,
-      });
-    }, 500);
+    const fetchStats = async () => {
+      try {
+        const data = await apiCall('stats-overview/');
+        setStats({
+          live: data.live_accounts || 0,
+          demo: data.demo_accounts || 0,
+          realBalance: data.real_balance || 0,
+          clients: data.total_clients || 0,
+          deposits: data.total_deposits || 0,
+          mamFunds: data.mam_investments || 0,
+          mamManaged: data.mam_managed_funds || 0,
+          ibEarnings: data.total_earnings || 0, 
+          withdrawable: data.commission_balance || 0,
+        });
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+        // Fallback to mock data if API fails
+        setStats({
+          live: 2,
+          demo: 3,
+          realBalance: 1560,
+          clients: 5,
+          deposits: 7200,
+          mamFunds: 3000,
+          mamManaged: 5000,
+          ibEarnings: 150,
+          withdrawable: 120,
+        });
+      }
+    };
+
+    const fetchRecentTransactions = async () => {
+      try {
+        const data = await apiCall('recent-transactions/');
+        setRecentTransactions(data.transactions || []);
+      } catch (error) {
+        console.error('Failed to fetch recent transactions:', error);
+        // Fallback to mock data if API fails
+        setRecentTransactions([
+          { type: "Deposit", amount: 100.00, date: "2025-11-11T12:38:43" },
+          { type: "Withdraw", amount: -50.50, date: "2025-11-11T12:38:43" }
+        ]);
+      }
+    };
+
+    fetchStats();
+    fetchRecentTransactions();
   }, []);
 
   const openModal = (type) => setActiveModal(type);
@@ -397,7 +433,7 @@ const Dashboard = () => {
           {statItems.map((box, i) => (
             <div
               key={i}
-              className={`rounded-lg p-4 text-center ${isDarkMode ? 'bg-gradient-to-b from-gray-900 to-black' : 'bg-gradient-to-b from-gray-100 to-white'} shadow-md h-[120px] w-full mx-auto hover:shadow-[0_0_12px_rgba(255,215,0,0.5)] transition-all duration-200 flex flex-col items-center justify-center`}
+              className={`rounded-lg p-4 text-center ${isDarkMode ? 'bg-gradient-to-b from-gray-700 to-black' : 'bg-gradient-to-b from-gray-100 to-white'} shadow-md h-[120px] w-full mx-auto hover:shadow-[0_0_12px_rgba(255,215,0,0.5)] transition-all duration-200 flex flex-col items-center justify-center`}
             >
               <box.icon className="w-8 h-8 mb-2 text-yellow-400" />
               <strong className={`block text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{box.label}</strong>
@@ -420,20 +456,25 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} rounded-md shadow-md p-4 space-y-3 text-[15px]`}>
-            {[{ type: "Deposit", color: "text-green-400", amount: "+$100.00" },
-            { type: "Withdraw", color: "text-red-400", amount: "-$50.50" }].map((item, i) => (
-              <div
-                key={i}
-                className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} p-3 rounded-md hover:shadow-[0_0_10px_rgba(255,215,0,0.4)] transition-all duration-200 flex justify-between items-center`}
-              >
-                <p>
-                  <span className="font-bold text-yellow-400">{item.type}:</span>{" "}
-                  <span className={`${item.color}`}>{item.amount}</span> (11/11/2025, 12:38:43 pm)
-                </p>
-                <ArrowRight className="w-4 h-4 text-yellow-400" />
-              </div>
-            ))}
+          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-md shadow-md p-4 space-y-3 text-[15px]`}>
+            {recentTransactions.map((item, i) => {
+              const isDeposit = item.amount > 0;
+              const color = isDeposit ? "text-green-400" : "text-red-400";
+              const amount = isDeposit ? `+$${item.amount}` : `-$${Math.abs(item.amount)}`;
+              const date = new Date(item.date).toLocaleString();
+              return (
+                <div
+                  key={i}
+                  className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} p-3 rounded-md hover:shadow-[0_0_10px_rgba(255,215,0,0.4)] transition-all duration-200 flex justify-between items-center`}
+                >
+                  <p>
+                    <span className="font-bold text-yellow-400">{item.type}:</span>{" "}
+                    <span className={`${color}`}>{amount}</span> ({date})
+                  </p>
+                  <ArrowRight className="w-4 h-4 text-yellow-400" />
+                </div>
+              );
+            })}
           </div>
         </div>
       </main>

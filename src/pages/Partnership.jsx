@@ -11,6 +11,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { apiCall } from '../utils/api';
 
 // Main Tree Component
 const ClientTree = ({ clients, level = 1 }) => {
@@ -31,12 +32,11 @@ const ClientItem = ({ client, level }) => {
   const contentRef = useRef(null);
   const [maxHeight, setMaxHeight] = useState('0px');
   const [selectedAccount, setSelectedAccount] = useState(null);
-const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const toggleExpand = () => setIsExpanded((prev) => !prev);
   const openModal = (e) => {
-    e.stopPropagation(); // Prevent toggling expand when opening modal
+    e.stopPropagation();
     setIsModalOpen(true);
   };
   const closeModal = () => setIsModalOpen(false);
@@ -47,7 +47,7 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     }
   }, [isExpanded]);
 
-  // Example accounts for demonstration
+  // Example accounts
   const accounts = [
     {
       id: "2141713014",
@@ -57,6 +57,7 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
       deposits: "$0.00",
       withdrawals: "$0.00",
       commission: "$0.04",
+      transactions: []
     },
     {
       id: "2141713006",
@@ -65,7 +66,8 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
       lots: 0.04,
       deposits: "$50.00",
       withdrawals: "$0.00",
-      commission: "$0.24",
+      commission: "$0.2",
+      transactions: []
     },
   ];
 
@@ -114,164 +116,77 @@ const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
       </div>
 
       {/* Modal for Accounts */}
-{isModalOpen && (
-  <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-    <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-4xl overflow-auto max-h-[80vh] relative`}>
-      <button
-        className="absolute top-3 right-3 text-yellow-500 font-bold"
-        onClick={closeModal}
-      >
-        ✖
-      </button>
-      <h2 className="text-yellow-300 text-lg font-semibold mb-4">
-        Accounts for {client.username}
-      </h2>
-      <table className="w-full text-yellow-200 border border-yellow-500">
-        <thead>
-          <tr className="border-b border-yellow-500">
-            <th className="px-2 py-1 text-left">Account ID</th>
-            <th className="px-2 py-1 text-left">Type</th>
-            <th className="px-2 py-1 text-left">Group</th>
-            <th className="px-2 py-1 text-left">Total Lots</th>
-            <th className="px-2 py-1 text-left">Total Deposits</th>
-            <th className="px-2 py-1 text-left">Total Withdrawals</th>
-            <th className="px-2 py-1 text-left">Commission Earned</th>
-            <th className="px-2 py-1 text-left">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {accounts.map((acc) => (
-            <tr key={acc.id} className={`border-b border-yellow-500 hover:bg-yellow-500/10 ${isDarkMode ? 'text-white' : 'text-black'}`}>
-              <td className="px-2 py-1">{acc.id}</td>
-              <td className="px-2 py-1">{acc.type}</td>
-              <td className="px-2 py-1">{acc.group}</td>
-              <td className="px-2 py-1">{acc.lots}</td>
-              <td className="px-2 py-1">{acc.deposits}</td>
-              <td className="px-2 py-1">{acc.withdrawals}</td>
-              <td className="px-2 py-1">{acc.commission}</td>
-              <td>
-                <button
-                  className="text-yellow-400 cursor-pointer font-semibold"
-                  onClick={() => {
-                    setSelectedAccount(acc); // Save the account to view
-                    setIsDetailModalOpen(true); // Open nested modal
-                  }}
-                >
-                  View
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
-
-{/* Nested Modal for Account Details */}
-{isDetailModalOpen && selectedAccount && (
-  <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-60">
-    <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-5xl overflow-auto max-h-[80vh] relative 
-                    hover:shadow-2xl transition-shadow duration-300`}>
-      {/* Close Button */}
-      <button
-        className="absolute top-3 right-3 text-yellow-500 font-bold"
-        onClick={() => setIsDetailModalOpen(false)}
-      >
-        ✖
-      </button>
-
-      {/* Modal Title */}
-      <h2 className="text-yellow-300 text-2xl font-bold mb-6 text-center">
-        Details for Account {selectedAccount.id}
-      </h2>
-
-      {/* Input fields and Submit button */}
-      <div className="mb-4">
-        <div className="flex flex-wrap gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Field 1"
-            className={`flex-1 min-w-[120px] px-3 py-2 border border-yellow-500 rounded-lg 
-                 ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} focus:outline-none focus:ring-2 focus:ring-yellow-400 
-                 transition-all duration-200`}
-          />
-          <input
-            type="text"
-            placeholder="Field 2"
-            className="flex-1 min-w-[120px] px-3 py-2 border border-yellow-500 rounded-lg 
-                 bg-black text-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 
-                 transition-all duration-200"
-          />
-          <input
-            type="text"
-            placeholder="Field 3"
-            className="flex-1 min-w-[120px] px-3 py-2 border border-yellow-500 rounded-lg 
-                 bg-black text-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 
-                 transition-all duration-200"
-          />
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
+          <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-4xl overflow-auto max-h-[80vh] relative`}>
+            <button
+              className="absolute top-3 right-3 text-yellow-500 font-bold"
+              onClick={closeModal}
+            >
+              ✖
+            </button>
+            <h2 className="text-yellow-300 text-lg font-semibold mb-4">
+              Accounts for {client.username}
+            </h2>
+            <table className="w-full text-yellow-200 border border-yellow-500">
+              <thead>
+                <tr className="border-b border-yellow-500">
+                  <th className="px-2 py-1 text-left">Account ID</th>
+                  <th className="px-2 py-1 text-left">Type</th>
+                  <th className="px-2 py-1 text-left">Group</th>
+                  <th className="px-2 py-1 text-left">Total Lots</th>
+                  <th className="px-2 py-1 text-left">Total Deposits</th>
+                  <th className="px-2 py-1 text-left">Total Withdrawals</th>
+                  <th className="px-2 py-1 text-left">Commission Earned</th>
+                  <th className="px-2 py-1 text-left">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accounts.map((acc) => (
+                  <tr key={acc.id} className={`border-b border-yellow-500 hover:bg-yellow-500/10 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                    <td className="px-2 py-1">{acc.id}</td>
+                    <td className="px-2 py-1">{acc.type}</td>
+                    <td className="px-2 py-1">{acc.group}</td>
+                    <td className="px-2 py-1">{acc.lots}</td>
+                    <td className="px-2 py-1">{acc.deposits}</td>
+                    <td className="px-2 py-1">{acc.withdrawals}</td>
+                    <td className="px-2 py-1">{acc.commission}</td>
+                    <td>
+                      <button
+                        className="text-yellow-400 cursor-pointer font-semibold"
+                        onClick={() => {
+                          setSelectedAccount(acc);
+                          setIsDetailModalOpen(true);
+                        }}
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <button
-          className={`px-3 py-1 ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} border border-yellow-500 rounded 
-                     hover:bg-yellow-500 hover:text-black hover:shadow-lg transition-all duration-200`}
-        >
-          Submit
-        </button>
-      </div>
+      )}
 
-      {/* Detail table */}
-      <table className= {`w-full  ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} border border-yellow-500`}>
-        <thead>
-          <tr className="border-b border-yellow-500">
-            <th className="px-2 py-1 text-left">Ticket</th>
-            <th className="px-2 py-1 text-left">Symbol</th>
-            <th className="px-2 py-1 text-left">Type</th>
-            <th className="px-2 py-1 text-left">Volume</th>
-            <th className="px-2 py-1 text-left">Open Price</th>
-            <th className="px-2 py-1 text-left">Current Price</th>
-            <th className="px-2 py-1 text-left">SL</th>
-            <th className="px-2 py-1 text-left">TP</th>
-            <th className="px-2 py-1 text-left">Profit</th>
-            <th className="px-2 py-1 text-left">Swap</th>
-            <th className="px-2 py-1 text-left">Open Time</th>
-            <th className="px-2 py-1 text-left">Comment</th>
-          </tr>
-        </thead>
-        <tbody>
-          {selectedAccount.transactions?.length > 0 ? (
-            selectedAccount.transactions.map((tx, index) => (
-              <tr
-                key={index}
-                className="border-b border-yellow-500 hover:bg-yellow-500/10 hover:shadow-md transition-shadow duration-200"
-              >
-                <td className="px-2 py-1">{tx.date}</td>
-                <td className="px-2 py-1">{tx.type}</td>
-                <td className="px-2 py-1">{tx.amount}</td>
-                <td className="px-2 py-1">{tx.balance}</td>
-                <td className="px-2 py-1">{tx.date}</td>
-                <td className="px-2 py-1">{tx.type}</td>
-                <td className="px-2 py-1">{tx.amount}</td>
-                <td className="px-2 py-1">{tx.balance}</td>
-                <td className="px-2 py-1">{tx.date}</td>
-                <td className="px-2 py-1">{tx.type}</td>
-                <td className="px-2 py-1">{tx.amount}</td>
-                <td className="px-2 py-1">{tx.balance}</td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="4" className="text-center py-3 text-gray-400">
-  No transactions found
-</td>
-
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
-
+      {/* Nested Modal for Account Details */}
+      {isDetailModalOpen && selectedAccount && (
+        <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-60">
+          <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-5xl overflow-auto max-h-[80vh]`}>
+            <button
+              className="absolute top-3 right-3 text-yellow-500 font-bold"
+              onClick={() => setIsDetailModalOpen(false)}
+            >
+              ✖
+            </button>
+            <h2 className="text-yellow-300 text-2xl font-bold mb-6 text-center">
+              Details for Account {selectedAccount.id}
+            </h2>
+            <p className="text-center text-yellow-200">No transactions available</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -280,6 +195,33 @@ const App = () => {
   const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [dashboardData, setDashboardData] = useState({
+    totalClients: 0,
+    directClients: 0,
+    totalEarnings: 0,
+    totalWithdrawals: 0,
+    commissionBalance: 0,
+    currentMonthEarnings: 0,
+    currentMonthVolume: 0,
+    totalVolume: 0,
+    referralLink: '',
+    earningsPerClient: [],
+    earningsPerMonth: [],
+  });
+  const [referralLink, setReferralLink] = useState('');
+  const [commissionData, setCommissionData] = useState([]);
+  const [tradingAccounts, setTradingAccounts] = useState([]);
+  const [withdrawalData, setWithdrawalData] = useState([]);
+  const [withdrawalLoading, setWithdrawalLoading] = useState(false);
+  const [withdrawalError, setWithdrawalError] = useState("");
+  const [selectedAccount, setSelectedAccount] = useState("");
+  const [amount, setAmount] = useState("");
+  const [comment, setComment] = useState("");
+  const [filter, setFilter] = useState("pending");
+  const [loading, setLoading] = useState(true);
+  const [commissionLoading, setCommissionLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [commissionError, setCommissionError] = useState("");
 
   const tabs = [
     { name: 'Dashboard', icon: <LayoutDashboard size={16} /> },
@@ -287,24 +229,6 @@ const App = () => {
     { name: 'Commission', icon: <CreditCard size={16} /> },
     { name: 'Withdraw', icon: <DollarSign size={16} /> },
   ];
-
-   	const withdrawData = [
-    { date: '2025-11-01', user: 'John Doe', type: 'Bank', amount: '$500', status: 'Pending' },
-    { date: '2025-11-02', user: 'Jane Smith', type: 'Paypal', amount: '$200', status: 'Completed' },
-    { date: '2025-11-03', user: 'Sarah Lee', type: 'Bank', amount: '$300', status: 'Pending' },
-  ];
-
-  const dashboardData = {
-    totalClients: 1,
-    directClients: 1,
-    totalEarnings: 0.24,
-    totalWithdrawals: 0.0,
-    commissionBalance: 0.24,
-    currentMonthEarnings: 0.0,
-    currentMonthVolume: 0.0,
-    totalVolume: 0.04,
-    referralLink: 'https://client.vtindex.com/register?ref=7SI1WOUI',
-  };
 
   const clientData = [
     {
@@ -339,16 +263,131 @@ const App = () => {
     },
   ];
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const data = await apiCall("/ib/stats/");
+        console.log("Dashboard data:", data);
+        setDashboardData({
+          totalClients: data.total_clients,
+          directClients: data.direct_clients,
+          totalEarnings: data.total_earnings,
+          totalWithdrawals: data.total_withdrawals,
+          commissionBalance: data.commission_balance,
+          currentMonthEarnings: data.current_month_earnings,
+          currentMonthVolume: data.current_month_volume_traded,
+          totalVolume: data.total_volume_traded,
+          referralLink: data.referralLink,
+          earningsPerClient: data.earnings_per_client,
+          earningsPerMonth: data.earnings_per_month,
+        });
+      } catch (err) {
+        console.error("Failed to fetch dashboard:", err);
+        setError(err.message || "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchReferralLink = async () => {
+      try {
+        const data = await apiCall("client/api/ib/referral-link/");
+        console.log("Referral link data:", data);
+        setReferralLink(data.referral_link || data.link || data.url || data);
+      } catch (err) {
+        console.error("Failed to fetch referral link:", err);
+      }
+    };
+
+    fetchDashboardData();
+    fetchReferralLink();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'Commission') {
+      const fetchCommissionData = async () => {
+        setCommissionLoading(true);
+        setCommissionError("");
+        try {
+          const data = await apiCall("client/ib/commission-transactions/");
+          console.log("Commission data:", data);
+          setCommissionData(data);
+        } catch (err) {
+          console.error("Failed to fetch commission data:", err);
+          setCommissionError(err.message || "An error occurred");
+        } finally {
+          setCommissionLoading(false);
+        }
+      };
+
+      fetchCommissionData();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'Withdraw') {
+      const fetchWithdrawalData = async () => {
+        setWithdrawalLoading(true);
+        setWithdrawalError("");
+        try {
+          const data = await apiCall("client/ib/transactions/");
+          console.log("Withdrawal data:", data);
+          setWithdrawalData(data);
+        } catch (err) {
+          console.error("Failed to fetch withdrawal data:", err);
+          setWithdrawalError(err.message || "An error occurred");
+        } finally {
+          setWithdrawalLoading(false);
+        }
+      };
+
+      const fetchTradingAccounts = async () => {
+        try {
+          const data = await apiCall("client/api/user-trading-accounts/");
+          console.log("Trading accounts:", data);
+          setTradingAccounts(data);
+        } catch (err) {
+          console.error("Failed to fetch trading accounts:", err);
+        }
+      };
+
+      fetchWithdrawalData();
+      fetchTradingAccounts();
+    }
+  }, [activeTab]);
+
+  const handleWithdrawalSubmit = async () => {
+    if (!selectedAccount || !amount) {
+      alert("Please select an account and enter an amount.");
+      return;
+    }
+    try {
+      const response = await apiCall("client/ib/transactions/", {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: parseFloat(amount),
+          account_id: selectedAccount,
+          comment: comment || "",
+        }),
+      });
+      console.log("Withdrawal request submitted:", response);
+      alert("Withdrawal request submitted successfully.");
+      setAmount("");
+      setComment("");
+      setSelectedAccount("");
+      // Optionally refetch data
+      const data = await apiCall("client/ib/transactions/");
+      setWithdrawalData(data);
+    } catch (err) {
+      console.error("Failed to submit withdrawal:", err);
+      alert("Failed to submit withdrawal: " + (err.message || "An error occurred"));
+    }
+  };
+
+
+
   return (
     <div className={`p-6 ${isDarkMode ? 'bg-black text-gray-100' : 'bg-white text-gray-900'}`}>
-      {/* Inline Scrollbar Styles */}
-      <style>{`
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: ${isDarkMode ? '#111' : '#f0f0f0'}; }
-        ::-webkit-scrollbar-thumb { background-color: #FFD700; border-radius: 10px; border: 2px solid ${isDarkMode ? '#111' : '#f0f0f0'}; }
-        * { scrollbar-width: thin; scrollbar-color: #FFD700 ${isDarkMode ? '#111' : '#f0f0f0'}; }
-      `}</style>
-
       {/* Tabs */}
       <div className="flex flex-col sm:flex-row items-center sm:justify-center gap-4 mb-8 w-full max-w-md mx-auto">
         {tabs.map((tab) => (
@@ -367,66 +406,86 @@ const App = () => {
         ))}
       </div>
 
-      {/* Dashboard Tab */}
+
+
+
 {activeTab === "Dashboard" && (
   <>
-    {/* Top Metrics Grid */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      {[
-        { label: "Total Clients", value: dashboardData.totalClients },
-        { label: "Direct Clients", value: dashboardData.directClients },
-        { label: "Total Earnings", value: dashboardData.totalEarnings },
-        { label: "Total Withdrawals", value: dashboardData.totalWithdrawals },
-        { label: "Commission Balance", value: dashboardData.commissionBalance },
-        { label: "Current Month Earnings", value: dashboardData.currentMonthEarnings },
-        { label: "Current Month Volume Traded (Lots)", value: dashboardData.currentMonthVolume },
-        { label: "Total Volume Traded (Lots)", value: dashboardData.totalVolume },
-      ].map((item, index) => (
-        <div
-          key={index}
-          className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-lg border border-yellow-500 flex flex-col items-center justify-center text-center
-                     transition-all transform hover:scale-105 hover:shadow-[0_0_15px_#FFD700]`}
-        >
-          <h3 className="text-yellow-400 font-semibold mb-1 text-sm">{item.label}</h3>
-          <p className="text-xl font-bold">{item.value}</p>
+    {loading && <p>Loading...</p>}
+    {error && <p className="text-red-500">{error}</p>}
+    {!loading && !error && (
+      <>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {[
+            { label: "Total Clients", value: dashboardData.totalClients },
+            { label: "Direct Clients", value: dashboardData.directClients },
+            { label: "Total Earnings", value: dashboardData.totalEarnings },
+            { label: "Total Withdrawals", value: dashboardData.totalWithdrawals },
+            { label: "Commission Balance", value: dashboardData.commissionBalance },
+            { label: "Current Month Earnings", value: dashboardData.currentMonthEarnings },
+            { label: "Current Month Volume Traded (Lots)", value: dashboardData.currentMonthVolume },
+            { label: "Total Volume Traded (Lots)", value: dashboardData.totalVolume },
+          ].map((item, index) => (
+            <div
+              key={index}
+              className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-lg border border-yellow-500 flex flex-col items-center justify-center text-center`}
+            >
+              <h3 className="text-yellow-400 font-semibold mb-1 text-sm">{item.label}</h3>
+              <p className="text-xl font-bold">{item.value}</p>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
 
-    {/* Commission Earnings Cards */}
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-  <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center
-                 transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]`}>
-    <h3 className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold mb-1 text-sm`}>Monthly Commission Earnings</h3>
-    <p className="text-xl font-bold text-yellow-300">--</p>
-  </div>
-  <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center
-                 transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]`}>
-    <h3 className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold mb-1 text-sm`}>Commission Earnings Per Client</h3>
-    <p className="text-yellow-300 text-xs mb-2">Top 10 clients by commission earnings</p>
-    <p className="text-xl font-bold text-yellow-300">--</p>
-  </div>
-</div>
+        {/* Commission Earnings Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+          <div
+            className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]`}
+          >
+            <h3 className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold mb-1 text-sm`}>
+              Monthly Commission Earnings
+            </h3>
+            <p className="text-xl font-bold text-yellow-300">--</p>
+          </div>
+          <div
+            className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]`}
+          >
+            <h3 className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold mb-1 text-sm`}>
+              Commission Earnings Per Client
+            </h3>
+            <p className="text-yellow-300 text-xs mb-2">Top 10 clients by commission earnings</p>
+            <p className="text-xl font-bold text-yellow-300">--</p>
+          </div>
+        </div>
 
-
-    {/* Referral Link */}
-<div className="mt-6 flex flex-col items-center gap-2 text-center border-2 border-yellow-500 rounded-lg p-3">
-  <span className="text-yellow-400 font-semibold text-sm">Referral Link:</span>
-  <div className="flex items-center gap-2">
-    <span className="text-cyan-400 text-sm break-all">{dashboardData.referralLink}</span>
-    <button
-      onClick={() => navigator.clipboard.writeText(dashboardData.referralLink)}
-      className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-semibold hover:bg-yellow-400"
-    >
-      📋 Copy
-    </button>
-  </div>
-</div>
+        {/* Referral Link */}
+        <div className="mt-6 flex flex-col items-center gap-2 text-center border-2 border-yellow-500 rounded-lg p-3">
+          <span className="text-yellow-400 font-semibold text-sm">Referral Link:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-cyan-400 text-sm break-all">{referralLink || dashboardData.referralLink}</span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => navigator.clipboard.writeText(referralLink || dashboardData.referralLink)}
+                className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-semibold hover:bg-yellow-400"
+              >
+                📋 Copy
+              </button>
+              <button
+                onClick={() => window.open(referralLink || dashboardData.referralLink, '_blank')}
+                className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-semibold hover:bg-yellow-400"
+              >
+                🔗 Open
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
   </>
 )}
 
 
-      {/* Client Tab */}
+ {/* Client Tab */}
 {activeTab === 'Client' && (
   <>
     {/* Search + Action Buttons */}
@@ -456,7 +515,8 @@ const App = () => {
       </div>
     </div>
 
-    {/* Client Tab */}
+
+      {/* Client Tab */}
       {activeTab === 'Client' && (
         <>
           <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-2 rounded-md border-yellow-500 shadow-md hover:shadow-[0_4px_15px_rgba(255,215,0,0.4)] transition-shadow duration-300`}>
@@ -470,7 +530,7 @@ const App = () => {
         {/* Per Page */}
         <div className="flex items-center gap-2">
           <label className="text-yellow-400 text-sm font-semibold">Per Page:</label>
-          <select className="bg-black text-yellow-300 border border-yellow-500 rounded-md px-2 py-1 focus:outline-none">
+          <select className={`${isDarkMode ? 'bg-black' : 'bg-white'} text-yellow-300 border border-yellow-500 rounded-md px-2 py-1 focus:outline-none`}>
             <option>10</option>
             <option>20</option>
             <option>50</option>
@@ -587,23 +647,34 @@ const App = () => {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { id: 1, positionId: 'P001', dealTicket: 'D001', client: 'Client A', account: 'ACC1', symbol: 'EURUSD', volume: '1.0', pl: '$50', commission: '$5', closeTime: '2025-11-01 14:00', created: '2025-11-01 14:05' },
-                  { id: 2, positionId: 'P002', dealTicket: 'D002', client: 'Client B', account: 'ACC2', symbol: 'GBPUSD', volume: '2.0', pl: '$120', commission: '$12', closeTime: '2025-11-02 15:30', created: '2025-11-02 15:35' },
-                  { id: 3, positionId: 'P003', dealTicket: 'D003', client: 'Client C', account: 'ACC3', symbol: 'USDJPY', volume: '0.5', pl: '$25', commission: '$2.5', closeTime: '2025-11-03 12:20', created: '2025-11-03 12:25' },
-                ].map((row, index) => (
+                {commissionLoading && (
+                  <tr>
+                    <td colSpan="11" className="px-4 py-2 text-center">Loading...</td>
+                  </tr>
+                )}
+                {commissionError && (
+                  <tr>
+                    <td colSpan="11" className="px-4 py-2 text-center text-red-500">{commissionError}</td>
+                  </tr>
+                )}
+                {!commissionLoading && !commissionError && commissionData.length === 0 && (
+                  <tr>
+                    <td colSpan="11" className="px-4 py-2 text-center">No data found</td>
+                  </tr>
+                )}
+                {!commissionLoading && !commissionError && commissionData.map((row, index) => (
                   <tr key={index} className="border-b border-gray-700">
                     <td className="px-4 py-2">{index + 1}</td>
-                    <td className="px-4 py-2">{row.positionId}</td>
-                    <td className="px-4 py-2">{row.dealTicket}</td>
+                    <td className="px-4 py-2">{row.position_id}</td>
+                    <td className="px-4 py-2">{row.deal_ticket}</td>
                     <td className="px-4 py-2">{row.client}</td>
-                    <td className="px-4 py-2">{row.account}</td>
+                    <td className="px-4 py-2">{row.trading_account}</td>
                     <td className="px-4 py-2">{row.symbol}</td>
                     <td className="px-4 py-2">{row.volume}</td>
                     <td className="px-4 py-2">{row.pl}</td>
-                    <td className="px-4 py-2">{row.commission}</td>
-                    <td className="px-4 py-2">{row.closeTime}</td>
-                    <td className="px-4 py-2">{row.created}</td>
+                    <td className="px-4 py-2">{row.commission_to_ib}</td>
+                    <td className="px-4 py-2">{row.mt5_close_time}</td>
+                    <td className="px-4 py-2">{row.commission_created}</td>
                   </tr>
                 ))}
               </tbody>
@@ -630,7 +701,7 @@ const App = () => {
           }}
         />
       </h2>
-      <p className="text-3xl font-extrabold text-white">$1,250.00</p>
+      <p className="text-3xl font-extrabold text-white">${dashboardData.commissionBalance}</p>
 
       <style>
         {`
@@ -642,38 +713,70 @@ const App = () => {
       </style>
     </div>
 
- {/* Trading Account Select + Amount */}
-<div className="flex flex-col sm:flex-row items-center w-full gap-4 sm:gap-0 justify-between">
-  {/* Left: Select */}
-  <div className="w-full sm:w-1/3">
-    <select className={` ${isDarkMode ? 'bg-black text-yellow-300 hover:bg-gray-900' : 'bg-white text-black hover:bg-gray-100'} p-3 rounded-md border border-yellow-500 w-full transition-colors`}>
-      <option value="">Select Trading Account</option>
-      <option value="acc1">Account 1</option>
-      <option value="acc2">Account 2</option>
-      <option value="acc3">Account 3</option>
-    </select>
+ {/* Trading Account Select + Amount + Comment */}
+<div className="flex flex-col gap-4">
+  <div className="flex flex-col sm:flex-row items-center w-full gap-4 sm:gap-0 justify-between">
+    {/* Left: Select */}
+    <div className="w-full sm:w-1/3">
+      <select
+        value={selectedAccount}
+        onChange={(e) => setSelectedAccount(e.target.value)}
+        className={` ${isDarkMode ? 'bg-black text-yellow-300 hover:bg-gray-900' : 'bg-white text-black hover:bg-gray-100'} p-3 rounded-md border border-yellow-500 w-full transition-colors`}
+      >
+        <option value="">Select Trading Account</option>
+        {Array.isArray(tradingAccounts) && tradingAccounts.length > 0 ? (
+          tradingAccounts.map((acc) => (
+            <option key={acc.account_id} value={acc.account_id}>{acc.account_id}</option>
+          ))
+        ) : (
+          <option disabled>No accounts found</option>
+        )}
+      </select>
+    </div>
+
+    {/* Right: Input + Button */}
+    <div className="flex gap-2 w-full sm:w-1/3 items-stretch ml-auto">
+      <input
+        type="number"
+        placeholder="Amount"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        className={`flex-1 ${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} p-3 rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
+      />
+      <button
+        onClick={handleWithdrawalSubmit}
+        className="bg-yellow-500 text-black px-4 py-2 text-sm rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all"
+      >
+        Submit
+      </button>
+    </div>
   </div>
 
-  {/* Right: Input + Button */}
-  <div className="flex gap-2 w-full sm:w-1/3 items-stretch ml-auto">
+  {/* Comment Input */}
+  <div className="w-full">
     <input
-      type="number"
-      placeholder="Amount"
-      className={`flex-1 ${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} p-3 rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
+      type="text"
+      placeholder="Comment (optional)"
+      value={comment}
+      onChange={(e) => setComment(e.target.value)}
+      className={`w-full ${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} p-3 rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
     />
-    <button className="bg-yellow-500 text-black px-4 py-2 text-sm rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all">
-      Submit
-    </button>
   </div>
 </div>
 
 
     {/* Pending / History Buttons */}
     <div className="flex flex-wrap justify-center gap-4">
-      <button className={`px-5 py-2 rounded-md font-semibold shadow text-black bg-yellow-300 hover:${isDarkMode ? 'bg-black ' : 'bg-white '} hover:text-yellow-300 hover:border transition-all shadow-md hover:shadow-lg`}>
+      <button
+        onClick={() => setFilter("pending")}
+        className={`px-5 py-2 rounded-md font-semibold shadow text-black ${filter === "pending" ? 'bg-yellow-500' : 'bg-yellow-300'} hover:bg-yellow-400 transition-all shadow-md hover:shadow-lg`}
+      >
         Pending
       </button>
-      <button className={`px-5 py-2 rounded-md font-semibold shadow text-black bg-yellow-300 hover:${isDarkMode ? 'bg-black ' : 'bg-white '} hover:text-yellow-300 hover:border transition-all shadow-md hover:shadow-lg`}>
+      <button
+        onClick={() => setFilter("history")}
+        className={`px-5 py-2 rounded-md font-semibold shadow text-black ${filter === "history" ? 'bg-yellow-500' : 'bg-yellow-300'} hover:bg-yellow-400 transition-all shadow-md hover:shadow-lg`}
+      >
         History
       </button>
     </div>
@@ -689,16 +792,35 @@ const App = () => {
           </tr>
         </thead>
         <tbody>
-          {withdrawData.map((row, index) => (
-            <tr key={index} className="border-b border-gray-700">
-              <td className="px-4 py-2 text-center">{index + 1}</td>
-              <td className="px-4 py-2 text-center">{row.date}</td>
-              <td className="px-4 py-2 text-center">{row.user}</td>
-              <td className="px-4 py-2 text-center">{row.type}</td>
-              <td className="px-4 py-2 text-center">{row.amount}</td>
-              <td className="px-4 py-2 text-center">{row.status}</td>
+          {withdrawalLoading && (
+            <tr>
+              <td colSpan="6" className="px-4 py-2 text-center">Loading...</td>
             </tr>
-          ))}
+          )}
+          {withdrawalError && (
+            <tr>
+              <td colSpan="6" className="px-4 py-2 text-center text-red-500">{withdrawalError}</td>
+            </tr>
+          )}
+          {!withdrawalLoading && !withdrawalError && (() => {
+            const filteredData = filter === "pending" ? withdrawalData.filter(row => row.status === "pending") : withdrawalData;
+            return filteredData.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="px-4 py-2 text-center">No data found</td>
+              </tr>
+            ) : (
+              filteredData.map((row, index) => (
+                <tr key={index} className="border-b border-gray-700">
+                  <td className="px-4 py-2 text-center">{index + 1}</td>
+                  <td className="px-4 py-2 text-center">{new Date(row.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-2 text-center">{row.trading_account || row.account_id}</td>
+                  <td className="px-4 py-2 text-center">{row.source}</td>
+                  <td className="px-4 py-2 text-center">{row.amount}</td>
+                  <td className="px-4 py-2 text-center">{row.status}</td>
+                </tr>
+              ))
+            );
+          })()}
         </tbody>
       </table>
     </div>

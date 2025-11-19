@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "../context/ThemeContext";
 
@@ -23,10 +23,14 @@ import Login from "../pages/Login";
 const AppRoutes = () => {
   const location = useLocation();
 
+  // Store current page in localStorage for all tabs
+  useEffect(() => {
+    localStorage.setItem('current_page', location.pathname);
+  }, [location.pathname]);
+
   const hideLayout = location.pathname === "/"; // hide navbar & main on login
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showDepositModal, setShowDepositModal] = useState(false);
 
   return (
     <div className="w-screen flex">

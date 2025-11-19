@@ -7,6 +7,7 @@ import TradesModal from "./TradesModal";
 import SettingsModal from "./SettingsModal";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { apiCall } from "../utils/api";
 
 export default function TradingAccounts({ showDepositModal, setShowDepositModal }) {
   const { isDarkMode } = useTheme();
@@ -31,6 +32,8 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate()
 
   const closeComponent = () => {
@@ -38,8 +41,39 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
     setTransferMessage("");
   };
 
+  const refreshAccounts = async () => {
+    try {
+      const data = await apiCall('api/user-trading-accounts/');
+      setAccounts(data.accounts || []);
+    } catch (error) {
+      console.error('Failed to refresh accounts:', error);
+    }
+  };
 
-  const handleSubmit = (e) => {
+  // Make refreshAccounts available globally for OpenAccount component
+  useEffect(() => {
+    window.refreshAccounts = refreshAccounts;
+    return () => {
+      delete window.refreshAccounts;
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const data = await apiCall('api/user-trading-accounts/');
+        setAccounts(data.accounts || []);
+      } catch (error) {
+        console.error('Failed to fetch accounts:', error);
+        setAccounts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAccounts();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -55,50 +89,25 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
       return;
     }
 
-    setTimeout(() => {
+    try {
+      const response = await apiCall('/internal-transfer', 'POST', {
+        from_account: fromAccount,
+        to_account: toAccount,
+        amount: parseFloat(amount)
+      });
       setTransferMessage("Transfer successful ✅");
-      setIsSubmitting(false);
+      // Refresh accounts after successful transfer
+      await refreshAccounts();
       setAmount("");
       setFromAccount("");
       setToAccount("");
-    }, 1000);
+    } catch (error) {
+      console.error('Transfer failed:', error);
+      setTransferMessage("Transfer failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  const accounts = [
-    {
-      id: 1,
-      type: "Pro",
-      login: "902165",
-      leverage: "1:100",
-      balance: "1200.50",
-      credit: "0.00",
-      equity: "1180.00",
-      margin: "0.00",
-      freeMargin: "132.0"
-    },
-    {
-      id: 2,
-      type: "Standard",
-      login: "902166",
-      leverage: "1:200",
-      balance: "2540.00",
-      credit: "0.00",
-      equity: "2550.25",
-      margin: "0.00",
-      freeMargin: "311.0"
-    },
-    {
-      id: 3,
-      type: "ECN",
-      login: "902167",
-      leverage: "1:500",
-      balance: "4890.75",
-      credit: "0.00",
-      equity: "4895.00",
-      margin: "0.00",
-      freeMargin: "281.0"
-    },
-  ];
 
   useEffect(() => {
     const fromAcc = accounts.find((acc) => acc.id === fromAccount);
@@ -166,11 +175,11 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
           </button>
 
           {/* Conditional rendering for each component */}
-          {activeComponent === "openAccount" && (
+         {activeComponent === "openAccount" && (
             <Modal title="Open Account" onClose={closeComponent}>
               <OpenAccount onClose={closeComponent} />
             </Modal>
-          )}
+          )} 
 
           {/* =======================
            INTERNAL TRANSFER SECTION
@@ -311,11 +320,15 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Balance</p>
-                <p className="text-2xl font-bold text-gold">$8,631.25</p>
+                <p className="text-2xl font-bold text-gold">
+                  ${accounts.reduce((total, acc) => total + (parseFloat(acc.balance) || 0), 0).toFixed(2)}
+                </p>
               </div>
               <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Equity</p>
-                <p className="text-2xl font-bold text-gold">$8,625.25</p>
+                <p className="text-2xl font-bold text-gold">
+                  ${accounts.reduce((total, acc) => total + (parseFloat(acc.equity) || 0), 0).toFixed(2)}
+                </p>
               </div>
               <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Accounts</p>
