@@ -289,7 +289,7 @@ export default function DemoAccountsPage() {
         </button>
 
         <button
-          onClick={() => navigate("/tradingAccounts")}
+          onClick={() => navigate("/tradingAccounts/")}
           className="bg-gradient-to-b from-yellow-400 to-yellow-600 text-black font-semibold px-5 py-2 rounded-md shadow-md hover:opacity-90 transition"
         >
           Go Live Account

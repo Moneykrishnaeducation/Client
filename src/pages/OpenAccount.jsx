@@ -45,19 +45,20 @@ function OpenAccount({ onClose }) {
 
   useEffect(() => {
     const fetchOptions = async () => {
-      try {
-        // Fetch user info
-        const userData = await apiCall('user-info/');
-        setUserInfo(userData || {});
+      // try {
+      //   // Fetch user info
+      //   const userData = await apiCall('user-info/');
+      //   setUserInfo(userData || {});
 
-        // Fetch groups
-        const groupData = await apiCall('api/trading-groups/?type=real');
-        setGroups(groupData.groups || []);
-      } catch (error) {
-        console.error('Failed to fetch options:', error);
-        // Fallback to static data
-        setGroups(["Standard", "Pro", "ECN", "VIP"]);
-      }
+      //   // Fetch groups
+      //   const groupData = await apiCall('api/trading-groups/?type=real');
+      //   setGroups(groupData.groups || []);
+      // } catch (error) {
+      //   console.error('Failed to fetch options:', error);
+      //   // Fallback to static data
+      //   setGroups(["Standard", "Pro", "ECN", "VIP"]);
+      // }
+      setGroups(["Standard", "Pro", "ECN", "VIP"]);
       // Always set static leverages
       setLeverages([1, 2, 5, 10, 20, 50, 100, 200]);
     };

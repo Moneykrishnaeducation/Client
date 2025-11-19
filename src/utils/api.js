@@ -21,23 +21,8 @@ export const getAuthHeaders = () => {
  * - Falls back to a direct redirect to the login page
  */
 export function handleUnauthorized() {
-  try {
-    // Immediate cleanup
-    localStorage.clear();
-    sessionStorage.clear();
-
-    // Call app-defined logout if available
-    if (typeof performLogout === 'function') {
-      performLogout(); // Should handle redirect internally
-    } else {
-      // Force redirect immediately
-      window.location.replace('/');
-    }
-  } catch (error) {
-    console.error('Immediate logout failed:', error);
-    // Always redirect as last resort
-    window.location.replace('/');
-  }
+  // Use the global handler for consistency
+  window.handleUnauthorized();
 }
 
 // Generic API call function with unauthorized handling

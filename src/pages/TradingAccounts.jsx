@@ -73,7 +73,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
     fetchAccounts();
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -89,13 +89,24 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
       return;
     }
 
-    setTimeout(() => {
+    try {
+      const response = await apiCall('/internal-transfer', 'POST', {
+        from_account: fromAccount,
+        to_account: toAccount,
+        amount: parseFloat(amount)
+      });
       setTransferMessage("Transfer successful ✅");
-      setIsSubmitting(false);
+      // Refresh accounts after successful transfer
+      await refreshAccounts();
       setAmount("");
       setFromAccount("");
       setToAccount("");
-    }, 1000);
+    } catch (error) {
+      console.error('Transfer failed:', error);
+      setTransferMessage("Transfer failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -160,7 +171,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
             className="bg-gold w-80 text-black px-4 py-2 rounded hover:bg-white transition"
             onClick={() => navigate("/demoAccounts")}
           >
-            Explore Demoe
+            Explore Demo
           </button>
 
           {/* Conditional rendering for each component */}
@@ -309,11 +320,15 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Balance</p>
-                <p className="text-2xl font-bold text-gold">$8,631.25</p>
+                <p className="text-2xl font-bold text-gold">
+                  ${accounts.reduce((total, acc) => total + (parseFloat(acc.balance) || 0), 0).toFixed(2)}
+                </p>
               </div>
               <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Equity</p>
-                <p className="text-2xl font-bold text-gold">$8,625.25</p>
+                <p className="text-2xl font-bold text-gold">
+                  ${accounts.reduce((total, acc) => total + (parseFloat(acc.equity) || 0), 0).toFixed(2)}
+                </p>
               </div>
               <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-4 text-center`}>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total Accounts</p>
