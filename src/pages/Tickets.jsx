@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, X, Plus, ChevronDown } from "lucide-react";
 import { useTheme } from '../context/ThemeContext';
+import { apiCall } from '../utils/api';
 
 const Tickets = () => {
   const { isDarkMode } = useTheme();
   const [activePage, setActivePage] = useState("view");
   const [userId, setUserId] = useState("");
+  const [tickets, setTickets] = useState({ open: [], closed: [], pending: [] });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     status: "",
@@ -13,6 +17,7 @@ const Tickets = () => {
     dateRange: "",
   });
   const [openDropdown, setOpenDropdown] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const uid =
@@ -20,17 +25,69 @@ const Tickets = () => {
       localStorage.getItem("username") ||
       "";
     setUserId(uid);
+    fetchTickets();
   }, []);
+
+  const fetchTickets = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await apiCall('api/tickets/');
+      setTickets(data);
+    } catch (err) {
+      setError("Failed to fetch tickets. Please try again.");
+      console.error("Error fetching tickets:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const applyFilters = () => {
     console.log("Applied Filters:", filters);
     setShowFilters(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Ticket submitted successfully!");
-    setActivePage("view");
+    const formData = new FormData(e.target);
+    const subject = formData.get('subject');
+    const description = formData.get('description');
+    const files = formData.getAll('documents');
+
+    try {
+      const ticketData = {
+        subject,
+        description,
+      };
+
+      // If there are files, include them in FormData
+      if (files.length > 0) {
+        const formDataWithFiles = new FormData();
+        formDataWithFiles.append('subject', subject);
+        formDataWithFiles.append('description', description);
+        files.forEach(file => {
+          formDataWithFiles.append('documents', file);
+        });
+
+        await apiCall('api/tickets/', {
+          method: 'POST',
+          body: formDataWithFiles,
+          headers: {} // Let browser set content-type for FormData
+        });
+      } else {
+        await apiCall('api/tickets/', {
+          method: 'POST',
+          body: JSON.stringify(ticketData),
+        });
+      }
+
+      alert("Ticket submitted successfully!");
+      setActivePage("view");
+      fetchTickets(); // Refresh tickets list
+    } catch (err) {
+      alert("Failed to create ticket. Please try again.");
+      console.error("Error creating ticket:", err);
+    }
   };
 
   const options = {
@@ -111,14 +168,83 @@ const Tickets = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td
-                    colSpan="7"
-                    className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
-                  >
-                    No tickets found.
-                  </td>
-                </tr>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
+                    >
+                      Loading tickets...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className={`text-center py-4 text-red-500 whitespace-nowrap`}
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : (
+                  <>
+                    {tickets.open.map((ticket) => (
+                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                        <td className="p-2 border border-yellow-600">
+                          <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">Open</span>
+                        </td>
+                        <td className="p-2 border border-yellow-600">
+                          <button className="text-yellow-400 hover:text-yellow-500">View</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {tickets.pending.map((ticket) => (
+                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                        <td className="p-2 border border-yellow-600">
+                          <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Pending</span>
+                        </td>
+                        <td className="p-2 border border-yellow-600">
+                          <button className="text-yellow-400 hover:text-yellow-500">View</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {tickets.closed.map((ticket) => (
+                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                        <td className="p-2 border border-yellow-600">
+                          <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">Closed</span>
+                        </td>
+                        <td className="p-2 border border-yellow-600">
+                          <button className="text-yellow-400 hover:text-yellow-500">View</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {tickets.open.length === 0 && tickets.pending.length === 0 && tickets.closed.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan="7"
+                          className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
+                        >
+                          No tickets found.
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                )}
               </tbody>
             </table>
           </div>
@@ -156,6 +282,7 @@ const Tickets = () => {
                   Subject <span className="text-red-500">*</span>
                 </label>
                 <input
+                  name="subject"
                   type="text"
                   placeholder="Enter ticket subject"
                   required
@@ -180,7 +307,7 @@ const Tickets = () => {
                 </label>
                 <div
                   className={`border-2 border-dashed rounded-lg text-center py-6 cursor-pointer transition-all duration-200 ${isDarkMode ? 'border-gray-700 hover:border-yellow-400 hover:bg-gray-900' : 'border-gray-300 hover:border-yellow-400 hover:bg-gray-100'}`}
-                  onClick={() => document.getElementById("fileInput").click()}
+                  onClick={() => fileInputRef.current.click()}
                 >
                   <p className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                     📎 Click to attach file
@@ -188,7 +315,7 @@ const Tickets = () => {
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     Accepted: JPG, JPEG, PDF (Max: 1MB)
                   </p>
-                  <input type="file" id="fileInput" hidden />
+                  <input type="file" name="documents" ref={fileInputRef} hidden multiple />
                 </div>
               </div>
 
