@@ -3,9 +3,11 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"; // adjust path if needed
 import { useTheme } from "../context/ThemeContext";
 import { ModalWrapper } from "./Dashboard";
 import { apiCall } from "../utils/api";
+import { useToast } from "../hooks/useToast";
 
 function OpenAccount({ onClose }) {
   const { isDarkMode } = useTheme();
+  const { toasts, addToast, removeToast } = useToast();
   const generatePassword = (length = 8) => {
     const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const lowercase = "abcdefghijklmnopqrstuvwxyz";
@@ -91,7 +93,12 @@ function OpenAccount({ onClose }) {
       });
 
       if (data.success) {
-        alert(`✅ Account created successfully!\nAccount ID: ${data.account.account_id}\nMaster Password: ${data.account.master_password}\nInvestor Password: ${data.account.investor_password}\n\n📧 An email with your login details has been sent.`);
+        addToast({
+          title: "Account Created Successfully!",
+          description: `Account ID: ${data.account.account_id}\nMaster Password: ${data.account.master_password}\nInvestor Password: ${data.account.investor_password}\n\n📧 An email with your login details has been sent.`,
+          type: "success",
+          duration: 10000
+        });
         onClose();
         // Refresh accounts list after successful creation
         if (window.refreshAccounts) {
@@ -102,7 +109,12 @@ function OpenAccount({ onClose }) {
       }
     } catch (error) {
       console.error('Error creating account:', error);
-      alert(`❌ Failed to create account: ${error.message}`);
+      addToast({
+        title: "Failed to Create Account",
+        description: error.message,
+        type: "error",
+        duration: 5000
+      });
     } finally {
       setLoading(false);
     }
