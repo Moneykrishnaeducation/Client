@@ -15,6 +15,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { apiCall } from '../utils/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { CSVLink } from 'react-csv';
 
 // Main Tree Component
 const ClientTree = ({ clients, level = 1 }) => {
@@ -294,6 +295,24 @@ const App = () => {
   const [perPage, setPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [totalClients, setTotalClients] = useState(0);
+  // Pagination for Commission
+  const [commissionCurrentPage, setCommissionCurrentPage] = useState(1);
+  const [commissionPerPage, setCommissionPerPage] = useState(20);
+  const [commissionTotalPages, setCommissionTotalPages] = useState(1);
+  const [commissionTotalItems, setCommissionTotalItems] = useState(0);
+  const [commissionSearchQuery, setCommissionSearchQuery] = useState("");
+
+
+  // Add User Form State
+  const [addUserForm, setAddUserForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    dob: '',
+    country: '',
+  });
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserError, setAddUserError] = useState('');
 
   const tabs = [
     { name: 'Dashboard', icon: <LayoutDashboard size={16} /> },
@@ -359,9 +378,16 @@ const App = () => {
         setCommissionLoading(true);
         setCommissionError("");
         try {
-          const data = await apiCall("client/ib/commission-transactions/");
-          console.log("Commission data:", data);
-          setCommissionData(data);
+          const params = new URLSearchParams({
+            page: commissionCurrentPage,
+            per_page: commissionPerPage,
+            ...(commissionSearchQuery && { q: commissionSearchQuery }),
+          });
+        const data = await apiCall(`client/ib/commission-transactions/?${params}`);
+        console.log("Commission data:", data);
+        setCommissionData(data.results || data);
+        setCommissionTotalPages(data.pagination?.total_pages || 1);
+        setCommissionTotalItems(data.pagination?.total || 0);
         } catch (err) {
           console.error("Failed to fetch commission data:", err);
           setCommissionError(err.message || "An error occurred");
@@ -372,7 +398,7 @@ const App = () => {
 
       fetchCommissionData();
     }
-  }, [activeTab]);
+  }, [activeTab, commissionCurrentPage, commissionPerPage, commissionSearchQuery]);
 
   useEffect(() => {
     if (activeTab === 'Withdraw') {
@@ -460,6 +486,64 @@ const App = () => {
       console.error("Failed to submit withdrawal:", err);
       alert("Failed to submit withdrawal: " + (err.message || "An error occurred"));
     }
+  };
+
+  const handleAddUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!addUserForm.name || !addUserForm.email || !addUserForm.phone || !addUserForm.country) {
+      setAddUserError("Please fill in all required fields.");
+      return;
+    }
+    setAddUserLoading(true);
+    setAddUserError("");
+    try {
+      const response = await apiCall("client/ib/add-client/", {
+        method: 'POST',
+        body: JSON.stringify(addUserForm),
+      });
+      console.log("Add user response:", response);
+      alert("User added successfully!");
+      setAddUserForm({ name: '', email: '', phone: '', country: '' });
+      setShowAddUserForm(false);
+      // Optionally refetch client data
+      const params = new URLSearchParams({
+        page: currentPage,
+        per_page: perPage,
+        ...(searchQuery && { q: searchQuery }),
+      });
+      const data = await apiCall(`client/ib/client-tree/?${params}`);
+      setClientData(data.clients || []);
+      setTotalPages(data.pagination?.total_pages || 1);
+      setTotalClients(data.pagination?.total || 0);
+    } catch (err) {
+      console.error("Failed to add user:", err);
+      setAddUserError(err.message || "An error occurred while adding the user.");
+    } finally {
+      setAddUserLoading(false);
+    }
+  };
+
+  const handleDownloadClients = () => {
+    // Flatten the client tree into a CSV-friendly format
+    const flattenClients = (clients, level = 1) => {
+      let flat = [];
+      clients.forEach(client => {
+        flat.push({
+          Level: level,
+          Name: client.name,
+          Email: client.email,
+          Phone: client.phone,
+          Accounts: client.accounts ? client.accounts.length : 0,
+        });
+        if (client.clients && client.clients.length > 0) {
+          flat = flat.concat(flattenClients(client.clients, level + 1));
+        }
+      });
+      return flat;
+    };
+
+    const csvData = flattenClients(clientData);
+    return csvData;
   };
 
 
@@ -575,7 +659,7 @@ const App = () => {
 
  {/* Client Tab */}
 {activeTab === 'Client' && (
-  <>
+  <div>
     {/* Search + Action Buttons */}
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 w-full">
       {/* Left: Search */}
@@ -592,9 +676,11 @@ const App = () => {
 
       {/* Right: Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-        <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
-          <DownloadCloud size={16} /> Download
-        </button>
+        <CSVLink data={handleDownloadClients()} filename={"clients.csv"}>
+          <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
+            <DownloadCloud size={16} /> Download
+          </button>
+        </CSVLink>
 
         <button
           className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full sm:w-auto"
@@ -666,28 +752,41 @@ const App = () => {
           </button>
 
           <h3 className="text-yellow-400 font-semibold mb-4 text-lg">Add New User</h3>
-          <form className="flex flex-col gap-3">
+          {addUserError && <p className="text-red-500 mb-4">{addUserError}</p>}
+          <form onSubmit={handleAddUserSubmit} className="flex flex-col gap-3">
             <input
               type="text"
               placeholder="Name"
-              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
+              value={addUserForm.name}
+              onChange={(e) => setAddUserForm({ ...addUserForm, name: e.target.value })}
+              className="px-3 py-2 rounded-md border border-yellow-500 focus:outline-none"
             />
             <input
               type="email"
               placeholder="Email"
-              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
+              value={addUserForm.email}
+              onChange={(e) => setAddUserForm({ ...addUserForm, email: e.target.value })}
+              className="px-3 py-2 rounded-md border border-yellow-500 focus:outline-none"
             />
             <input
               type="text"
               placeholder="Phone"
-              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
+              value={addUserForm.phone}
+              onChange={(e) => setAddUserForm({ ...addUserForm, phone: e.target.value })}
+              className="px-3 py-2 rounded-md border border-yellow-500 focus:outline-none"
             />
             <input
               type="date"
               placeholder="DOB"
-              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
+              value={addUserForm.dob}
+              onChange={(e) => setAddUserForm({ ...addUserForm, dob: e.target.value })}
+              className="px-3 py-2 rounded-md border border-yellow-500 focus:outline-none"
             />
-            <select className={`px-3 py-2 rounded-md border border-yellow-500 focus:outline-none ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}`}>
+            <select
+              value={addUserForm.country}
+              onChange={(e) => setAddUserForm({ ...addUserForm, country: e.target.value })}
+              className={`px-3 py-2 rounded-md border border-yellow-500 focus:outline-none ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}`}
+            >
               <option value="">Select Country</option>
               <option value="US">United States</option>
               <option value="UK">United Kingdom</option>
@@ -696,22 +795,23 @@ const App = () => {
             </select>
             <button
               type="submit"
-              className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition"
+              disabled={addUserLoading}
+              className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition disabled:opacity-50"
             >
-              Submit
+              {addUserLoading ? 'Submitting...' : 'Submit'}
             </button>
           </form>
         </div>
       </div>
     )}
-  </>
+  </div>
 )}
 
     
 
       {/* Commission Tab */}
       {activeTab === 'Commission' && (
-        <div className={`${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}rounded-xl shadow-2xl border-yellow-500 p-2 space-y-4 transition-shadow`}>
+        <div className={`${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} rounded-xl shadow-2xl border-yellow-500 p-2 space-y-4 transition-shadow`}>
           {/* Top Controls */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
   <div className={`flex items-center gap-2 ${isDarkMode ? 'bg-black' : 'bg-white'} border border-yellow-500 rounded-md px-3 py-2 w-auto max-w-[400px] sm:w-1/2`}>
@@ -719,6 +819,8 @@ const App = () => {
     <input
       type="text"
       placeholder="Search..."
+      value={commissionSearchQuery}
+      onChange={(e) => setCommissionSearchQuery(e.target.value)}
       className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} placeholder-yellow-400 focus:outline-none w-[120px] sm:w-full`}
     />
   </div>
@@ -769,20 +871,56 @@ const App = () => {
                     <td className="px-4 py-2">{index + 1}</td>
                     <td className="px-4 py-2">{row.position_id}</td>
                     <td className="px-4 py-2">{row.deal_ticket}</td>
-                    <td className="px-4 py-2">{row.client}</td>
-                    <td className="px-4 py-2">{row.trading_account}</td>
-                    <td className="px-4 py-2">{row.symbol}</td>
+                    <td className="px-4 py-2">{row.client_user}</td>
+                    <td className="px-4 py-2">{row.client_trading_account}</td>
+                    <td className="px-4 py-2">{row.position_symbol}</td>
                     <td className="px-4 py-2">{row.volume}</td>
-                    <td className="px-4 py-2">{row.pl}</td>
-                    <td className="px-4 py-2">{row.commission_to_ib}</td>
+                    <td className="px-4 py-2">{row.profit}</td>
+                    <td className="px-4 py-2">{row.amount}</td>
                     <td className="px-4 py-2">{row.mt5_close_time}</td>
-                    <td className="px-4 py-2">{row.commission_created}</td>
+                    <td className="px-4 py-2">{row.created_at}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            
+
 </div>
+
+</div>
+
+          {/* Pagination for Commission */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4 w-full">
+            {/* Per Page */}
+            <div className="flex items-center gap-2">
+              <label className="text-yellow-400 text-sm font-semibold">Per Page:</label>
+              <select
+                value={commissionPerPage}
+                onChange={(e) => setCommissionPerPage(Number(e.target.value))}
+                className={`${isDarkMode ? 'bg-black' : 'bg-white'} text-yellow-300 border border-yellow-500 rounded-md px-2 py-1 focus:outline-none`}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCommissionCurrentPage(Math.max(1, commissionCurrentPage - 1))}
+                className="flex items-center justify-center bg-yellow-500 text-black px-2 py-1 rounded-md hover:bg-yellow-400 shadow-md transition-all"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="text-yellow-300 font-semibold text-sm">Page {commissionCurrentPage} of {commissionTotalPages} ({commissionTotalItems} items)</span>
+              <button
+                onClick={() => setCommissionCurrentPage(Math.min(commissionTotalPages, commissionCurrentPage + 1))}
+                className="flex items-center justify-center bg-yellow-500 text-black px-2 py-1 rounded-md hover:bg-yellow-400 shadow-md transition-all"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -929,11 +1067,9 @@ const App = () => {
   </div>
 )}
 
-      
-
-
     </div>
   );
+
 };
 
 export default App;
