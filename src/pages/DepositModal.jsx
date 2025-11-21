@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Copy } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
+import { sharedUtils } from "../utils/shared-utils";
 
 export default function DepositModal({
   showDepositModal,
@@ -13,8 +15,18 @@ export default function DepositModal({
   setCurrency,
   convertedAmount,
   selectedDepositAccount,
+  usdtAmount,
+  setUsdtAmount,
 }) {
   const { isDarkMode } = useTheme();
+  const [proofFile, setProofFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [usdInrRate, setUsdInrRate] = useState(null);
+  const [loadingRate, setLoadingRate] = useState(false);
+  const [usdtProof, setUsdtProof] = useState(null);
+  const [isSubmittingUsdt, setIsSubmittingUsdt] = useState(false);
+  const [isSubmittingCheesePay, setIsSubmittingCheesePay] = useState(false);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText("TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs");
@@ -23,6 +35,80 @@ export default function DepositModal({
       console.error("Failed to copy: ", err);
     }
   };
+
+  const fetchUsdInrRate = async () => {
+    setLoadingRate(true);
+    try {
+      const response = await fetch("http://client.localhost:8000/get-usd-inr-rate/");
+      const data = await response.json();
+      setUsdInrRate(data.rate);
+      console.log(data.rate)
+    } catch (error) {
+      console.error("Failed to fetch USD to INR rate:", error);
+      // Fallback rate if API fails
+      setUsdInrRate(88.6855);
+    } finally {
+      setLoadingRate(false);
+    }
+  };
+
+  const handleManualDepositSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedDepositAccount || !cheeseAmount || !proofFile) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('mam_id', selectedDepositAccount);
+      // Convert amount to USD before posting
+      const usdAmount = currency === "INR" ? parseFloat(cheeseAmount) / usdInrRate : parseFloat(cheeseAmount);
+      formData.append('amount', usdAmount.toFixed(2));
+      formData.append('proof', proofFile);
+
+      const url = `manual-deposit/`.startsWith('http') ? `manual-deposit/` : `${API_BASE_URL}manual-deposit/`;
+      const headers = { ...getAuthHeaders() };
+      delete headers['Content-Type']; // Remove for multipart
+      const csrfToken = getCookie('csrftoken');
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+      }
+      const config = {
+        method: 'POST',
+        headers,
+        body: formData,
+        credentials: 'include'
+      };
+
+      const response = await fetch(url, config);
+      if (response.status === 401 || response.status === 403) {
+        handleUnauthorized();
+        throw new Error('Unauthorized access');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      await response.json(); // Assuming it returns JSON, but not used here
+
+      alert("Manual deposit request submitted successfully!");
+      setShowDepositModal(false);
+      setCheeseAmount("");
+      setProofFile(null);
+    } catch (error) {
+      console.error('Failed to submit manual deposit:', error);
+      alert("Failed to submit deposit request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  React.useEffect(() => {
+    if (showDepositModal) {
+      fetchUsdInrRate();
+    }
+  }, [showDepositModal]);
+
   return (
     <>
       {showDepositModal && (
@@ -79,7 +165,60 @@ export default function DepositModal({
             <div className={`${isDarkMode ? 'text-white' : 'text-black'} space-y-5`}>
               {/* CheesePay Section */}
               {activeTab === "cheesepay" && (
-                <form className="space-y-4">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!selectedDepositAccount || !cheeseAmount) {
+                      sharedUtils.showToast("Please fill in all required fields.", "error");
+                      return;
+                    }
+
+                    setIsSubmittingCheesePay(true);
+                    try {
+                      const amount_usd = currency === "INR" ? (parseFloat(cheeseAmount) / usdInrRate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
+                      const amount_inr = currency === "USD" ? (parseFloat(cheeseAmount) * usdInrRate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
+
+                      const url = `cheesepay-initiate/`.startsWith('http') ? `cheesepay-initiate/` : `${API_BASE_URL}cheesepay-initiate/`;
+                      const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+                      const csrfToken = getCookie('csrftoken');
+                      if (csrfToken) {
+                        headers['X-CSRFToken'] = csrfToken;
+                      }
+                      const config = {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                          account_id: selectedDepositAccount,
+                          amount_usd,
+                          amount_inr
+                        }),
+                        credentials: 'include'
+                      };
+
+                      const response = await fetch(url, config);
+                      if (response.status === 401 || response.status === 403) {
+                        handleUnauthorized();
+                        throw new Error('Unauthorized access');
+                      }
+                      if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                      }
+                      const data = await response.json();
+
+                      if (data.success && data.payment_url) {
+                        window.location.href = data.payment_url;
+                      } else {
+                        throw new Error(data.error || 'Failed to initiate CheesePay payment');
+                      }
+                    } catch (error) {
+                      console.error('Failed to initiate CheesePay deposit:', error);
+                      sharedUtils.showToast("Failed to initiate CheesePay payment. Please try again.", "error");
+                    } finally {
+                      setIsSubmittingCheesePay(false);
+                    }
+                  }}
+                  className="space-y-4"
+                >
                   {/* Currency Selection (Styled Radios) */}
                   <div className="flex gap-6 justify-center">
                     {["USD", "INR"].map((curr) => (
@@ -104,28 +243,40 @@ export default function DepositModal({
                     ))}
                   </div>
 
+                  {loadingRate && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                      <p className={`${isDarkMode ? 'text-yellow-300' : 'text-yellow-800'} text-sm`}>
+                        ⚠️ Exchange rate not available. Please wait while we fetch the exchange rate to use CheesePay.
+                      </p>
+                    </div>
+                  )}
+
                   <div>
+                    <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
+                      {currency === "USD" ? "USD Amount (USD)" : "INR Amount (₹)"}
+                    </label>
                     <input
                       type="number"
                       placeholder="Enter amount"
                       value={cheeseAmount}
                       onChange={(e) => setCheeseAmount(e.target.value)}
+                      required
                       className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
                     />
                   </div>
 
-                  {convertedAmount && (
+                  {cheeseAmount && usdInrRate && (
                     <div>
                       <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
-                        {currency === "USD" ? "Converted (INR)" : "Converted (USD)"}
+                        {currency === "INR" ? "Converted (USD)" : "Converted (INR)"}
                       </label>
                       <input
                         type="text"
                         readOnly
                         value={
                           currency === "USD"
-                            ? `₹ ${convertedAmount}`
-                            : `$ ${convertedAmount}`
+                            ? `₹ ${(parseFloat(cheeseAmount) * usdInrRate).toFixed(2)}`
+                            : `$ ${(parseFloat(cheeseAmount) / usdInrRate).toFixed(2)}`
                         }
                         placeholder="Auto converted amount"
                         className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700]/60 rounded-lg cursor-not-allowed`}
@@ -135,16 +286,17 @@ export default function DepositModal({
 
                   <button
                     type="submit"
-                    className="w-full bg-[#FFD700] text-black font-semibold py-3 rounded-lg hover:bg-white transition-all"
+                    disabled={isSubmittingCheesePay}
+                    className={`w-full ${isSubmittingCheesePay ? 'bg-gray-500' : 'bg-[#FFD700]'} text-black font-semibold py-3 rounded-lg hover:bg-white transition-all ${isSubmittingCheesePay ? 'cursor-not-allowed' : ''}`}
                   >
-                    Confirm & Proceed
+                    {isSubmittingCheesePay ? "Processing..." : "Confirm & Proceed"}
                   </button>
                 </form>
               )}
 
               {/* Manual Deposit Section */}
               {activeTab === "manual" && (
-                <form className="space-y-4">
+                <form onSubmit={handleManualDepositSubmit} className="space-y-4">
                   <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-700'} text-center`}>
                     Contact <span className="text-[#FFD700]">Support</span> for Bank
                     Details.
@@ -179,22 +331,23 @@ export default function DepositModal({
                       placeholder="Enter amount"
                       value={cheeseAmount}
                       onChange={(e) => setCheeseAmount(e.target.value)}
+                      required
                       className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
                     />
                   </div>
 
-                  {convertedAmount && (
+                  {cheeseAmount && usdInrRate && (
                     <div>
                       <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
-                        {currency === "USD" ? "Converted (INR)" : "Converted (USD)"}
+                        {currency === "INR" ? "Converted (USD)" : "Converted (INR)"}
                       </label>
                       <input
                         type="text"
                         readOnly
                         value={
                           currency === "USD"
-                            ? `₹ ${convertedAmount}`
-                            : `$ ${convertedAmount}`
+                            ? `₹ ${(parseFloat(cheeseAmount) * usdInrRate).toFixed(2)}`
+                            : `$ ${(parseFloat(cheeseAmount) / usdInrRate).toFixed(2)}`
                         }
                         placeholder="Auto converted amount"
                         className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700]/60 rounded-lg cursor-not-allowed`}
@@ -202,23 +355,83 @@ export default function DepositModal({
                     </div>
                   )}
 
-                  <input
-                    type="file"
-                    className={`w-full ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition`}
-                  />
+                  <div>
+                    <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
+                      Upload Proof of Payment *
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => setProofFile(e.target.files[0])}
+                      required
+                      className={`w-full ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition`}
+                    />
+                  </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-[#FFD700] text-black font-semibold py-3 rounded-lg hover:bg-white transition-all"
+                    disabled={isSubmitting}
+                    className={`w-full ${isSubmitting ? 'bg-gray-500' : 'bg-[#FFD700]'} text-black font-semibold py-3 rounded-lg hover:bg-white transition-all ${isSubmitting ? 'cursor-not-allowed' : ''}`}
                   >
-                    Submit
+                    {isSubmitting ? "Submitting..." : "Submit Manual Deposit"}
                   </button>
                 </form>
               )}
 
               {/* USDT Section */}
               {activeTab === "usdt" && (
-                <form className="space-y-4">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!selectedDepositAccount || !usdtAmount || !usdtProof) {
+                      sharedUtils.showToast("Please fill in all required fields.", "error");
+                      return;
+                    }
+
+                    setIsSubmittingUsdt(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('mam_id', selectedDepositAccount);
+                      formData.append('amount', usdtAmount);
+                      formData.append('proof', usdtProof);
+
+                      const url = `usdt-deposit/`.startsWith('http') ? `usdt-deposit/` : `${API_BASE_URL}usdt-deposit/`;
+                      const headers = { ...getAuthHeaders() };
+                      delete headers['Content-Type']; // Remove for multipart
+                      const csrfToken = getCookie('csrftoken');
+                      if (csrfToken) {
+                        headers['X-CSRFToken'] = csrfToken;
+                      }
+                      const config = {
+                        method: 'POST',
+                        headers,
+                        body: formData,
+                        credentials: 'include'
+                      };
+
+                      const response = await fetch(url, config);
+                      if (response.status === 401 || response.status === 403) {
+                        handleUnauthorized();
+                        throw new Error('Unauthorized access');
+                      }
+                      if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                      }
+                      await response.json(); // Assuming it returns JSON, but not used here
+
+                      sharedUtils.showToast("USDT deposit request submitted successfully!", "success");
+                      setShowDepositModal(false);
+                      setUsdtAmount("");
+                      setUsdtProof(null);
+                    } catch (error) {
+                      console.error('Failed to submit USDT deposit:', error);
+                      sharedUtils.showToast("Failed to submit USDT deposit request. Please try again.", "error");
+                    } finally {
+                      setIsSubmittingUsdt(false);
+                    }
+                  }}
+                  className="space-y-4"
+                >
                   <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Send <span className="text-[#FFD700]">USDT (TRC20)</span> to this
                     address:
@@ -237,20 +450,31 @@ export default function DepositModal({
                   <input
                     type="number"
                     placeholder="Enter USDT amount"
-                    className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg`}
+                    value={usdtAmount}
+                    onChange={(e) => setUsdtAmount(e.target.value)}
+                    required
+                    className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
                   />
 
-                  <input
-                    type="file"
-                    required
-                    className={`w-full ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition`}
-                  />
+                  <div>
+                    <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
+                      Upload Proof of Payment *
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => setUsdtProof(e.target.files[0])}
+                      required
+                      className={`w-full ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} file:mr-2 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-[#FFD700] file:text-black hover:file:bg-white transition`}
+                    />
+                  </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-[#FFD700] text-black font-semibold py-3 rounded-lg hover:bg-white transition-all"
+                    disabled={isSubmittingUsdt}
+                    className={`w-full ${isSubmittingUsdt ? 'bg-gray-500' : 'bg-[#FFD700]'} text-black font-semibold py-3 rounded-lg hover:bg-white transition-all ${isSubmittingUsdt ? 'cursor-not-allowed' : ''}`}
                   >
-                    Submit USDT Deposit
+                    {isSubmittingUsdt ? "Submitting..." : "Submit USDT Deposit"}
                   </button>
                 </form>
               )}

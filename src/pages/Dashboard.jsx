@@ -52,10 +52,14 @@ const DepositModal = ({ onClose, showToast }) => {
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [rate, setRate] = useState(83.25);
+  const [loadingRate, setLoadingRate] = useState(true);
   const [proof, setProof] = useState(null);
   const [usdtAmount, setUsdtAmount] = useState("");
   const [usdtProof, setUsdtProof] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isSubmittingCheesePay, setIsSubmittingCheesePay] = useState(false);
+
+  const fallbackAccounts = [];
 
   // Fetch user trading accounts
   useEffect(() => {
@@ -84,7 +88,7 @@ const DepositModal = ({ onClose, showToast }) => {
           setSelectedDepositAccount(fallbackAccounts[0].id);
         }
       } finally {
-        setLoadingAccounts(false);  
+        setLoadingAccounts(false);
       }
     };
 
@@ -97,9 +101,11 @@ const DepositModal = ({ onClose, showToast }) => {
       try {
         const data = await apiCall('get-usd-inr-rate/');
         setRate(data.rate || 83.25);
+        setLoadingRate(false);
       } catch (error) {
         console.error('Failed to fetch USD-INR rate:', error);
         setRate(83.25); // fallback
+        setLoadingRate(false);
       }
     };
 
@@ -137,17 +143,16 @@ const DepositModal = ({ onClose, showToast }) => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-3 px-5 font-semibold text-sm uppercase tracking-wide transition-all duration-300 ${
-              activeTab === tab
+            className={`pb-3 px-5 font-semibold text-sm uppercase tracking-wide transition-all duration-300 ${activeTab === tab
                 ? "text-[#FFD700] border-b-2 border-[#FFD700]"
                 : isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-black"
-            }`}
+              }`}
           >
             {tab === "cheesepay"
               ? "CheesePay"
               : tab === "manual"
-              ? "Manual Deposit"
-              : "USDT (TRC20)"}
+                ? "Manual Deposit"
+                : "USDT (TRC20)"}
           </button>
         ))}
       </div>
@@ -173,69 +178,130 @@ const DepositModal = ({ onClose, showToast }) => {
 
       {/* ---------------- Tab Content ---------------- */}
       {activeTab === "cheesepay" && (
-        <form className="space-y-4">
-          {/* Currency Selection */}
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!selectedDepositAccount || !cheeseAmount) {
+              sharedUtils.showToast("Please fill in all required fields.", "error");
+              return;
+            }
+
+            setIsSubmittingCheesePay(true);
+            try {
+              const amount_usd = currency === "INR" ? (parseFloat(cheeseAmount) / rate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
+              const amount_inr = currency === "USD" ? (parseFloat(cheeseAmount) * rate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
+
+              const url = `cheesepay-initiate/`.startsWith('http') ? `cheesepay-initiate/` : `${API_BASE_URL}cheesepay-initiate/`;
+              const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+              const csrfToken = getCookie('csrftoken');
+              if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+              }
+              const config = {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  account_id: selectedDepositAccount,
+                  amount_usd,
+                  amount_inr
+                }),
+                credentials: 'include'
+              };
+
+              const response = await fetch(url, config);
+              if (response.status === 401 || response.status === 403) {
+                handleUnauthorized();
+                throw new Error('Unauthorized access');
+              }
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              }
+              const data = await response.json();
+
+              if (data.success && data.payment_url) {
+                window.location.href = data.payment_url;
+              } else {
+                throw new Error(data.error || 'Failed to initiate CheesePay payment');
+              }
+            } catch (error) {
+              console.error('Failed to initiate CheesePay deposit:', error);
+              sharedUtils.showToast("Failed to initiate CheesePay payment. Please try again.", "error");
+            } finally {
+              setIsSubmittingCheesePay(false);
+            }
+          }}
+          className="space-y-4"
+        >
+          {/* Currency Selection (Styled Radios) */}
           <div className="flex gap-6 justify-center">
             {["USD", "INR"].map((curr) => (
               <label
                 key={curr}
-                className={`flex items-center gap-2 cursor-pointer select-none ${
-                  currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
+                className={`flex items-center gap-2 cursor-pointer select-none ${currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
               >
                 <input
                   type="radio"
-                  name="currency"
+                  name="cp-currency"
                   value={curr}
                   checked={currency === curr}
                   onChange={(e) => setCurrency(e.target.value)}
                   className="appearance-none w-5 h-5 border-2 border-[#FFD700] rounded-full
-                    checked:bg-[#FFD700] transition-all duration-200
-                    focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50"
+                   checked:bg-[#FFD700] checked:border-[#FFD700] transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50"
                 />
                 <span className="font-medium">{curr}</span>
               </label>
             ))}
           </div>
 
-          {/* Amount */}
-          <input
-            type="number"
-            placeholder="Enter amount"
-            value={cheeseAmount}
-            onChange={(e) => setCheeseAmount(e.target.value)}
-            className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
-          />
+          {loadingRate && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <p className={`${isDarkMode ? 'text-yellow-300' : 'text-yellow-800'} text-sm`}>
+                ⚠️ Exchange rate not available. Please wait while we fetch the exchange rate to use CheesePay.
+              </p>
+            </div>
+          )}
 
-          {/* Converted */}
-          {convertedAmount && (
+          <div>
+            <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
+              {currency === "USD" ? "USD Amount (USD)" : "INR Amount (₹)"}
+            </label>
+            <input
+              type="number"
+              placeholder="Enter amount"
+              value={cheeseAmount}
+              onChange={(e) => setCheeseAmount(e.target.value)}
+              required
+              className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#FFD700] outline-none transition`}
+            />
+          </div>
+
+          {cheeseAmount && rate && (
             <div>
               <label className={`block text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'} mb-1`}>
-                {currency === "USD"
-                  ? "Converted (INR)"
-                  : "Converted (USD)"}
+                {currency === "INR" ? "Converted (USD)" : "Converted (INR)"}
               </label>
               <input
                 type="text"
                 readOnly
                 value={
                   currency === "USD"
-                    ? `₹ ${convertedAmount}`
-                    : `$ ${convertedAmount}`
+                    ? `₹ ${(parseFloat(cheeseAmount) * rate).toFixed(2)}`
+                    : `$ ${(parseFloat(cheeseAmount) / rate).toFixed(2)}`
                 }
+                placeholder="Auto converted amount"
                 className={`w-full p-3 ${isDarkMode ? 'bg-[#1a1a1a] text-gray-300' : 'bg-gray-100 text-gray-900'} border border-[#FFD700]/60 rounded-lg cursor-not-allowed`}
               />
-              <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'} mt-1`}>
-                Conversion rate: 1 USD = {rate} INR
-              </p>
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full bg-[#FFD700] text-black font-semibold py-3 rounded-lg hover:bg-white transition-all"
+            disabled={isSubmittingCheesePay}
+            className={`w-full ${isSubmittingCheesePay ? 'bg-gray-500' : 'bg-[#FFD700]'} text-black font-semibold py-3 rounded-lg hover:bg-white transition-all ${isSubmittingCheesePay ? 'cursor-not-allowed' : ''}`}
           >
-            Confirm & Proceed
+            {isSubmittingCheesePay ? "Processing..." : "Confirm & Proceed"}
           </button>
         </form>
       )}
@@ -303,9 +369,8 @@ const DepositModal = ({ onClose, showToast }) => {
             {["USD", "INR"].map((curr) => (
               <label
                 key={curr}
-                className={`flex items-center gap-2 cursor-pointer select-none ${
-                  currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
+                className={`flex items-center gap-2 cursor-pointer select-none ${currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
               >
                 <input
                   type="radio"
@@ -374,7 +439,7 @@ const DepositModal = ({ onClose, showToast }) => {
           onSubmit={async (e) => {
             e.preventDefault();
             if (!selectedDepositAccount || !usdtAmount || !usdtProof) {
-              showToast("Please fill all required fields.", "error");
+              showToast("Please fill in all required fields.", "error");
               return;
             }
             setSubmitting(true);
@@ -383,7 +448,31 @@ const DepositModal = ({ onClose, showToast }) => {
               formData.append('mam_id', selectedDepositAccount);
               formData.append('amount', usdtAmount);
               formData.append('proof', usdtProof);
-              await apiCall('usdt-deposit/', 'POST', formData, true);
+
+              const url = `usdt-deposit/`.startsWith('http') ? `usdt-deposit/` : `${API_BASE_URL}usdt-deposit/`;
+              const headers = { ...getAuthHeaders() };
+              delete headers['Content-Type']; // Remove for multipart
+              const csrfToken = getCookie('csrftoken');
+              if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+              }
+              const config = {
+                method: 'POST',
+                headers,
+                body: formData,
+                credentials: 'include'
+              };
+
+              const response = await fetch(url, config);
+              if (response.status === 401 || response.status === 403) {
+                handleUnauthorized();
+                throw new Error('Unauthorized access');
+              }
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              }
+              await response.json(); // Assuming it returns JSON, but not used here
+
               showToast("USDT deposit request submitted successfully!", "success");
               setUsdtAmount("");
               setUsdtProof(null);
@@ -441,7 +530,7 @@ const DepositModal = ({ onClose, showToast }) => {
 
 /* --------------------- Withdraw & Open Account --------------------- */
 const WithdrawModal = ({ onClose }) => {
-  return <Withdraw onClose={onClose}/>
+  return <Withdraw onClose={onClose} />
 };
 
 /* --------------------- Open Account Modal --------------------- */
@@ -598,7 +687,7 @@ const Dashboard = () => {
           ))}
         </div>
 
-         {/* Recent Activity */}
+        {/* Recent Activity */}
         <div className="mt-4 pl-2 w-full mx-auto">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-lg font-semibold text-yellow-400">Recent Activity</h3>
@@ -643,15 +732,14 @@ const Dashboard = () => {
         {notifications.map((notification) => (
           <div
             key={notification.id}
-            className={`flex items-center gap-3 p-4 rounded-lg shadow-lg ${isDarkMode ? 'text-white' : 'text-black'} transition-all duration-300 ${
-              notification.type === 'success'
+            className={`flex items-center gap-3 p-4 rounded-lg shadow-lg ${isDarkMode ? 'text-white' : 'text-black'} transition-all duration-300 ${notification.type === 'success'
                 ? 'bg-green-600'
                 : notification.type === 'error'
-                ? 'bg-red-600'
-                : notification.type === 'warning'
-                ? 'bg-yellow-600'
-                : 'bg-blue-600'
-            }`}
+                  ? 'bg-red-600'
+                  : notification.type === 'warning'
+                    ? 'bg-yellow-600'
+                    : 'bg-blue-600'
+              }`}
           >
             {notification.type === 'success' && <CheckCircle className="w-5 h-5" />}
             {notification.type === 'error' && <X className="w-5 h-5" />}
