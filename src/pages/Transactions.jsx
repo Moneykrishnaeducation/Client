@@ -6,26 +6,20 @@ import { apiCall } from "../utils/api";
 const Transactions = () => {
   const { isDarkMode } = useTheme();
 
-  const [typeFilter, setTypeFilter] = useState("All Types");
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [dateRange, setDateRange] = useState("All Dates");
-
-  const [isTypeOpen, setIsTypeOpen] = useState(false);
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const [isDateOpen, setIsDateOpen] = useState(false);
-
-  const [isMobile, setIsMobile] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("Pending");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [transactions, setTransactions] = useState([]);
+  const [pendingTransactions, setPendingTransactions] = useState([]);
+  const [tradingAccounts, setTradingAccounts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery]);
 
   useEffect(() => {
     console.log('Transactions component mounted, fetching data...');
@@ -53,7 +47,7 @@ const Transactions = () => {
     const fetchPendingTransactions = async () => {
       try {
         const data = await apiCall('pending-transactions/');
-        // Handle pending transactions if needed
+        setPendingTransactions(data);
         console.log('Pending transactions:', data);
       } catch (err) {
         console.error('Failed to fetch pending transactions:', err);
@@ -63,7 +57,7 @@ const Transactions = () => {
     const fetchUserTradingAccounts = async () => {
       try {
         const data = await apiCall('user-trading-accounts/');
-        // Handle trading accounts if needed
+        setTradingAccounts(data.accounts || []);
         console.log('User trading accounts:', data);
       } catch (err) {
         console.error('Failed to fetch user trading accounts:', err);
@@ -92,6 +86,8 @@ const Transactions = () => {
             <input
               type="text"
               placeholder="Search transactions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full pl-10 pr-3 py-2 rounded-md ${
                 isDarkMode
                   ? "bg-black border-yellow-500 text-yellow-300 placeholder-yellow-400 hover:bg-gray-900"
@@ -100,124 +96,40 @@ const Transactions = () => {
             />
           </div>
 
-          {/* Dropdown Filters */}
-          <div className="flex flex-wrap justify-center sm:justify-end gap-3 w-full sm:w-auto" style={{ zIndex: 10 }}>
-
-            {/* TYPE DROPDOWN */}
-            <div className={`group relative ${isMobile ? '' : 'hover:group'}`}>
+          {/* Category Buttons */}
+          <div className="flex flex-wrap justify-center sm:justify-end gap-3 w-full sm:w-auto">
+            {["Pending", "Withdrawal", "Internal Transfer", "Deposit"].map((category) => (
               <button
-                onClick={isMobile ? () => setIsTypeOpen(!isTypeOpen) : undefined}
-                className={`px-4 py-2 rounded-md flex items-center gap-2 border border-yellow-600 ${
-                  isDarkMode ? "bg-gray-900 text-yellow-400" : "bg-white text-black"
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-md border border-yellow-600 transition-all duration-200 ${
+                  selectedCategory === category
+                    ? "bg-yellow-500 text-black"
+                    : isDarkMode
+                    ? "bg-black-900 text-yellow-400 hover:bg-gray-800"
+                    : "bg-white text-black hover:bg-gray-100"
                 }`}
               >
-                {typeFilter} <ChevronDown size={16} />
+                {category}
               </button>
-
-              <div
-                className={`absolute top-full left-0 w-44 bg-black text-yellow-300 border border-yellow-500 rounded-md ${
-                  isMobile
-                    ? (isTypeOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')
-                    : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
-                } transition-all duration-200 shadow-lg z-50`}
-              >
-                {["All Types", "Deposit", "Withdrawal", "Internal Transfer"].map(
-                  (opt) => (
-                    <div
-                      key={opt}
-                      onClick={() => { setTypeFilter(opt); setIsTypeOpen(false); }}
-                      className="px-4 py-2 hover:bg-yellow-500 hover:text-black cursor-pointer"
-                    >
-                      {opt}
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-
-            {/* STATUS DROPDOWN */}
-            <div className={`group relative ${isMobile ? '' : 'hover:group'}`}>
-              <button
-                onClick={isMobile ? () => setIsStatusOpen(!isStatusOpen) : undefined}
-                className={`px-4 py-2 rounded-md flex items-center gap-2 border border-yellow-600 ${
-                  isDarkMode ? "bg-gray-900 text-yellow-400" : "bg-white text-black"
-                }`}
-              >
-                {statusFilter} <ChevronDown size={16} />
-              </button>
-
-              <div
-                className={`absolute top-full left-0 w-44 bg-black text-yellow-300 border border-yellow-500 rounded-md ${
-                  isMobile
-                    ? (isStatusOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')
-                    : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
-                } transition-all duration-200 shadow-lg z-50`}
-              >
-                {["All Status", "Completed", "Pending", "Failed"].map((opt) => (
-                  <div
-                    key={opt}
-                    onClick={() => { setStatusFilter(opt); setIsStatusOpen(false); }}
-                    className="px-4 py-2 hover:bg-yellow-500 hover:text-black cursor-pointer"
-                  >
-                    {opt}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* DATE RANGE DROPDOWN */}
-            <div className={`group relative ${isMobile ? '' : 'hover:group'}`}>
-              <button
-                onClick={isMobile ? () => setIsDateOpen(!isDateOpen) : undefined}
-                className={`px-4 py-2 rounded-md flex items-center gap-2 border border-yellow-600 ${
-                  isDarkMode ? "bg-gray-900 text-yellow-400" : "bg-white text-black"
-                }`}
-              >
-                {dateRange} <ChevronDown size={16} />
-              </button>
-
-              <div
-                className={`absolute top-full left-0 w-44 bg-black text-yellow-300 border border-yellow-500 rounded-md ${
-                  isMobile
-                    ? (isDateOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')
-                    : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
-                } transition-all duration-200 shadow-lg z-50`}
-              >
-                {[
-                  "All Dates",
-                  "Today",
-                  "This Week",
-                  "This Month",
-                  "Last 3 Months"
-                ].map((opt) => (
-                  <div
-                    key={opt}
-                    onClick={() => { setDateRange(opt); setIsDateOpen(false); }}
-                    className="px-4 py-2 hover:bg-yellow-500 hover:text-black cursor-pointer"
-                  >
-                    {opt}
-                  </div>
-                ))}
-              </div>
-            </div>
-
+            ))}
           </div>
         </div>
 
         {/* 📊 Transactions Table */}
         <div
           className={`overflow-x-auto shadow-lg ${
-            isDarkMode ? "border-gray-800 bg-gray-900" : "border-gray-300 bg-white"
+            isDarkMode ? "border-black-900" : "border-gray-300 bg-white"
           }`}
         >
           <table className="w-full border-collapse text-left text-sm sm:text-base border border-yellow-600">
-            <thead className={`text-yellow-400 ${isDarkMode ? "bg-gray-800" : "bg-gray-200"}`}>
+            <thead className={`text-yellow-400 ${isDarkMode ? "bg-black-800" : "bg-black-200"}`}>
               <tr>
                 <th className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
                   Date/Time
                 </th>
 
-                {typeFilter === "Internal Transfer" ? (
+                {selectedCategory === "Internal Transfer" ? (
                   <>
                     <th className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
                       From Account
@@ -270,26 +182,49 @@ const Transactions = () => {
                     {error}
                   </td>
                 </tr>
-              ) : transactions.length === 0 ? (
-                <tr className="text-center">
-                  <td
-                    colSpan="6"
-                    className={`py-6 font-medium ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    }`}
-                  >
-                    No transactions found.
-                  </td>
-                </tr>
-              ) : (
-                transactions
-                  .filter((transaction) => {
-                    const matchesType = typeFilter === "All Types" || transaction.type === typeFilter;
-                    const matchesStatus = statusFilter === "All Status" || transaction.status === statusFilter;
-                    // Add date filtering logic if needed
-                    return matchesType && matchesStatus;
-                  })
-                  .map((transaction, index) => (
+              ) : (() => {
+                let displayData = [];
+                if (selectedCategory === "Pending") {
+                  displayData = pendingTransactions;
+                } else if (selectedCategory === "Withdrawal") {
+                  displayData = transactions.filter(t => t.transaction_type === "withdraw_trading");
+                } else if (selectedCategory === "Deposit") {
+                  displayData = transactions.filter(t => t.transaction_type === "deposit_trading");
+                } else if (selectedCategory === "Internal Transfer") {
+                  displayData = transactions.filter(t => t.transaction_type === "internal_transfer");
+                }
+
+                const filteredData = displayData.filter((transaction) => {
+                  const matchesSearch = searchQuery === "" ||
+                    (transaction.account_name && transaction.account_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    (transaction.account_id && transaction.account_id.toString().toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    (transaction.note && transaction.note.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    (transaction.amount && transaction.amount.toString().includes(searchQuery)) ||
+                    (transaction.type && transaction.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    (transaction.status && transaction.status.toLowerCase().includes(searchQuery.toLowerCase()));
+                  return matchesSearch;
+                });
+
+                if (filteredData.length === 0) {
+                  return (
+                    <tr className="text-center">
+                      <td
+                        colSpan="6"
+                        className={`py-6 font-medium ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        No {selectedCategory.toLowerCase()} found.
+                      </td>
+                    </tr>
+                  );
+                }
+
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedData = filteredData.slice(startIndex, endIndex);
+
+                return paginatedData.map((transaction, index) => (
                     <tr
                       key={index}
                       className={`${
@@ -297,10 +232,10 @@ const Transactions = () => {
                       } transition-colors duration-200`}
                     >
                       <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                        {new Date(transaction.date).toLocaleString()}
+                        {new Date(transaction.created_at).toLocaleString()}
                       </td>
 
-                      {typeFilter === "Internal Transfer" ? (
+                      {selectedCategory === "Internal Transfer" ? (
                         <>
                           <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
                             {transaction.from_account || 'N/A'}
@@ -312,10 +247,10 @@ const Transactions = () => {
                       ) : (
                         <>
                           <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                            {transaction.account_id || 'N/A'}
+                            {transaction.trading_account_id || 'N/A'}
                           </td>
                           <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                            {transaction.account_name || 'N/A'}
+                            {transaction.trading_account_name || 'N/A'}
                           </td>
                         </>
                       )}
@@ -324,7 +259,7 @@ const Transactions = () => {
                         ${transaction.amount || 0}
                       </td>
                       <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                        {transaction.note || 'N/A'}
+                        {transaction.admin_comment || 'N/A'}
                       </td>
                       <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
                         <span
@@ -340,11 +275,101 @@ const Transactions = () => {
                         </span>
                       </td>
                     </tr>
-                  ))
-              )}
+                  ));
+              })()}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {(() => {
+          let displayData = [];
+          if (selectedCategory === "Pending") {
+            displayData = pendingTransactions;
+          } else if (selectedCategory === "Withdrawal") {
+            displayData = transactions.filter(t => t.transaction_type === "withdraw_trading");
+          } else if (selectedCategory === "Deposit") {
+            displayData = transactions.filter(t => t.transaction_type === "deposit_trading");
+          } else if (selectedCategory === "Internal Transfer") {
+            displayData = transactions.filter(t => t.transaction_type === "internal_transfer");
+          }
+
+          const filteredData = displayData.filter((transaction) => {
+            const matchesSearch = searchQuery === "" ||
+              (transaction.account_name && transaction.account_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (transaction.account_id && transaction.account_id.toString().toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (transaction.note && transaction.note.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (transaction.amount && transaction.amount.toString().includes(searchQuery)) ||
+              (transaction.type && transaction.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (transaction.status && transaction.status.toLowerCase().includes(searchQuery.toLowerCase()));
+            return matchesSearch;
+          });
+
+          const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+          if (filteredData.length === 0 || totalPages <= 1) return null;
+
+          return (
+            <div className="flex justify-between items-center mt-4">
+              {/* Left: Items per page selector */}
+              <div className="flex items-center gap-2">
+                <label className={`text-sm ${isDarkMode ? "text-gray-300 bg-gray-800" : "text-gray-700 bg-gray-100"} p-2 rounded-md`}>
+                  Items per page:
+                </label>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className={`px-2 py-1 border rounded-md ${
+                    isDarkMode
+                      ? "bg-black-800 border-gray-600 text-white"
+                      : "bg-white border-gray-300 text-black"
+                  }`}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              {/* Right: Page navigation */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 border rounded-md ${
+                    currentPage === 1
+                      ? "opacity-50 cursor-not-allowed"
+                      : isDarkMode
+                      ? "bg-black-800 border-gray-600 text-white hover:bg-gray-700"
+                      : "bg-white border-gray-300 text-black hover:bg-gray-100"
+                  }`}
+                >
+                  Previous
+                </button>
+                <span className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 border rounded-md ${
+                    currentPage === totalPages
+                      ? "opacity-50 cursor-not-allowed"
+                      : isDarkMode
+                      ? "bg-black-800 border-gray-600 text-white hover:bg-gray-700"
+                      : "bg-white border-gray-300 text-black hover:bg-gray-100"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
     </div>
