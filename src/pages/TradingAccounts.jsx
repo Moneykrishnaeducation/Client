@@ -443,7 +443,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                   <Info key="balance" label="Balance" value={`$${selectedAccount.balance}`} isDarkMode={isDarkMode} />
                   <Info key="equity" label="Equity" value={`$${selectedAccount.equity}`} isDarkMode={isDarkMode} />
                   <Info key="margin-level" label="Margin level" value={`${selectedAccount.margin}%`} isDarkMode={isDarkMode} />
-                  <Info key="free-margin" label="Free Margin" value={`$${selectedAccount.freeMargin}`} isDarkMode={isDarkMode} />
+                  <Info key="free-margin" label="Free Margin" value={`$${selectedAccount.free_margin}`} isDarkMode={isDarkMode} />
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-4 pt-2">
