@@ -27,7 +27,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState('/static/client/images/default-profile.jpg');
   const [bannerImage, setBannerImage] = useState(null);
 
   const [bankDetails, setBankDetails] = useState(null);
@@ -36,8 +36,14 @@ const ProfilePage = () => {
   const [showCryptoModal, setShowCryptoModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const [identityFile, setIdentityFile] = useState(null);
-  const [residentialFile, setResidentialFile] = useState(null);
+  const [identityStatus, setIdentityStatus] = useState('not_uploaded');
+  const [residentialStatus, setResidentialStatus] = useState('not_uploaded');
+  const [identityFileName, setIdentityFileName] = useState('');
+  const [residentialFileName, setResidentialFileName] = useState('');
+  const [identityLoading, setIdentityLoading] = useState(false);
+  const [residentialLoading, setResidentialLoading] = useState(false);
+  const [identityError, setIdentityError] = useState('');
+  const [residentialError, setResidentialError] = useState('');
 
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
@@ -61,6 +67,7 @@ const ProfilePage = () => {
           dob: data.dob || '',
           address: data.address || '',
         });
+        setProfileImage(data.profile_pic || '/static/client/images/default-profile.jpg');
         setError(null);
       } catch (err) {
         console.error('Error fetching user profile:', err);
@@ -108,9 +115,30 @@ const ProfilePage = () => {
       }
     };
 
+    const fetchDocuments = async () => {
+      try {
+        const data = await apiCall('api/profile/documents/');
+        if (data && data.length > 0) {
+          const identityDoc = data.find(doc => doc.document_type === 'identity');
+          const residentialDoc = data.find(doc => doc.document_type === 'residence');
+          if (identityDoc) {
+            setIdentityStatus(identityDoc.status || 'pending');
+            setIdentityFileName(identityDoc.document || '');
+          }
+          if (residentialDoc) {
+            setResidentialStatus(residentialDoc.status || 'pending');
+            setResidentialFileName(residentialDoc.document || '');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching documents:', err);
+      }
+    };
+
     fetchUserProfile();
     fetchBankDetails();
     fetchCryptoDetails();
+    fetchDocuments();
   }, []);
 
   if (loading) {
@@ -202,12 +230,30 @@ const ProfilePage = () => {
             id="profileUpload"
             accept="image/*"
             hidden
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files[0];
               if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => setProfileImage(reader.result);
-                reader.readAsDataURL(file);
+                const formData = new FormData();
+                formData.append('profile_pic', file);
+                try {
+                  await apiCall('api/profile/image/', {
+                    method: 'POST',
+                    body: formData,
+                  });
+                  // Refetch profile data to ensure the new image is displayed and stored
+                  const data = await apiCall('api/profile/');
+                  setUser({
+                    name: data.name || '',
+                    email: data.email || '',
+                    phone: data.phone || '',
+                    dob: data.dob || '',
+                    address: data.address || '',
+                  });
+                  setProfileImage(data.profile_pic || '/static/client/images/default-profile.jpg');
+                } catch (err) {
+                  console.error('Error uploading profile image:', err);
+                  // Optionally show error to user
+                }
               }
             }}
           />
@@ -256,22 +302,65 @@ const ProfilePage = () => {
     </div>
   </div>
   <div className="flex flex-col items-center justify-center">
-    {identityFile ? (
+    {identityStatus !== 'not_uploaded' ? (
       <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-center`}>
         <p className="text-[#FFD700] font-semibold">
-          File Uploaded: {identityFile.name}
+          Document Uploaded
         </p>
-        <p className="text-sm mt-1">Status: Verified</p>
+        {identityFileName && <p className="text-sm mt-1">File: {identityFileName.split('/').pop()}</p>}
+        <p className="text-sm mt-1">Status: Pending</p>
+        {identityError && <p className="text-red-500 text-sm mt-1">{identityError}</p>}
       </div>
     ) : (
-      <label className={`cursor-pointer px-4 py-2 rounded-md font-semibold ${isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]'} transition-colors duration-300`}>
-        <FileUp size={18} className="inline mr-2" />
-        Upload ID Proof
+      <label className={`cursor-pointer px-4 py-2 rounded-md font-semibold ${identityLoading ? 'bg-gray-500 cursor-not-allowed' : (isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]')} transition-colors duration-300`}>
+        {identityLoading ? 'Uploading...' : (
+          <>
+            <FileUp size={18} className="inline mr-2" />
+            Upload Document
+          </>
+        )}
         <input
           type="file"
           accept="image/*,.pdf"
           hidden
-          onChange={(e) => setIdentityFile(e.target.files[0])}
+          disabled={identityLoading}
+          onChange={async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              setIdentityLoading(true);
+              setIdentityError('');
+              const formData = new FormData();
+              formData.append('document', file);
+              try {
+                await apiCall('/documents/identity/', {
+                  method: 'POST',
+                  body: formData,
+                });
+                // Refetch documents to update status
+                const data = await apiCall('api/profile/documents/');
+                if (data && data.length > 0) {
+                  const identityDoc = data.find(doc => doc.document_type === 'identity');
+                  if (identityDoc) {
+                    setIdentityStatus(identityDoc.status || 'pending');
+                  }
+                }
+              } catch (err) {
+                console.error('Error uploading identity document:', err);
+                let errorMsg = 'Failed to upload document';
+                try {
+                  const parsed = JSON.parse(err.message);
+                  if (parsed.error) {
+                    errorMsg = parsed.error;
+                  }
+                } catch {
+                  errorMsg = err.message || 'Failed to upload document';
+                }
+                setIdentityError(errorMsg);
+              } finally {
+                setIdentityLoading(false);
+              }
+            }
+          }}
         />
       </label>
     )}
@@ -296,22 +385,65 @@ const ProfilePage = () => {
     </div>
   </div>
   <div className="flex flex-col items-center justify-center">
-    {residentialFile ? (
+    {residentialStatus !== 'not_uploaded' ? (
       <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-center`}>
         <p className="text-[#FFD700] font-semibold">
-          File Uploaded: {residentialFile.name}
+          Document Uploaded
         </p>
-        <p className="text-sm mt-1">Status: Verified</p>
+        {residentialFileName && <p className="text-sm mt-1">File: {residentialFileName.split('/').pop()}</p>}
+        <p className="text-sm mt-1">Status: Pending</p>
+        {residentialError && <p className="text-red-500 text-sm mt-1">{residentialError}</p>}
       </div>
     ) : (
-      <label className={`cursor-pointer px-4 py-2 rounded-md font-semibold ${isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]'} transition-colors duration-300`}>
-        <FileUp size={18} className="inline mr-2" />
-        Upload Address Proof
+      <label className={`cursor-pointer px-4 py-2 rounded-md font-semibold ${residentialLoading ? 'bg-gray-500 cursor-not-allowed' : (isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]')} transition-colors duration-300`}>
+        {residentialLoading ? 'Uploading...' : (
+          <>
+            <FileUp size={18} className="inline mr-2" />
+            Upload Document
+          </>
+        )}
         <input
           type="file"
           accept="image/*,.pdf"
           hidden
-          onChange={(e) => setResidentialFile(e.target.files[0])}
+          disabled={residentialLoading}
+          onChange={async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              setResidentialLoading(true);
+              setResidentialError('');
+              const formData = new FormData();
+              formData.append('document', file);
+              try {
+                await apiCall('/documents/residence/', {
+                  method: 'POST',
+                  body: formData,
+                });
+                // Refetch documents to update status
+                const data = await apiCall('api/profile/documents/');
+                if (data && data.length > 0) {
+                  const residentialDoc = data.find(doc => doc.document_type === 'residence');
+                  if (residentialDoc) {
+                    setResidentialStatus(residentialDoc.status || 'pending');
+                  }
+                }
+              } catch (err) {
+                console.error('Error uploading residential document:', err);
+                let errorMsg = 'Failed to upload document';
+                try {
+                  const parsed = JSON.parse(err.message);
+                  if (parsed.error) {
+                    errorMsg = parsed.error;
+                  }
+                } catch {
+                  errorMsg = err.message || 'Failed to upload document';
+                }
+                setResidentialError(errorMsg);
+              } finally {
+                setResidentialLoading(false);
+              }
+            }
+          }}
         />
       </label>
     )}
@@ -617,7 +749,7 @@ const ProfilePage = () => {
                   try {
                     await apiCall('profile/edit/', {
                       method: 'POST',
-                      body: JSON.stringify({  
+                      body: JSON.stringify({
                         phone: phone,
                         dob: dob,
                         address: address
@@ -626,8 +758,13 @@ const ProfilePage = () => {
                     setShowEditModal(false);
                   } catch (err) {
                     console.error('Error submitting change request:', err);
-                    setEditError(err.message || 'Failed to submit change request');
-                  } finally {
+                    if (err.message && err.message.includes('unique_pending_request_per_user')) {
+                      setEditError('You already have a pending change request. Please wait for it to be processed before submitting another one.');
+                    } else if (err.message === 'You already have a pending personal info change request') {
+                      setEditError('You already have a pending personal info change request');
+                    } else {
+                      setEditError(err.message || 'Failed to submit change request');
+                    }
                     setEditLoading(false);
                   }
                 }}

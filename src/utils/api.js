@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import {useLocation } from 'react-router-dom';
 
 // API utility functions for consistent token handling
 
