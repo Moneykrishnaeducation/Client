@@ -13,13 +13,18 @@ const Tickets = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     status: "",
-    priority: "",
     dateRange: "",
   });
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: "",
+    dateRange: "",
+  });
+  const [searchTerm, setSearchTerm] = useState("");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState([]);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -46,12 +51,32 @@ const Tickets = () => {
   };
 
   const applyFilters = () => {
-    console.log("Applied Filters:", filters);
+    setAppliedFilters({ ...filters });
     setShowFilters(false);
+  };
+
+  const isWithinDateRange = (date, range) => {
+    const now = new Date();
+    const ticketDate = new Date(date);
+    if (range === "This Week") {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return ticketDate >= weekAgo;
+    } else if (range === "This Month") {
+      const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      return ticketDate >= monthAgo;
+    } else if (range === "Last 3 Months") {
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+      return ticketDate >= threeMonthsAgo;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!userId) {
+      alert("Please log in to create a ticket.");
+      return;
+    }
     const formData = new FormData(e.target);
     const subject = formData.get('subject');
     const description = formData.get('description');
@@ -97,7 +122,6 @@ const Tickets = () => {
 
   const options = {
     status: ["Open", "Pending", "Closed"],
-    priority: ["High", "Medium", "Low"],
     dateRange: ["This Week", "This Month", "Last 3 Months"],
   };
 
@@ -107,19 +131,41 @@ const Tickets = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() && attachments.length === 0) return;
+    if (!selectedTicket || !selectedTicket.id) {
+      alert("No ticket selected.");
+      return;
+    }
     try {
+    if (attachments.length > 0) {
+      const formData = new FormData();
+      formData.append('message', message);
+      attachments.forEach(file => formData.append('file', file));
       await apiCall(`api/tickets/${selectedTicket.id}/send-message/`, {
         method: 'POST',
-        body: JSON.stringify({ message }),
+        body: formData,
+        headers: {},
       });
-      alert("Message sent successfully!");
+      alert("Message and attachments sent successfully!");
+    } else {
+        await apiCall(`api/tickets/${selectedTicket.id}/send-message/`, {
+          method: 'POST',
+          body: JSON.stringify({ message }),
+        });
+        alert("Message sent successfully!");
+      }
       setMessage("");
+      setAttachments([]);
       setShowViewModal(false);
     } catch (err) {
-      alert("Failed to send message. Please try again.");
-      console.error("Error sending message:", err);
+      alert("Failed to send. Please try again.");
+      console.error("Error sending:", err);
     }
+  };
+
+  const handleAttach = (e) => {
+    const files = Array.from(e.target.files);
+    setAttachments([...attachments, ...files]);
   };
 
 
@@ -149,6 +195,8 @@ const Tickets = () => {
                 <input
                   type="text"
                   placeholder="Search tickets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className={`bg-transparent ${isDarkMode ? 'text-yellow-300 placeholder-yellow-400' : 'text-black placeholder-gray-500'} focus:outline-none w-full text-sm sm:text-base`}
                 />
               </div>
@@ -211,7 +259,12 @@ const Tickets = () => {
                   </tr>
                 ) : (
                   <>
-                    {tickets.open.map((ticket) => (
+                    {tickets.open.filter(ticket => {
+                      const matchesSearch = searchTerm === "" || ticket.id.toString().includes(searchTerm) || ticket.subject.toLowerCase().includes(searchTerm.toLowerCase());
+                      const matchesStatus = appliedFilters.status === "" || appliedFilters.status === "Open";
+                      const matchesDate = appliedFilters.dateRange === "" || isWithinDateRange(ticket.created_at, appliedFilters.dateRange);
+                      return matchesSearch && matchesStatus && matchesDate;
+                    }).map((ticket) => (
                       <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
                         <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
                         <td className="p-2 border border-yellow-600">{ticket.id}</td>
@@ -234,7 +287,12 @@ const Tickets = () => {
                         </td>
                       </tr>
                     ))}
-                    {tickets.pending.map((ticket) => (
+                    {tickets.pending.filter(ticket => {
+                      const matchesSearch = searchTerm === "" || ticket.id.toString().includes(searchTerm) || ticket.subject.toLowerCase().includes(searchTerm.toLowerCase());
+                      const matchesStatus = appliedFilters.status === "" || appliedFilters.status === "Pending";
+                      const matchesDate = appliedFilters.dateRange === "" || isWithinDateRange(ticket.created_at, appliedFilters.dateRange);
+                      return matchesSearch && matchesStatus && matchesDate;
+                    }).map((ticket) => (
                       <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
                         <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
                         <td className="p-2 border border-yellow-600">{ticket.id}</td>
@@ -257,7 +315,12 @@ const Tickets = () => {
                         </td>
                       </tr>
                     ))}
-                    {tickets.closed.map((ticket) => (
+                    {tickets.closed.filter(ticket => {
+                      const matchesSearch = searchTerm === "" || ticket.id.toString().includes(searchTerm) || ticket.subject.toLowerCase().includes(searchTerm.toLowerCase());
+                      const matchesStatus = appliedFilters.status === "" || appliedFilters.status === "Closed";
+                      const matchesDate = appliedFilters.dateRange === "" || isWithinDateRange(ticket.created_at, appliedFilters.dateRange);
+                      return matchesSearch && matchesStatus && matchesDate;
+                    }).map((ticket) => (
                       <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
                         <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
                         <td className="p-2 border border-yellow-600">{ticket.id}</td>
@@ -342,6 +405,7 @@ const Tickets = () => {
                   Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
+                  name="description"
                   placeholder="Describe the issue in detail"
                   required
                   className={`w-full p-2 rounded-md ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-400' : 'bg-gray-100 border-gray-300 text-black placeholder-gray-600'} h-28`}
@@ -397,7 +461,7 @@ const Tickets = () => {
 
       {/* Custom Dropdowns */}
       <div className="space-y-4">
-        {["status", "priority", "dateRange"].map((key) => (
+        {["status", "dateRange"].map((key) => (
           <div key={key} className="relative">
             <label className="block font-semibold mb-1 text-yellow-400 capitalize">
               {key === "dateRange" ? "Date Range" : key}
@@ -458,6 +522,7 @@ const Tickets = () => {
                 onClick={() => {
                   setShowViewModal(false);
                   setMessage("");
+                  setAttachments([]);
                 }}
                 className={`transition ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'}`}
               >
@@ -493,12 +558,31 @@ const Tickets = () => {
 
               <div className="flex gap-2">
                 <button
+                  onClick={() => fileInputRef.current.click()}
+                  className="bg-gray-400 hover:bg-gray-500 text-black font-semibold px-4 py-2 rounded-md transition"
+                >
+                  Attach
+                </button>
+                <button
                   onClick={handleSendMessage}
                   className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md transition"
                 >
                   Send Message
                 </button>
               </div>
+              <input type="file" ref={fileInputRef} hidden multiple onChange={handleAttach} />
+              {attachments.length > 0 && (
+                <div>
+                  <label className="block font-semibold text-yellow-400">Attachments</label>
+                  <ul className="mt-1">
+                    {attachments.map((file, index) => (
+                      <li key={index} className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {file.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>

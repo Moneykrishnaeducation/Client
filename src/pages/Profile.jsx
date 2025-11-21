@@ -54,6 +54,20 @@ const ProfilePage = () => {
 
   const inputClass = `w-full p-2 ${isDarkMode ? 'bg-[#1a1a1a] border-gray-700 text-white' : 'bg-gray-100 border-gray-300 text-black'} border rounded-md focus:outline-none focus:border-[#FFD700] placeholder-gray-500`;
 
+  const fetchBanner = async () => {
+    try {
+      const data = await apiCall('profile/banner/');
+      if (data) {
+        setBannerImage(data);
+      } else {
+        setBannerImage(null);
+      }
+    } catch (err) {
+      console.error('Error fetching banner:', err);
+      setBannerImage(null);
+    }
+  };
+
   // Fetch user profile data on component mount
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -136,6 +150,7 @@ const ProfilePage = () => {
     };
 
     fetchUserProfile();
+    fetchBanner();
     fetchBankDetails();
     fetchCryptoDetails();
     fetchDocuments();
@@ -197,12 +212,28 @@ const ProfilePage = () => {
     id="bannerUpload"
     accept="image/*"
     hidden
-    onChange={(e) => {
+    onChange={async (e) => {
       const file = e.target.files[0];
       if (file) {
+        // Immediate preview
         const reader = new FileReader();
-        reader.onloadend = () => setBannerImage(reader.result); // preview immediately
+        reader.onloadend = () => setBannerImage(reader.result);
         reader.readAsDataURL(file);
+
+        // Upload to API
+        const formData = new FormData();
+        formData.append('banner', file);
+        try {
+          await apiCall('api/profile/banner/', {
+            method: 'POST',
+            body: formData,
+          });
+          // Refetch to ensure persistence
+          fetchBanner();
+        } catch (err) {
+          console.error('Error uploading banner image:', err);
+          // Optionally show error to user
+        }
       }
     }}
   />
@@ -233,6 +264,12 @@ const ProfilePage = () => {
             onChange={async (e) => {
               const file = e.target.files[0];
               if (file) {
+                // Immediate preview
+                const reader = new FileReader();
+                reader.onloadend = () => setProfileImage(reader.result);
+                reader.readAsDataURL(file);
+
+                // Upload to API
                 const formData = new FormData();
                 formData.append('profile_pic', file);
                 try {
@@ -240,16 +277,7 @@ const ProfilePage = () => {
                     method: 'POST',
                     body: formData,
                   });
-                  // Refetch profile data to ensure the new image is displayed and stored
-                  const data = await apiCall('api/profile/');
-                  setUser({
-                    name: data.name || '',
-                    email: data.email || '',
-                    phone: data.phone || '',
-                    dob: data.dob || '',
-                    address: data.address || '',
-                  });
-                  setProfileImage(data.profile_pic || '/static/client/images/default-profile.jpg');
+                  // No refetch needed, preview is already set
                 } catch (err) {
                   console.error('Error uploading profile image:', err);
                   // Optionally show error to user
