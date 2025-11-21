@@ -648,7 +648,7 @@ const App = () => {
 
 
   return (
-    <div className={`p-6 ${isDarkMode ? 'bg-black text-gray-100' : 'bg-white text-gray-900'}`}>
+    <div className={`p-6 lg:max-w-[80vw] max-h-full ${isDarkMode ? 'bg-black text-gray-100' : 'bg-white text-gray-900'}`}>
       {/* Global Scrollbar Styles */}
       <style>{`
         ::-webkit-scrollbar { width: 10px; }
