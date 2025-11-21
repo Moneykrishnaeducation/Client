@@ -26,10 +26,22 @@ export default function MamDashboard() {
   const [selectedAccount, setSelectedAccount] = useState(null);
 
   const [showDepositModal, setShowDepositModal] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+const [activeTab, setActiveTab] = useState("cheesepay");
+const [cheeseAmount, setCheeseAmount] = useState("");
+const [currency, setCurrency] = useState("USD");
+const [convertedAmount, setConvertedAmount] = useState("");
+const [selectedDepositAccount, setSelectedDepositAccount] = useState(null);
 
-  const [activeTab, setActiveTab] = useState("cheesepay");
-  const [selectedDepositAccount, setSelectedDepositAccount] = useState(null);
+const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+const [showSettingsModal, setShowSettingsModal] = useState(false);
+const [showTradesModal, setShowTradesModal] = useState(false);
+
+const [newLeverage, setNewLeverage] = useState("");
+const [selectedPasswordType, setSelectedPasswordType] = useState("");
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+const [showPasswords, setShowPasswords] = useState(false);
+
 
   const [form, setForm] = useState({
     account_name: "",
@@ -40,6 +52,8 @@ export default function MamDashboard() {
     master_password: "",
     investor_password: "",
   });
+
+  const [accessToken, setAccessToken] = useState("");
 
   const getCookie = (name) => {
     let cookieValue = null;
@@ -61,83 +75,194 @@ export default function MamDashboard() {
 
     const savedAccounts = localStorage.getItem("mamAccounts");
     if (savedAccounts) setMamAccounts(JSON.parse(savedAccounts));
+
+    // Fetch MAM accounts from API
+    fetchMAMAccounts();
   }, []);
 
-  const [accessToken, setAccessToken] = useState("");
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.id]: e.target.value });
-  };
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const csrf = getCookie("csrftoken");
-
-  // FIX 1: Read the correct token
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    alert("You must log in again — token missing.");
-    return;
-  }
-
+  const fetchMAMAccounts = async () => {
   try {
-    const response = await fetch("/mam-accounts/create/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
 
-        // FIX 2: CSRF required by Django
-        "X-CSRFToken": csrf,
+    const response = await fetch(
+      "http://client.localhost:8000/user-mam-accounts/",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      }
+    );
 
-        // FIX 3: Correct JWT header for IsAuthenticated
-        Authorization: `Bearer ${token}`,
-      },
-
-      // FIX 4: Required so Django can read session + CSRF cookies
-      credentials: "include",
-
-      body: JSON.stringify(form),
-    });
-
-    // Backend returns 401 → wrong token OR token not sent
     if (!response.ok) {
-      const err = await response.json();
-      alert("Error: " + JSON.stringify(err));
+      console.error("Failed to fetch MAM accounts");
       return;
     }
 
     const data = await response.json();
 
-    alert("MAM Account Created Successfully!");
+    const formatted = data.map((acc) => ({
+      account_id: acc.account_id,
+      accountName: acc.account_name,
+      profitPercentage: acc.profit_sharing_percentage || acc.profit_percentage,
+      leverage: acc.leverage,
+      enabled: acc.is_enabled,
+    }));
 
-    // Convert backend snake_case → camelCase for React table
-    const formatted = {
-      id: data.mam_account.id,
-      accountName: data.mam_account.account_name,
-      profitPercentage: data.mam_account.profit_percentage,
-      leverage: data.mam_account.leverage,
-      enabled: data.mam_account.is_enabled,
+    setMamAccounts(formatted);
+    localStorage.setItem("mamAccounts", JSON.stringify(formatted));
+  } catch (error) {
+    console.error("Error fetching MAM accounts:", error);
+  }
+};
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.id]: e.target.value });
+  };
+
+  const handleToggleStatus = (id) => {
+    setMamAccounts((prev) => {
+      const updated = prev.map((acc) =>
+        acc.account_id === id ? { ...acc, enabled: !acc.enabled } : acc
+      );
+      localStorage.setItem("mamAccounts", JSON.stringify(updated));
+      return updated;
+    });
+
+    // Also update selectedAccount if it's the one being toggled
+    if (selectedAccount && selectedAccount.account_id === id) {
+      setSelectedAccount((prev) => ({ ...prev, enabled: !prev.enabled }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const csrf = getCookie("csrftoken");
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      alert("You must log in again — token missing.");
+      return;
+    }
+
+    // Validate profit_percentage
+    const profitPercentage = parseFloat(form.profit_percentage);
+    if (isNaN(profitPercentage) || profitPercentage <= 0) {
+      alert("Please enter a valid profit sharing percentage greater than 0.");
+      return;
+    }
+
+    // Prepare form data with corrected types and values
+    const payload = {
+      ...form,
+      profit_percentage: profitPercentage,
+      leverage: parseInt(form.leverage.replace('x', ''), 10),
+      risk_level: form.risk_level.toLowerCase(),
+      payout_frequency: form.payout_frequency.toLowerCase(),
     };
 
-    // Update table
-    setMamAccounts((prev) => [...prev, formatted]);
+    try {
+      const response = await fetch("http://client.localhost:8000/mam-accounts/create/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrf,
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
 
-    // Close modal
-    setShowModal(false);
+      if (!response.ok) {
+        let err;
+        try {
+          err = await response.json();
+        } catch (e) {
+          err = { error: "Server error occurred. Please try again." };
+        }
+        alert("Error: " + JSON.stringify(err));
+        return;
+      }
+
+      const data = await response.json();
+      alert("MAM Account Created Successfully!");
+
+      const newAccount = {
+        account_id: data.account_id,
+        accountName: data.account_name,
+        profitPercentage: data.profit_sharing_percentage || data.profit_percentage,
+        leverage: data.leverage,
+        enabled: data.is_enabled,
+      };
+
+      setMamAccounts((prev) => [...prev, newAccount]);
+      setShowModal(false);
+    } catch (error) {
+      console.error("Create MAM error:", error);
+      alert("Something went wrong. Check console.");
+    }
+  };  
+
+
+
+  //Total Profits
+
+  const fetchMamProfitDetails = async (mamId) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      console.error("Token missing");
+      return;
+    }
+
+    const response = await fetch(
+      `http://client.localhost:8000/mam/${mamId}/profits/`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Failed to fetch profit details");
+      return;
+    }
+
+    const data = await response.json();
+
+    // Calculate TOTAL PROFIT = mam + investors
+    const investorTotal = data.investor_profits.reduce(
+      (sum, inv) => sum + inv.profit,
+      0
+    );
+
+    const totalProfit = data.mam_profit + investorTotal;
+
+    // Update selected account
+    setSelectedAccount((prev) => ({
+      ...prev,
+      totalProfit: totalProfit,
+      mamProfit: data.mam_profit,
+      investorProfits: data.investor_profits,
+    }));
+
   } catch (error) {
-    console.error("Create MAM error:", error);
-    alert("Something went wrong. Check console.");
+    console.error("Error fetching MAM profit details:", error);
   }
 };
 
 
   return (
     <div className="w-full flex flex-col items-center text-white p-6">
-
-      <h2 className="text-2xl font-bold mb-2 text-center">
-        Multi-Account Manager
-      </h2>
+      <h2 className="text-2xl font-bold mb-2 text-center">Multi-Account Manager</h2>
 
       <div className="flex w-full justify-end gap-1 px-10 text-sm mb-4">
         <InfoIcon className="w-4 h-4 text-blue-400" />
@@ -154,7 +279,6 @@ const handleSubmit = async (e) => {
           <h3 className="text-lg font-semibold mb-2 text-yellow-400">
             Understanding MAM Accounts
           </h3>
-
           <p className="text-sm">Auto-copied trades system explained...</p>
         </div>
       )}
@@ -167,7 +291,6 @@ const handleSubmit = async (e) => {
         >
           <Plus className="w-4 h-4" /> Create New MAM Manager Account
         </button>
-
         <button
           onClick={() => navigate("/MAMInvestments")}
           className="bg-[#FFD700] text-black font-semibold py-3 px-14 rounded-md hover:bg-yellow-400 flex items-center gap-2"
@@ -182,7 +305,7 @@ const handleSubmit = async (e) => {
           <table className="min-w-full text-left">
             <thead className="bg-gray-800 text-yellow-400">
               <tr>
-                <th className="px-4 py-2">ID</th>
+                <th className="px-4 py-2">Account ID</th>
                 <th className="px-4 py-2">Account Name</th>
                 <th className="px-4 py-2">Profit Sharing</th>
                 <th className="px-4 py-2">Leverage</th>
@@ -190,17 +313,13 @@ const handleSubmit = async (e) => {
                 <th className="px-4 py-2">Action</th>
               </tr>
             </thead>
-
             <tbody>
               {mamAccounts.map((acc) => (
-                <tr
-                  key={acc.id}
-                  className="bg-[#1a1a1a] hover:bg-gray-700 transition"
-                >
-                  <td className="px-4 py-2">{acc.id}</td>
+                <tr key={acc.account_id} className="bg-[#1a1a1a] hover:bg-gray-700 transition">
+                  <td className="px-4 py-2">{acc.account_id}</td>
                   <td className="px-4 py-2">{acc.accountName}</td>
                   <td className="px-4 py-2">{acc.profitPercentage}%</td>
-                  <td className="px-4 py-2">{acc.leverage}</td>
+                  <td className="px-4 py-2">{acc.leverage}%</td>
                   <td
                     className={`px-4 py-2 font-semibold ${
                       acc.enabled ? "text-green-400" : "text-red-400"
@@ -208,57 +327,48 @@ const handleSubmit = async (e) => {
                   >
                     {acc.enabled ? "Enabled" : "Disabled"}
                   </td>
-
-                  <td className="px-4 py-2 flex gap-2">
+                  <td className="px-2 py-2 flex gap-2">
                     <button
-                      className="bg-yellow-500 text-white px-3 py-1 rounded text-sm"
-                      onClick={() => setSelectedAccount(acc)}
+                      className="bg-yellow-500 text-white px-5 py-1 rounded text-sm"
+                      onClick={() => {
+                        setSelectedAccount(acc);
+                        fetchMamProfitDetails(acc.account_id);
+                      }}
                     >
                       View
                     </button>
-
-                    {/* ⭐ FIXED: OPEN DEPOSIT MODAL */}
                     <button
-                      onClick={() => {
-                        setShowDepositModal(true);
-                        setActiveTab("cheesepay");
-                        setSelectedDepositAccount(acc);
-                      }}
-                      className="bg-gold text-black px-3 py-1 rounded hover:bg-white transition"
-                    >
-                      Deposit
-                    </button>
+                          onClick={() => {
+                            setSelectedDepositAccount(acc.account_id || acc.id);
+                            setShowDepositModal(true);
+                          }}
+                          className="bg-yellow-500 text-white px-5 py-1 rounded text-sm"
+                        >
+                          Deposit
+                        </button>
+                   
 
-                    {/* ⭐ FIXED: OPEN WITHDRAW MODAL */}
-                    <button
-                      onClick={() => {
-                        setSelectedAccount(acc);
-                        setShowWithdrawModal(true);
-                      }}
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-400 transition"
-                    >
-                      Withdraw
-                    </button>
+                        <DepositModal
+        showDepositModal={showDepositModal}
+        setShowDepositModal={setShowDepositModal}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        cheeseAmount={cheeseAmount}
+        setCheeseAmount={setCheeseAmount}
+        currency={currency}
+        setCurrency={setCurrency}
+        convertedAmount={convertedAmount}
+        selectedDepositAccount={selectedDepositAccount}
+      />
 
-                    <button className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-white transition">
-                Investors
-              </button>
 
-              <button className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-white transition">
-                Settings
-              </button>
 
-              <button
-                onClick={() => handleToggleStatus(selectedAccount.id)}
-                className={`px-3 py-1 rounded text-sm ${
-                  selectedAccount.enabled
-                    ? "bg-yellow-500 hover:bg-yellow-400"
-                    : "bg-red-500 hover:bg-red-400"
-                }`}
-              >
-                {selectedAccount.enabled ? "Disable" : "Enable"}
-              </button>
 
+
+
+
+
+                    
                   </td>
                 </tr>
               ))}
@@ -271,10 +381,7 @@ const handleSubmit = async (e) => {
       {selectedAccount && (
         <div className="mt-6 w-[90%] max-w-5xl">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-yellow-400">
-              Account Details
-            </h3>
-
+            <h3 className="text-lg font-semibold text-yellow-400">Account Details</h3>
             <button
               onClick={() => setSelectedAccount(null)}
               className="text-yellow-400 border border-yellow-400 px-4 py-1 rounded hover:bg-yellow-400 hover:text-black transition"
@@ -285,58 +392,85 @@ const handleSubmit = async (e) => {
 
           <div className="bg-[#111] border border-yellow-400 rounded-lg p-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <InfoBox label="Account ID" value={selectedAccount.id} />
+              <InfoBox label="Account ID" value={selectedAccount.account_id} />
               <InfoBox label="Account Name" value={selectedAccount.accountName} />
               <InfoBox label="Profit Sharing" value={selectedAccount.profitPercentage + "%"} />
+              <InfoBox label="Total Profit" value={selectedAccount.totalProfit} />
               <InfoBox label="Leverage" value={selectedAccount.leverage} />
               <InfoBox label="Status" value={selectedAccount.enabled ? "Enabled" : "Disabled"} />
             </div>
 
+
+            
+
             {/* ACTION BUTTONS */}
-            <div className="flex flex-wrap justify-center gap-4 pt-4">
 
-              {/* ⭐ VIEW PAGE DEPOSIT */}
-              <button
-                className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-white transition"
-                onClick={() => setShowDepositModal(true)}
-              >
-                Deposit
-              </button>
+                <div className="flex flex-wrap justify-center gap-4 pt-4">
+                  <button
+                    onClick={() => {
+                      setSelectedDepositAccount(selectedAccount.account_id); // ✔ FIXED
+                      setShowDepositModal(true);
+                    }}
+                    className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
+                  >
+                    Deposit
+                  </button>
 
-              {/* ⭐ VIEW PAGE WITHDRAW */}
-              <button
-                className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-white transition"
-                onClick={() => setShowWithdrawModal(true)}
-              >
-                Withdraw
-              </button>
+                  <DepositModal
+        showDepositModal={showDepositModal}
+        setShowDepositModal={setShowDepositModal}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        cheeseAmount={cheeseAmount}
+        setCheeseAmount={setCheeseAmount}
+        currency={currency}
+        setCurrency={setCurrency}
+        convertedAmount={convertedAmount}
+        selectedDepositAccount={selectedDepositAccount}
+      />
 
-              <button className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-white transition">
-                Investors
-              </button>
 
-              <button className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-white transition">
-                Settings
-              </button>
-            </div>
+                  <button
+                    className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
+                    onClick={() => {
+                      setSelectedDepositAccount(selectedAccount.account_id);
+                      setShowWithdrawModal(true);
+                    }}
+                  >
+                    Withdraw
+                  </button>
+
+                  <button className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
+                  onClick={() => setShowTradesModal(true)}>
+                    Investors
+                  </button>
+
+                   <TradesModal
+                              showTradesModal={showTradesModal}
+                              setShowTradesModal={setShowTradesModal}
+                              selectedAccount={selectedAccount}
+                            />
+
+                  <button
+                    className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
+                    onClick={() => {
+                      setSelectedDepositAccount(selectedAccount.account_id);
+                      setShowSettingsModal(true);
+                    }}
+                  >
+                    Settings
+                  </button>
+
+                  <button
+                    className={`bg-yellow-400 px-4 py-2 rounded hover:bg-[#FFD700] transition text-black ${selectedAccount.enabled ? 'bg-red-500' : 'bg-yellow-400'}`}
+                    onClick={() => handleToggleStatus(selectedAccount.account_id)}
+                  >
+                    {selectedAccount.enabled ? 'Disable' : 'Enable'}
+                  </button>
+                </div>
+
           </div>
         </div>
-      )}
-
-      {/* ⭐ DEPOSIT MODAL */}
-      {showDepositModal && (
-        <DepositModal
-          account={selectedDepositAccount}
-          onClose={() => setShowDepositModal(false)}
-        />
-      )}
-
-      {/* ⭐ WITHDRAW MODAL */}
-      {showWithdrawModal && (
-        <Withdraw
-          account={selectedAccount}
-          onClose={() => setShowWithdrawModal(false)}
-        />
       )}
 
       {/* CREATE MODAL */}
@@ -344,9 +478,7 @@ const handleSubmit = async (e) => {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-gray-900 text-white p-6 rounded-lg shadow-lg w-[90%] max-w-lg">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-yellow-400">
-                Create New MAM Account
-              </h2>
+              <h2 className="text-lg font-bold text-yellow-400">Create New MAM Account</h2>
               <X
                 className="w-6 h-6 cursor-pointer text-gray-400 hover:text-yellow-400"
                 onClick={() => setShowModal(false)}
@@ -455,16 +587,50 @@ const handleSubmit = async (e) => {
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="submit" onClick={handleSubmit}
                   className="bg-yellow-500 px-4 py-2 rounded text-black font-semibold"
                 >
                   Create Account
                 </button>
               </div>
             </form>
-
           </div>
         </div>
+      )}
+
+      {/* DEPOSIT MODAL */}
+      {showDepositModal && (
+        <DepositModal
+          onClose={() => setShowDepositModal(false)}
+          accountId={selectedDepositAccount}
+        />
+      )}
+
+      {/* WITHDRAW MODAL */}
+      {showWithdrawModal && (
+        <Withdraw
+          onClose={() => setShowWithdrawModal(false)}
+          accountId={selectedAccount?.account_id}
+        />
+      )}
+
+      {/* SETTINGS MODAL */}
+      {showSettingsModal && (
+        <SettingsModal
+          showSettingsModal={showSettingsModal}
+          setShowSettingsModal={setShowSettingsModal}
+          selectedAccount={selectedAccount}
+          newLeverage={newLeverage}
+          setNewLeverage={setNewLeverage}
+          selectedPasswordType={selectedPasswordType}
+          setSelectedPasswordType={setSelectedPasswordType}
+          newPassword={newPassword}
+          setNewPassword={setNewPassword}
+          confirmPassword={confirmPassword}
+          setConfirmPassword={setConfirmPassword}
+          showPasswords={showPasswords}
+          setShowPasswords={setShowPasswords}
+        />
       )}
     </div>
   );
