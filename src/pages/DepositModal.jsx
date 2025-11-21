@@ -30,7 +30,7 @@ export default function DepositModal({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText("TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs");
-      alert("Address copied to clipboard!");
+      sharedUtils.showToast("Address copied to clipboard!", "success");
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
@@ -55,7 +55,7 @@ export default function DepositModal({
   const handleManualDepositSubmit = async (e) => {
     e.preventDefault();
     if (!selectedDepositAccount || !cheeseAmount || !proofFile) {
-      alert("Please fill in all required fields.");
+      sharedUtils.showToast("Please fill in all required fields.", "error");
       return;
     }
 
@@ -92,13 +92,13 @@ export default function DepositModal({
       }
       await response.json(); // Assuming it returns JSON, but not used here
 
-      alert("Manual deposit request submitted successfully!");
+      sharedUtils.showToast("Manual deposit request submitted successfully!", "success");
       setShowDepositModal(false);
       setCheeseAmount("");
       setProofFile(null);
     } catch (error) {
       console.error('Failed to submit manual deposit:', error);
-      alert("Failed to submit deposit request. Please try again.");
+      sharedUtils.showToast("Failed to submit deposit request. Please try again.", "error");
     } finally {
       setIsSubmitting(false);
     }
