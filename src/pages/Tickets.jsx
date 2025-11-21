@@ -17,6 +17,9 @@ const Tickets = () => {
     dateRange: "",
   });
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [message, setMessage] = useState("");
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -58,6 +61,7 @@ const Tickets = () => {
       const ticketData = {
         subject,
         description,
+        created_by: userId,
       };
 
       // If there are files, include them in FormData
@@ -65,6 +69,7 @@ const Tickets = () => {
         const formDataWithFiles = new FormData();
         formDataWithFiles.append('subject', subject);
         formDataWithFiles.append('description', description);
+        formDataWithFiles.append('created_by', userId);
         files.forEach(file => {
           formDataWithFiles.append('documents', file);
         });
@@ -100,6 +105,24 @@ const Tickets = () => {
     setFilters({ ...filters, [key]: value });
     setOpenDropdown(null);
   };
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    try {
+      await apiCall(`api/tickets/${selectedTicket.id}/send-message/`, {
+        method: 'POST',
+        body: JSON.stringify({ message }),
+      });
+      alert("Message sent successfully!");
+      setMessage("");
+      setShowViewModal(false);
+    } catch (err) {
+      alert("Failed to send message. Please try again.");
+      console.error("Error sending message:", err);
+    }
+  };
+
+
 
   return (
     <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} h-full px-4 py-6 md:px-8`}>
@@ -199,7 +222,15 @@ const Tickets = () => {
                           <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">Open</span>
                         </td>
                         <td className="p-2 border border-yellow-600">
-                          <button className="text-yellow-400 hover:text-yellow-500">View</button>
+                          <button
+                            onClick={() => {
+                              setSelectedTicket(ticket);
+                              setShowViewModal(true);
+                            }}
+                            className="text-yellow-400 hover:text-yellow-500"
+                          >
+                            View
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -214,7 +245,15 @@ const Tickets = () => {
                           <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Pending</span>
                         </td>
                         <td className="p-2 border border-yellow-600">
-                          <button className="text-yellow-400 hover:text-yellow-500">View</button>
+                          <button
+                            onClick={() => {
+                              setSelectedTicket(ticket);
+                              setShowViewModal(true);
+                            }}
+                            className="text-yellow-400 hover:text-yellow-500"
+                          >
+                            View
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -229,7 +268,15 @@ const Tickets = () => {
                           <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">Closed</span>
                         </td>
                         <td className="p-2 border border-yellow-600">
-                          <button className="text-yellow-400 hover:text-yellow-500">View</button>
+                          <button
+                            onClick={() => {
+                              setSelectedTicket(ticket);
+                              setShowViewModal(true);
+                            }}
+                            className="text-yellow-400 hover:text-yellow-500"
+                          >
+                            View
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -398,6 +445,64 @@ const Tickets = () => {
     </div>
   </div>
 )}
+
+      {/* ===================== VIEW MODAL ===================== */}
+      {showViewModal && selectedTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
+          <div className={`relative w-full max-w-lg p-6 rounded-xl shadow-2xl border ${isDarkMode ? 'border-gray-700 bg-black text-white' : 'border-gray-300 bg-white text-black'}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-yellow-400">
+                Ticket Details
+              </h3>
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  setMessage("");
+                }}
+                className={`transition ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'}`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block font-semibold text-yellow-400">Subject</label>
+                <p className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{selectedTicket.subject}</p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-yellow-400">Date and Time</label>
+                <p className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{new Date(selectedTicket.created_at).toLocaleString()}</p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-yellow-400">Username</label>
+                <p className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{selectedTicket.username}</p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-yellow-400">Message</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Enter your message"
+                  className={`w-full p-2 rounded-md ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-400' : 'bg-gray-100 border-gray-300 text-black placeholder-gray-600'} h-24`}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSendMessage}
+                  className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md transition"
+                >
+                  Send Message
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
