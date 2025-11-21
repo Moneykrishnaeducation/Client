@@ -400,7 +400,7 @@ const App = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const data = await apiCall("ib/stats/");
+        const data = await apiCall("client/ib/stats/");
         console.log("Dashboard data:", data);
         // Aggregate earningsPerMonth by month (JAN to DEC), summing totals across years, filling missing months with 0
         const aggregatedMonthly = {};
