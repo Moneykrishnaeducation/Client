@@ -32,6 +32,7 @@ const AppRoutes = () => {
   const hideLayout = location.pathname === "/"; // hide navbar & main on login
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
 
   return (
     <div className="w-screen flex">
@@ -42,8 +43,8 @@ const AppRoutes = () => {
       {!hideLayout ? (
         <Main isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
           <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/tradingaccounts" element={<TradingAccounts />} />
+            <Route path="/dashboard" element={<Dashboard/>} />
+            <Route path="/tradingaccounts" element={<TradingAccounts showDepositModal={showDepositModal} setShowDepositModal={setShowDepositModal}/>} />
             <Route path="/socialtrading" element={<SocialTrading />} />
             <Route path="/partnership" element={<Partnership />} />
             <Route path="/platform" element={<Platform />} />

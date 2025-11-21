@@ -7,16 +7,17 @@ import TradesModal from "./TradesModal";
 import SettingsModal from "./SettingsModal";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { apiCall } from "../utils/api";
+import { apiCall, getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
 
 export default function TradingAccounts({ showDepositModal, setShowDepositModal }) {
   const { isDarkMode } = useTheme();
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [activeTab, setActiveTab] = useState("cheesepay");
   const [cheeseAmount, setCheeseAmount] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("INR");
   const [convertedAmount, setConvertedAmount] = useState("");
   const [selectedDepositAccount, setSelectedDepositAccount] = useState("");
+  const [usdtAmount, setUsdtAmount] = useState("");
   const [activeComponent, setActiveComponent] = useState(null);
   const [fromAccount, setFromAccount] = useState("");
   const [toAccount, setToAccount] = useState("");
@@ -44,7 +45,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   const refreshAccounts = async () => {
     try {
       const data = await apiCall('api/user-trading-accounts/');
-      setAccounts(data.accounts || []);
+      setAccounts((data.accounts || []).filter(acc => acc.account_type === "standard"));
     } catch (error) {
       console.error('Failed to refresh accounts:', error);
     }
@@ -62,7 +63,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
     const fetchAccounts = async () => {
       try {
         const data = await apiCall('api/user-trading-accounts/');
-        setAccounts(data.accounts || []);
+        setAccounts((data.accounts || []).filter(acc => acc.account_type === "standard"));
       } catch (error) {
         console.error('Failed to fetch accounts:', error);
         setAccounts([]);
@@ -90,11 +91,36 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
     }
 
     try {
-      const response = await apiCall('/internal-transfer', 'POST', {
-        from_account: fromAccount,
-        to_account: toAccount,
-        amount: parseFloat(amount)
-      });
+      const url = `api/internal-transfer/`.startsWith('http') ? `api/internal-transfer/` : `${API_BASE_URL}api/internal-transfer/`;
+      const headers = { ...getAuthHeaders() };
+      const csrfToken = getCookie('csrftoken');
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+      }
+      const config = {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from_account_id: fromAccount,
+          to_account_id: toAccount,
+          amount: parseFloat(amount)
+        }),
+        credentials: 'include'
+      };
+
+      const response = await fetch(url, config);
+      if (response.status === 401 || response.status === 403) {
+        handleUnauthorized();
+        throw new Error('Unauthorized access');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      await response.json(); // Assuming it returns JSON, but not used here
+
       setTransferMessage("Transfer successful ✅");
       // Refresh accounts after successful transfer
       await refreshAccounts();
@@ -149,9 +175,9 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   );
 
   return (
-    <div className={`min-h-[90vh] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} font-sans flex flex-col items-center`}>
+    <div className={`min-h-[90vh] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} font-sans  flex flex-col items-center`}>
       {/* Header */}
-      <header className={`w-full ${isDarkMode ? 'bg-black' : 'bg-white'} py-2 mt-6`}>
+      <header className={`w-full ${isDarkMode ? 'bg-black' : 'bg-white'} mt-6`}>
         <div className="max-w-[1100px] mx-auto flex flex-wrap gap-3 justify-around items-center px-4">
           <button
             className="bg-gold  w-80 text-black px-4 py-2 rounded hover:bg-white transition"
@@ -213,11 +239,11 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                       required
                       className={`w-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold`}
                     >
-                      <option value="" disabled>
+                      <option value="" disabled key="disabled-from">
                         Select Account
                       </option>
                       {accounts.map((acc) => (
-                        <option key={acc.id} value={acc.id}>
+                        <option key={acc.id} value={acc.account_id}>
                           {acc.group_alias} (${acc.balance})
                         </option>
                       ))}
@@ -235,11 +261,11 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                       required
                       className={`w-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold`}
                     >
-                      <option value="" disabled>
+                      <option value="" disabled key="disabled-to">
                         Select Account
                       </option>
                       {accounts.map((acc) => (
-                        <option key={acc.id} value={acc.id}>
+                        <option key={acc.id} value={acc.account_id}>
                           {acc.group_alias} (${acc.balance})
                         </option>
                       ))}
@@ -311,7 +337,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
       </header>
 
       <main className="flex-1 w-full flex justify-center">
-        <div className="max-w-[1100px] w-full p-6">
+        <div className="w-full p-6">
           {/* Account Summary */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gold mb-4">
@@ -358,7 +384,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                   <tbody>
                     {accounts.map((acc) => (
                       <tr
-                        key={acc.id}
+                        key={acc.account_id}
                         className={`border-b ${isDarkMode ? 'border-[#333] hover:bg-[#1a1a1a]' : 'border-gray-300 hover:bg-gray-100'} transition`}
                       >
                         <td className="p-3">{acc.group_alias}</td>
@@ -368,12 +394,14 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                         <td className="p-3">${acc.equity}</td>
                         <td className="p-3 text-center flex gap-3 justify-center">
                           <button
+                            key="view-button"
                             onClick={() => setSelectedAccount(acc)}
                             className="bg-gold text-black px-3 py-1 rounded hover:bg-white transition"
                           >
                             View
                           </button>
                           <button
+                            key="deposit-button"
                             onClick={() => {
                               setShowDepositModal(true);
                               setActiveTab("cheesepay");
@@ -407,15 +435,15 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                 </button>
               </div>
 
-              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-6 space-y-4`}>
+              <div className={`${isDarkMode ? 'bg-[#111]' : 'bg-gray-100'} border border-gold rounded-lg p-2 space-y-4`}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Info label="Account Type" value={selectedAccount.group_alias} isDarkMode={isDarkMode} />
-                  <Info label="Platform Login" value={selectedAccount.account_id} isDarkMode={isDarkMode} />
-                  <Info label="Leverage" value={selectedAccount.leverage} isDarkMode={isDarkMode} />
-                  <Info label="Balance" value={`$${selectedAccount.balance}`} isDarkMode={isDarkMode} />
-                  <Info label="Equity" value={`$${selectedAccount.equity}`} isDarkMode={isDarkMode} />
-                  <Info label="Margin level" value={`${selectedAccount.margin}%`} isDarkMode={isDarkMode} />
-                  <Info label="Free Margin" value={`$${selectedAccount.freeMargin}`} isDarkMode={isDarkMode} />
+                  <Info key="account-type" label="Account Type" value={selectedAccount.group_alias} isDarkMode={isDarkMode} />
+                  <Info key="platform-login" label="Platform Login" value={selectedAccount.account_id} isDarkMode={isDarkMode} />
+                  <Info key="leverage" label="Leverage" value={selectedAccount.leverage} isDarkMode={isDarkMode} />
+                  <Info key="balance" label="Balance" value={`$${selectedAccount.balance}`} isDarkMode={isDarkMode} />
+                  <Info key="equity" label="Equity" value={`$${selectedAccount.equity}`} isDarkMode={isDarkMode} />
+                  <Info key="margin-level" label="Margin level" value={`${selectedAccount.margin}%`} isDarkMode={isDarkMode} />
+                  <Info key="free-margin" label="Free Margin" value={`$${selectedAccount.freeMargin}`} isDarkMode={isDarkMode} />
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-4 pt-2">
@@ -423,6 +451,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
                     className="bg-gold text-black w-30 px-4 py-2 rounded hover:bg-white transition"
                     onClick={() => {
                       setShowDepositModal(true);
+                      setActiveTab("cheesepay");
                       setSelectedDepositAccount(selectedAccount.account_id);
                     }}
                   >
@@ -462,6 +491,8 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
             setCurrency={setCurrency}
             convertedAmount={convertedAmount}
             selectedDepositAccount={selectedDepositAccount}
+            usdtAmount={usdtAmount}
+            setUsdtAmount={setUsdtAmount}
           />
 
           {/* Withdraw Modal */}
@@ -474,7 +505,10 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
             setShowTradesModal={setShowTradesModal}
             selectedAccount={selectedAccount}
           />
-
+          
+          {showWithdrawModal && (
+            <Withdraw onClose={() => setShowWithdrawModal(false)} />
+          )}
           <SettingsModal
             showSettingsModal={showSettingsModal}
             setShowSettingsModal={setShowSettingsModal}

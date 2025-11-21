@@ -2,7 +2,23 @@ import { useLocation } from 'react-router-dom';
 
 // API utility functions for consistent token handling
 
-const API_BASE_URL = 'http://client.localhost:8000/';
+export const API_BASE_URL = 'http://client.localhost:8000/';
+
+// Get CSRF token from cookies
+export function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
 
 // Get auth headers with token
 export const getAuthHeaders = () => {
@@ -59,6 +75,17 @@ export const apiCall = async (endpoint, options = {}) => {
     ...options
   };
 
+  // Add CSRF token for state-changing requests
+  const method = (options.method || 'GET').toUpperCase();
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    const csrfToken = getCookie('csrftoken');
+    if (csrfToken) {
+      config.headers['X-CSRFToken'] = csrfToken;
+    }
+    // Ensure credentials are included for CSRF
+    config.credentials = 'include';
+  }
+
   // Merge headers if options.headers exists
   if (options.headers) {
     config.headers = { ...config.headers, ...options.headers };
@@ -95,6 +122,23 @@ export const loginUser = async (email, password) => {
   }
 
   return data;
+};
+
+// Function to get CSRF token from server if needed
+export const getCSRFToken = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}api/csrf-token/`, {
+      method: 'GET',
+      credentials: 'include', // Include cookies
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data.csrfToken;
+    }
+  } catch (error) {
+    console.error('Failed to fetch CSRF token:', error);
+  }
+  return null;
 };
 
 // Hook to track current page
