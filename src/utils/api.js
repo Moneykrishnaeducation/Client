@@ -70,10 +70,27 @@ if (typeof window !== 'undefined') {
 export const apiCall = async (endpoint, options = {}) => {
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
+  // Build headers starting from auth defaults, then merge any user-provided headers
+  const defaultHeaders = getAuthHeaders();
+  const mergedHeaders = options.headers ? { ...defaultHeaders, ...options.headers } : { ...defaultHeaders };
+
   const config = {
-    headers: getAuthHeaders(),
-    ...options
+    ...options,
+    headers: mergedHeaders,
   };
+
+  // If caller provided a FormData body, allow the browser to set Content-Type
+  // (including the multipart boundary). Remove any pre-set Content-Type header
+  // so fetch will set it correctly.
+  try {
+    if (options && options.body && typeof FormData !== 'undefined' && options.body instanceof FormData) {
+      if (config.headers && config.headers['Content-Type']) {
+        delete config.headers['Content-Type'];
+      }
+    }
+  } catch (e) {
+    // Defensive: if FormData isn't available or instanceof check fails, ignore
+  }
 
   // Add CSRF token for state-changing requests
   const method = (options.method || 'GET').toUpperCase();
@@ -86,10 +103,7 @@ export const apiCall = async (endpoint, options = {}) => {
     config.credentials = 'include';
   }
 
-  // Merge headers if options.headers exists
-  if (options.headers) {
-    config.headers = { ...config.headers, ...options.headers };
-  }
+  // Headers were already merged above into config.headers
 
   try {
     const response = await fetch(url, config);
