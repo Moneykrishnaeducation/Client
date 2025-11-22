@@ -4,7 +4,7 @@ import { Info as InfoIcon, Plus, Users, X } from "lucide-react";
 
 import Withdraw from "./Withdraw";
 import DepositModal from "./DepositModal";
-import TradesModal from "./TradesModal";
+import InvestorManagement from "./InvestorManagement";
 import SettingsModal from "./SettingsModal";
 
 // ✔ InfoBox Component
@@ -24,6 +24,8 @@ export default function MamDashboard() {
   const [showInfo, setShowInfo] = useState(false);
   const [mamAccounts, setMamAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [toggleLoadingIds, setToggleLoadingIds] = useState([]);
+  const [toggleError, setToggleError] = useState(null);
 
   const [showDepositModal, setShowDepositModal] = useState(false);
 const [activeTab, setActiveTab] = useState("cheesepay");
@@ -124,18 +126,67 @@ const [showPasswords, setShowPasswords] = useState(false);
   };
 
   const handleToggleStatus = (id) => {
-    setMamAccounts((prev) => {
-      const updated = prev.map((acc) =>
-        acc.account_id === id ? { ...acc, enabled: !acc.enabled } : acc
-      );
-      localStorage.setItem("mamAccounts", JSON.stringify(updated));
-      return updated;
-    });
+    // Call server API to toggle MAM account status
+    (async () => {
+      setToggleError(null);
+      setToggleLoadingIds((prev) => Array.from(new Set([...prev, id])));
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) throw new Error('Missing auth token');
 
-    // Also update selectedAccount if it's the one being toggled
-    if (selectedAccount && selectedAccount.account_id === id) {
-      setSelectedAccount((prev) => ({ ...prev, enabled: !prev.enabled }));
-    }
+        // determine current enabled state from local list or selectedAccount
+        const current = mamAccounts.find((acc) => acc.account_id === id);
+        const currentEnabled = typeof current !== 'undefined' ? current.enabled : (selectedAccount && selectedAccount.account_id === id ? selectedAccount.enabled : true);
+        const enableTrading = !currentEnabled; // send desired state
+
+        const url = 'http://client.localhost:8000/toggle-mam-account/';
+        const body = { id: id, enable_trading: enableTrading };
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          let errTxt = `${res.status} ${res.statusText}`;
+          try {
+            const j = await res.json();
+            errTxt = j.error || JSON.stringify(j);
+          } catch (e) {}
+          throw new Error(errTxt);
+        }
+
+        let payload = {};
+        try { payload = await res.json(); } catch (e) { payload = {}; }
+
+        // server may return new state in payload.is_enabled or payload.enabled
+        const newEnabled = (typeof payload.is_enabled !== 'undefined') ? Boolean(payload.is_enabled) :
+                           (typeof payload.enabled !== 'undefined') ? Boolean(payload.enabled) :
+                           enableTrading;
+
+        setMamAccounts((prev) => {
+          const updated = prev.map((acc) =>
+            acc.account_id === id ? { ...acc, enabled: newEnabled } : acc
+          );
+          localStorage.setItem('mamAccounts', JSON.stringify(updated));
+          return updated;
+        });
+
+        if (selectedAccount && selectedAccount.account_id === id) {
+          setSelectedAccount((prev) => ({ ...prev, enabled: newEnabled }));
+        }
+      } catch (e) {
+        console.error('Toggle MAM account error:', e);
+        setToggleError(String(e));
+      } finally {
+        setToggleLoadingIds((prev) => prev.filter((v) => v !== id));
+      }
+    })();
   };
 
   const handleSubmit = async (e) => {
@@ -445,7 +496,7 @@ const [showPasswords, setShowPasswords] = useState(false);
                     Investors
                   </button>
 
-                   <TradesModal
+                   <InvestorManagement
                               showTradesModal={showTradesModal}
                               setShowTradesModal={setShowTradesModal}
                               selectedAccount={selectedAccount}
@@ -462,11 +513,13 @@ const [showPasswords, setShowPasswords] = useState(false);
                   </button>
 
                   <button
-                    className={`bg-yellow-400 px-4 py-2 rounded hover:bg-[#FFD700] transition text-black ${selectedAccount.enabled ? 'bg-red-500' : 'bg-yellow-400'}`}
-                    onClick={() => handleToggleStatus(selectedAccount.account_id)}
-                  >
-                    {selectedAccount.enabled ? 'Disable' : 'Enable'}
-                  </button>
+                      disabled={toggleLoadingIds.includes(selectedAccount.account_id)}
+                      className={`px-4 py-2 rounded transition text-black ${selectedAccount.enabled ? (toggleLoadingIds.includes(selectedAccount.account_id) ? 'bg-red-300' : 'bg-red-500') : (toggleLoadingIds.includes(selectedAccount.account_id) ? 'bg-yellow-300' : 'bg-yellow-400')} hover:opacity-90`}
+                      onClick={() => handleToggleStatus(selectedAccount.account_id)}
+                    >
+                      {toggleLoadingIds.includes(selectedAccount.account_id) ? (selectedAccount.enabled ? 'Disabling...' : 'Enabling...') : (selectedAccount.enabled ? 'Disable' : 'Enable')}
+                    </button>
+                    {toggleError && <div className="text-red-400 mt-2">{toggleError}</div>}
                 </div>
 
           </div>

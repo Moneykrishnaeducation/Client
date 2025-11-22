@@ -269,7 +269,10 @@ const Maminvestments = () => {
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("Missing auth token. Please log in again.");
 
-      const url = `http://client.localhost:8000/mam/investors/${accountId}/toggle-copy`;
+      const endpoint = currentEnabled ? 'pause-copying/' : 'start-copying/';
+      const url = `http://client.localhost:8000/${endpoint}`;
+      const body = { mam_id: accountId };
+
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -277,6 +280,7 @@ const Maminvestments = () => {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -288,15 +292,10 @@ const Maminvestments = () => {
         throw new Error(errText);
       }
 
-      // If API returns a payload, prefer server value. Otherwise flip local state.
-      let payload = {};
-      try {
-        payload = await res.json();
-      } catch (e) {
-        payload = {};
-      }
+      const data = await res.json();
 
-      const newEnabled = (typeof payload.enabled !== 'undefined') ? Boolean(payload.enabled) : !currentEnabled;
+      // Backend confirms success with message
+      const newEnabled = !currentEnabled; // Flip the state
 
       // Update selected account view
       setSelectedAccount((prev) => (prev && String(prev.id) === String(accountId) ? { ...prev, enabled: newEnabled } : prev));
@@ -305,7 +304,7 @@ const Maminvestments = () => {
       setInvestments((prev) => prev.map((it) => (String(it.id) === String(accountId) ? { ...it, enabled: newEnabled } : it)));
 
       // Small user feedback
-      alert(newEnabled ? 'Copying resumed for account.' : 'Copying paused for account.');
+      alert(data.message || (newEnabled ? 'Copying resumed for account.' : 'Copying paused for account.'));
     } catch (e) {
       console.error('Toggle copy API error:', e);
       setToggleError(String(e));
@@ -636,8 +635,7 @@ const Maminvestments = () => {
             <Info label="Account Name" value={selectedAccount.accountName} isDarkMode={true} />
             <Info label="Profit Percentage" value={`${selectedAccount.profitPercentage}%`} isDarkMode={true} />
             <Info label="Leverage" value={selectedAccount.leverage} isDarkMode={true} />
-            <Info label="Total Profit" value={`$${selectedAccount.totalProfit?.toFixed(2) || "0.00"}`} isDarkMode={true} />
-                        <Info label="Total Profit" value={`$${formatNumber(selectedAccount.totalProfit)}`} isDarkMode={true} />
+            <Info label="Total Profit" value={`$${formatNumber(selectedAccount.totalProfit)}`} isDarkMode={true} />
             <Info label="Status" value={selectedAccount.enabled ? "Enabled" : "Disabled"} isDarkMode={true} />
             <Info label="Risk Level" value={selectedAccount.riskLevel || "Medium"} isDarkMode={true} />
           </div>
