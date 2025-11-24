@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
+import { sharedUtils } from "../utils/shared-utils";
 
 export default function SettingsModal({
   showSettingsModal,
@@ -18,6 +20,134 @@ export default function SettingsModal({
   setShowPasswords,
 }) {
   const { isDarkMode } = useTheme();
+  const [accountDetails, setAccountDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [updatingLeverage, setUpdatingLeverage] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (showSettingsModal && selectedAccount) {
+      fetchAccountDetails();
+    }
+  }, [showSettingsModal, selectedAccount]);
+
+  const fetchAccountDetails = async () => {
+    setLoadingDetails(true);
+    setError("");
+    try {
+      const url = `api/account-details/${selectedAccount.account_id}/`.startsWith('http') ? `api/account-details/${selectedAccount.account_id}/` : `${API_BASE_URL}api/account-details/${selectedAccount.account_id}/`;
+      const headers = { ...getAuthHeaders() };
+      const config = {
+        method: 'GET',
+        headers,
+        credentials: 'include'
+      };
+      const response = await fetch(url, config);
+      if (response.status === 401 || response.status === 403) {
+        handleUnauthorized();
+        throw new Error('Unauthorized access');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setAccountDetails(data);
+    } catch (err) {
+      console.error('Error fetching account details:', err);
+      setError('Failed to load account details');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const handleUpdateLeverage = async () => {
+    if (!newLeverage) return;
+    setUpdatingLeverage(true);
+    setError("");
+    try {
+      const url = `api/update-leverage/${selectedAccount.account_id}/`.startsWith('http') ? `api/update-leverage/${selectedAccount.account_id}/` : `${API_BASE_URL}api/update-leverage/${selectedAccount.account_id}/`;
+      const headers = { ...getAuthHeaders() };
+      const csrfToken = getCookie('csrftoken');
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+      }
+      const leverageValue = parseInt(newLeverage.split(':')[1]);
+      if (isNaN(leverageValue)) {
+        setError('Invalid leverage value selected');
+        return;
+      }
+      const config = {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ leverage: leverageValue }),
+        credentials: 'include'
+      };
+      const response = await fetch(url, config);
+      if (response.status === 401 || response.status === 403) {
+        handleUnauthorized();
+        throw new Error('Unauthorized access');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      await response.json(); // Assuming it returns JSON, but not used here
+      sharedUtils.showToast('Leverage updated successfully');
+      setNewLeverage("");
+      fetchAccountDetails(); // Refresh details
+    } catch (err) {
+      console.error('Error updating leverage:', err);
+      setError('Failed to update leverage');
+    } finally {
+      setUpdatingLeverage(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword || !confirmPassword || newPassword !== confirmPassword) {
+      if (newPassword !== confirmPassword) {
+        setError("Passwords do not match");
+      }
+      return;
+    }
+    setUpdatingPassword(true);
+    setError("");
+    try {
+      const url = `api/update-password/${selectedAccount.account_id}/`.startsWith('http') ? `api/update-password/${selectedAccount.account_id}/` : `${API_BASE_URL}api/update-password/${selectedAccount.account_id}/`;
+      const headers = { ...getAuthHeaders() };
+      const csrfToken = getCookie('csrftoken');
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+      }
+      const config = {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          password_type: selectedPasswordType,
+          new_password: newPassword
+        }),
+        credentials: 'include'
+      };
+      const response = await fetch(url, config);
+      if (response.status === 401 || response.status === 403) {
+        handleUnauthorized();
+        throw new Error('Unauthorized access');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      await response.json(); // Assuming it returns JSON, but not used here
+      sharedUtils.showToast('Password updated successfully');
+      setNewPassword("");
+      setConfirmPassword("");
+      setSelectedPasswordType("");
+    } catch (err) {
+      console.error('Error updating password:', err);
+      setError('Failed to update password');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
   return (
     <>
       {showSettingsModal && (
@@ -37,6 +167,11 @@ export default function SettingsModal({
             </h2>
 
             <div className="space-y-6">
+              {error && (
+                <div className="bg-red-800 text-red-400 p-2 rounded-md text-sm font-medium shadow-md">
+                  {error}
+                </div>
+              )}
               {/* Leverage Section */}
               <div>
                 <h3 className="text-lg font-semibold text-[#FFD700] mb-2">Leverage</h3>
@@ -60,19 +195,15 @@ export default function SettingsModal({
                     <option value="1:1000">1:1000</option>
                   </select>
                   <button
-                    onClick={() => {
-                      // Handle leverage update
-                      alert(`Leverage updated to ${newLeverage}`);
-                      setNewLeverage("");
-                    }}
-                    disabled={!newLeverage}
+                    onClick={handleUpdateLeverage}
+                    disabled={!newLeverage || updatingLeverage}
                     className={`mt-2 px-4 py-2 rounded text-black transition ${
-                      newLeverage
+                      newLeverage && !updatingLeverage
                         ? "bg-[#FFD700] hover:bg-white"
                         : "bg-gray-600 cursor-not-allowed"
                     }`}
                   >
-                    Update Leverage
+                    {updatingLeverage ? 'Updating...' : 'Update Leverage'}
                   </button>
                 </div>
               </div>
@@ -132,24 +263,15 @@ export default function SettingsModal({
                       </div>
                     </div>
                     <button
-                      onClick={() => {
-                        if (newPassword !== confirmPassword) {
-                          alert("Passwords do not match");
-                          return;
-                        }
-                        // Handle password update
-                        alert("Password updated successfully");
-                        setNewPassword("");
-                        setConfirmPassword("");
-                      }}
-                      disabled={!newPassword || !confirmPassword}
+                      onClick={handleUpdatePassword}
+                      disabled={!newPassword || !confirmPassword || updatingPassword}
                       className={`px-4 py-2 rounded text-black transition ${
-                        newPassword && confirmPassword
+                        newPassword && confirmPassword && !updatingPassword
                           ? "bg-[#FFD700] hover:bg-white"
                           : "bg-gray-600 cursor-not-allowed"
                       }`}
                     >
-                      Update Password
+                      {updatingPassword ? 'Updating...' : 'Update Password'}
                     </button>
                   </div>
                 </div>

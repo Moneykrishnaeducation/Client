@@ -9,6 +9,7 @@ import Transactions from './Transactions';
 import Maminvestments from './MAMInvestments';
 import DemoAccountsPage from './DemoAccountsPage';
 import PammAccount from './PammAccount';
+import Ibrequest from './Ibrequest';
 
 export const pages = {
   dashboard: Dashboard,
@@ -22,4 +23,5 @@ export const pages = {
   maminvestments: Maminvestments,
   demoAccounts:DemoAccountsPage,
   pammAccount:PammAccount,
+  ibrequest:Ibrequest,
 };

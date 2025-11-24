@@ -1,6 +1,7 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { apiCall } from "../utils/api";
 import {
   Home,
   CreditCard,
@@ -16,18 +17,38 @@ import {
 const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const { isDarkMode } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
     { path: "/tradingaccounts", icon: CreditCard, label: "Trading Accounts" },
     { path: "/socialtrading", icon: Users, label: "Social Trading" },
-    { path: "/partnership", icon: Handshake, label: "Partnership" },
+    { path: "/partnership", icon: Handshake, label: "Partnership", requiresApproval: true },
     { path: "/platform", icon: Monitor, label: "Platform" },
     { path: "/tickets", icon: Ticket, label: "Ticket" },
     { path: "/transactions", icon: Repeat, label: "Transactions" },
     { path: "/economic-calendar", icon: Calendar, label: "Economic Calendar" },
     { path: "/support", icon: Headphones, label: "Terms & Conditions" },
   ];
+
+  const handleMenuClick = async (item) => {
+    if (item.requiresApproval) {
+      try {
+        const response = await apiCall('client/ib/status/');
+        if (response.approved) {
+          navigate(item.path);
+        } else {
+          navigate('/ibrequest');
+        }
+      } catch (error) {
+        console.error('Failed to check IB status:', error);
+        navigate('/ibrequest');
+      }
+    } else {
+      navigate(item.path);
+    }
+    setIsSidebarOpen(false);
+  };
 
   return (
     <nav
@@ -52,29 +73,54 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setIsSidebarOpen(false)}
-              className={`flex items-center gap-4 px-5 py-3 rounded-md text-sm font-medium transition-all duration-300 relative
-              ${
-                isActive
-                  ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 text-black shadow-[0_0_20px_#FFD700]"
-                  : `${isDarkMode ? 'text-gray-300 hover:text-yellow-400 hover:bg-gray-900' : 'text-gray-700 hover:text-yellow-400 hover:bg-gray-100'}`
-              }`}
-            >
-              {/* Border on Hover */}
-              <span className={`absolute inset-0 rounded-md border-2 border-transparent hover:border-${isDarkMode ? 'white' : 'black'} pointer-events-none transition-all duration-300`}></span>
+          if (item.requiresApproval) {
+            return (
+              <button
+                key={item.path}
+                onClick={() => handleMenuClick(item)}
+                className={`flex items-center gap-4 px-5 py-3 rounded-md text-sm font-medium transition-all duration-300 relative
+                ${
+                  isActive
+                    ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 text-black shadow-[0_0_20px_#FFD700]"
+                    : `${isDarkMode ? 'text-gray-300 hover:text-yellow-400 hover:bg-gray-900' : 'text-gray-700 hover:text-yellow-400 hover:bg-gray-100'}`
+                }`}
+              >
+                {/* Border on Hover */}
+                <span className={`absolute inset-0 rounded-md border-2 border-transparent hover:border-${isDarkMode ? 'white' : 'black'} pointer-events-none transition-all duration-300`}></span>
 
-              <Icon
-                className={`text-lg relative z-10 ${
-                  isActive ? "text-black" : "text-yellow-400"
-                } transition-all duration-300`}
-              />
-              <span className="relative z-10">{item.label}</span>
-            </Link>
-          );
+                <Icon
+                  className={`text-lg relative z-10 ${
+                    isActive ? "text-black" : "text-yellow-400"
+                  } transition-all duration-300`}
+                />
+                <span className="relative z-10">{item.label}</span>
+              </button>
+            );
+          } else {
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`flex items-center gap-4 px-5 py-3 rounded-md text-sm font-medium transition-all duration-300 relative
+                ${
+                  isActive
+                    ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 text-black shadow-[0_0_20px_#FFD700]"
+                    : `${isDarkMode ? 'text-gray-300 hover:text-yellow-400 hover:bg-gray-900' : 'text-gray-700 hover:text-yellow-400 hover:bg-gray-100'}`
+                }`}
+              >
+                {/* Border on Hover */}
+                <span className={`absolute inset-0 rounded-md border-2 border-transparent hover:border-${isDarkMode ? 'white' : 'black'} pointer-events-none transition-all duration-300`}></span>
+
+                <Icon
+                  className={`text-lg relative z-10 ${
+                    isActive ? "text-black" : "text-yellow-400"
+                  } transition-all duration-300`}
+                />
+                <span className="relative z-10">{item.label}</span>
+              </Link>
+            );
+          }
         })}
       </div>
     </nav>

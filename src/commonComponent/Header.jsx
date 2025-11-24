@@ -8,7 +8,7 @@ import {
 import { Bell, X, CheckCircle, Info, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { apiCall } from "../utils/api";
+import { apiCall, getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
 
 const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const { isDarkMode, toggleMode } = useTheme();
@@ -40,7 +40,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         // [{ id: 1, message: "New message", type: "info" }]
         if (response?.notifications) {
           setNotifications(
-            response.notifications.map((n) => ({
+            response.notifications.filter((n) => !n.is_read).map((n) => ({
               ...n,
               icon:
                 n.type === "success"
@@ -52,11 +52,10 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                   : <Info className="w-5 h-5 text-blue-400" />,
             }))
           );
+          setLoadingNotifications(false);
         }
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
-      } finally {
-        setLoadingNotifications(false);
       }
     };
 
@@ -80,14 +79,107 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   }, []);
 
   // 🔹 Mark single notification as read
-  const markAsRead = (id) => {
-    setNotifications(notifications.filter((notif) => notif.id !== id));
-  };
+  const markAsRead = async (id) => {
+  try {
+    const url = `${API_BASE_URL}client/notifications/${id}/mark-read/`;
+
+    const headers = {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json"
+    };
+
+    // Add CSRF token if present
+    const csrfToken = getCookie('csrftoken');
+    if (csrfToken) {
+      headers['X-CSRFToken'] = csrfToken;
+    }
+
+    const config = {
+      method: 'POST',
+      headers,
+      credentials: 'include'
+    };
+
+    const response = await fetch(url, config);
+
+    if (response.status === 401 || response.status === 403) {
+      handleUnauthorized();
+      throw new Error('Unauthorized access');
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Success Toast
+    sharedUtils.showToast("Notification marked as read!", "success");
+
+    // Update unread count
+    if (data?.unread_count !== undefined) {
+      setUnreadCount(data.unread_count);
+    }
+
+  } catch (error) {
+    console.error("Failed to mark notification as read:", error);
+    sharedUtils.showToast("Failed to mark as read. Please try again.", "error");
+  }
+};
+
 
   // 🔹 Mark all as read
-  const markAllAsRead = () => {
-    setNotifications([]);
-  };
+  const markAllAsRead = async () => {
+  try {
+    const url = `${API_BASE_URL}client/notifications/mark-all-read/`;
+
+    const headers = {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json"
+    };
+
+    // Add CSRF token if present
+    const csrfToken = getCookie('csrftoken');
+    if (csrfToken) {
+      headers['X-CSRFToken'] = csrfToken;
+    }
+
+    const config = {
+      method: 'POST',
+      headers,
+      credentials: 'include'
+    };
+
+    const response = await fetch(url, config);
+
+    if (response.status === 401 || response.status === 403) {
+      handleUnauthorized();
+      throw new Error("Unauthorized access");
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Success notification
+    sharedUtils.showToast("All notifications marked as read!", "success");
+
+    // Update unread count to 0 (backend guarantees this)
+    setUnreadCount(0);
+
+    // Clear or update notifications list in UI
+    setNotifications((prev) =>
+      prev.map((n) => ({ ...n, is_read: true }))
+    );
+
+  } catch (error) {
+    console.error("Failed to mark all notifications as read:", error);
+    sharedUtils.showToast("Failed to mark all as read. Please try again.", "error");
+  }
+};
+
 
   // 🔹 Close notification panel when clicking outside
   useEffect(() => {

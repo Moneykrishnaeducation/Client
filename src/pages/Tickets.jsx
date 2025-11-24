@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, X, Plus, ChevronDown } from "lucide-react";
 import { useTheme } from '../context/ThemeContext';
+import { apiCall } from '../utils/api';
 
 const Tickets = () => {
   const { isDarkMode } = useTheme();
   const [activePage, setActivePage] = useState("view");
   const [userId, setUserId] = useState("");
+  const [tickets, setTickets] = useState({ open: [], closed: [], pending: [] });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     status: "",
@@ -13,6 +17,10 @@ const Tickets = () => {
     dateRange: "",
   });
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [message, setMessage] = useState("");
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const uid =
@@ -20,17 +28,71 @@ const Tickets = () => {
       localStorage.getItem("username") ||
       "";
     setUserId(uid);
+    fetchTickets();
   }, []);
+
+  const fetchTickets = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await apiCall('api/tickets/');
+      setTickets(data);
+    } catch (err) {
+      setError("Failed to fetch tickets. Please try again.");
+      console.error("Error fetching tickets:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const applyFilters = () => {
     console.log("Applied Filters:", filters);
     setShowFilters(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Ticket submitted successfully!");
-    setActivePage("view");
+    const formData = new FormData(e.target);
+    const subject = formData.get('subject');
+    const description = formData.get('description');
+    const files = formData.getAll('documents');
+
+    try {
+      const ticketData = {
+        subject,
+        description,
+        created_by: userId,
+      };
+
+      // If there are files, include them in FormData
+      if (files.length > 0) {
+        const formDataWithFiles = new FormData();
+        formDataWithFiles.append('subject', subject);
+        formDataWithFiles.append('description', description);
+        formDataWithFiles.append('created_by', userId);
+        files.forEach(file => {
+          formDataWithFiles.append('documents', file);
+        });
+
+        await apiCall('api/tickets/', {
+          method: 'POST',
+          body: formDataWithFiles,
+          headers: {} // Let browser set content-type for FormData
+        });
+      } else {
+        await apiCall('api/tickets/', {
+          method: 'POST',
+          body: JSON.stringify(ticketData),
+        });
+      }
+
+      alert("Ticket submitted successfully!");
+      setActivePage("view");
+      fetchTickets(); // Refresh tickets list
+    } catch (err) {
+      alert("Failed to create ticket. Please try again.");
+      console.error("Error creating ticket:", err);
+    }
   };
 
   const options = {
@@ -43,6 +105,24 @@ const Tickets = () => {
     setFilters({ ...filters, [key]: value });
     setOpenDropdown(null);
   };
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    try {
+      await apiCall(`api/tickets/${selectedTicket.id}/send-message/`, {
+        method: 'POST',
+        body: JSON.stringify({ content: message }),
+      });
+      alert("Message sent successfully!");
+      setMessage("");
+      setShowViewModal(false);
+    } catch (err) {
+      alert("Failed to send message. Please try again.");
+      console.error("Error sending message:", err);
+    }
+  };
+
+
 
   return (
     <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} h-full px-4 py-6 md:px-8`}>
@@ -111,14 +191,107 @@ const Tickets = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td
-                    colSpan="7"
-                    className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
-                  >
-                    No tickets found.
-                  </td>
-                </tr>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
+                    >
+                      Loading tickets...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className={`text-center py-4 text-red-500 whitespace-nowrap`}
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : (
+                  <>
+                    {tickets.open.map((ticket) => (
+                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                        <td className="p-2 border border-yellow-600">
+                          <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">Open</span>
+                        </td>
+                        <td className="p-2 border border-yellow-600">
+                          <button
+                            onClick={() => {
+                              setSelectedTicket(ticket);
+                              setShowViewModal(true);
+                            }}
+                            className="text-yellow-400 hover:text-yellow-500"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {tickets.pending.map((ticket) => (
+                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                        <td className="p-2 border border-yellow-600">
+                          <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Pending</span>
+                        </td>
+                        <td className="p-2 border border-yellow-600">
+                          <button
+                            onClick={() => {
+                              setSelectedTicket(ticket);
+                              setShowViewModal(true);
+                            }}
+                            className="text-yellow-400 hover:text-yellow-500"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {tickets.closed.map((ticket) => (
+                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                        <td className="p-2 border border-yellow-600">
+                          <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">Closed</span>
+                        </td>
+                        <td className="p-2 border border-yellow-600">
+                          <button
+                            onClick={() => {
+                              setSelectedTicket(ticket);
+                              setShowViewModal(true);
+                            }}
+                            className="text-yellow-400 hover:text-yellow-500"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {tickets.open.length === 0 && tickets.pending.length === 0 && tickets.closed.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan="7"
+                          className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
+                        >
+                          No tickets found.
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                )}
               </tbody>
             </table>
           </div>
@@ -156,6 +329,7 @@ const Tickets = () => {
                   Subject <span className="text-red-500">*</span>
                 </label>
                 <input
+                  name="subject"
                   type="text"
                   placeholder="Enter ticket subject"
                   required
@@ -168,6 +342,7 @@ const Tickets = () => {
                   Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
+                  name="description"
                   placeholder="Describe the issue in detail"
                   required
                   className={`w-full p-2 rounded-md ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-400' : 'bg-gray-100 border-gray-300 text-black placeholder-gray-600'} h-28`}
@@ -180,7 +355,7 @@ const Tickets = () => {
                 </label>
                 <div
                   className={`border-2 border-dashed rounded-lg text-center py-6 cursor-pointer transition-all duration-200 ${isDarkMode ? 'border-gray-700 hover:border-yellow-400 hover:bg-gray-900' : 'border-gray-300 hover:border-yellow-400 hover:bg-gray-100'}`}
-                  onClick={() => document.getElementById("fileInput").click()}
+                  onClick={() => fileInputRef.current.click()}
                 >
                   <p className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
                     📎 Click to attach file
@@ -188,7 +363,7 @@ const Tickets = () => {
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     Accepted: JPG, JPEG, PDF (Max: 1MB)
                   </p>
-                  <input type="file" id="fileInput" hidden />
+                  <input type="file" name="documents" ref={fileInputRef} hidden multiple />
                 </div>
               </div>
 
@@ -271,6 +446,64 @@ const Tickets = () => {
     </div>
   </div>
 )}
+
+      {/* ===================== VIEW MODAL ===================== */}
+      {showViewModal && selectedTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
+          <div className={`relative w-full max-w-lg p-6 rounded-xl shadow-2xl border ${isDarkMode ? 'border-gray-700 bg-black text-white' : 'border-gray-300 bg-white text-black'}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-yellow-400">
+                Ticket Details
+              </h3>
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  setMessage("");
+                }}
+                className={`transition ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'}`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block font-semibold text-yellow-400">Subject</label>
+                <p className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{selectedTicket.subject}</p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-yellow-400">Date and Time</label>
+                <p className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{new Date(selectedTicket.created_at).toLocaleString()}</p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-yellow-400">Username</label>
+                <p className={`mt-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{selectedTicket.username}</p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-yellow-400">Message</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Enter your message"
+                  className={`w-full p-2 rounded-md ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-400' : 'bg-gray-100 border-gray-300 text-black placeholder-gray-600'} h-24`}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSendMessage}
+                  className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md transition"
+                >
+                  Send Message
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

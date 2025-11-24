@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { apiCall } from '../utils/api';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { CSVLink } from 'react-csv';
 
 // Main Tree Component
 const ClientTree = ({ clients, level = 1 }) => {
@@ -27,12 +29,50 @@ const ClientTree = ({ clients, level = 1 }) => {
 // Individual Client Component
 const ClientItem = ({ client, level }) => {
   const { isDarkMode } = useTheme();
+
+  const formatKey = (key) => key.replace(/_/g, ' ').toUpperCase();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const contentRef = useRef(null);
   const [maxHeight, setMaxHeight] = useState('0px');
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [accountDetails, setAccountDetails] = useState({});
+  const [accountDetailsLoading, setAccountDetailsLoading] = useState(false);
+  const [accountDetailsError, setAccountDetailsError] = useState("");
+  const [positionsData, setPositionsData] = useState([]);
+  const [positionsLoading, setPositionsLoading] = useState(false);
+  const [positionsError, setPositionsError] = useState("");
+
+  const fetchPositions = async (accountId) => {
+    setPositionsLoading(true);
+    setPositionsError("");
+    try {
+      const data = await apiCall(`client/api/open-positions/${accountId}/`);
+      console.log("Positions data:", data);
+      setPositionsData(data.positions || []);
+    } catch (err) {
+      console.error("Failed to fetch positions:", err);
+      setPositionsError(err.message || "An error occurred");
+    } finally {
+      setPositionsLoading(false);
+    }
+  };
+
+  const fetchAccountDetails = async (accountId) => {
+    setAccountDetailsLoading(true);
+    setAccountDetailsError("");
+    try {
+      const data = await apiCall(`client/api/account-details/${accountId}/`);
+      console.log("Account details data:", data);
+      setAccountDetails(data);
+    } catch (err) {
+      console.error("Failed to fetch account details:", err);
+      setAccountDetailsError(err.message || "An error occurred");
+    } finally {
+      setAccountDetailsLoading(false);
+    }
+  };
 
   const toggleExpand = () => setIsExpanded((prev) => !prev);
   const openModal = (e) => {
@@ -47,32 +87,12 @@ const ClientItem = ({ client, level }) => {
     }
   }, [isExpanded]);
 
-  // Example accounts
-  const accounts = [
-    {
-      id: "2141713014",
-      type: "demo",
-      group: "group1",
-      lots: 0.01,
-      deposits: "$0.00",
-      withdrawals: "$0.00",
-      commission: "$0.04",
-      transactions: []
-    },
-    {
-      id: "2141713006",
-      type: "standard",
-      group: "group1",
-      lots: 0.04,
-      deposits: "$50.00",
-      withdrawals: "$0.00",
-      commission: "$0.2",
-      transactions: []
-    },
-  ];
+  // Use accounts from client data
+  const accounts = client.accounts || [];
 
   return (
-    <div className={`border-b border-yellow-200 rounded-md p-3 ${isDarkMode ? 'bg-black' : 'bg-white'} shadow-sm hover:shadow-lg transition-shadow duration-300`}>
+    <div className={`border-b border-yellow-200 rounded-md p-3 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+
       {/* Client Header */}
       <div
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer hover:bg-yellow-500/10 p-2 rounded-md transition-all"
@@ -80,7 +100,7 @@ const ClientItem = ({ client, level }) => {
       >
         {/* Client Info */}
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center w-full">
-          <span className={`${isDarkMode ? 'text-yellow-300' : 'text-black'} font-semibold`}>{client.username}</span>
+          <span className={`${isDarkMode ? 'text-yellow-300' : 'text-black'} font-semibold`}>{client.name}</span>
           <span className={`${isDarkMode ? 'text-yellow-200' : 'text-gray-600'} text-sm`}>{client.email}</span>
           <span className={`${isDarkMode ? 'text-yellow-200' : 'text-gray-600'} text-sm`}>{client.phone}</span>
         </div>
@@ -96,10 +116,10 @@ const ClientItem = ({ client, level }) => {
           >
             View Accounts
           </button>
-          {client.children?.length > 0 && (
-            <span className="text-yellow-400 font-semibold text-sm">
-              {isExpanded ? '▲' : '▼'}
-            </span>
+          {client.clients?.length > 0 && (
+          <span className="text-yellow-400 font-semibold text-sm">
+            {isExpanded ? '▲' : '▼'}
+          </span>
           )}
         </div>
       </div>
@@ -110,8 +130,8 @@ const ClientItem = ({ client, level }) => {
         style={{ maxHeight, transition: 'max-height 0.3s ease', overflow: 'hidden' }}
         className="ml-0 sm:ml-6 mt-2"
       >
-        {isExpanded && client.children?.length > 0 && (
-          <ClientTree clients={client.children} level={level + 1} />
+        {isExpanded && client.clients?.length > 0 && (
+          <ClientTree clients={client.clients} level={level + 1} />
         )}
       </div>
 
@@ -126,7 +146,7 @@ const ClientItem = ({ client, level }) => {
               ✖
             </button>
             <h2 className="text-yellow-300 text-lg font-semibold mb-4">
-              Accounts for {client.username}
+              Accounts for {client.name}
             </h2>
             <table className="w-full text-yellow-200 border border-yellow-500">
               <thead>
@@ -143,20 +163,22 @@ const ClientItem = ({ client, level }) => {
               </thead>
               <tbody>
                 {accounts.map((acc) => (
-                  <tr key={acc.id} className={`border-b border-yellow-500 hover:bg-yellow-500/10 ${isDarkMode ? 'text-white' : 'text-black'}`}>
-                    <td className="px-2 py-1">{acc.id}</td>
-                    <td className="px-2 py-1">{acc.type}</td>
-                    <td className="px-2 py-1">{acc.group}</td>
-                    <td className="px-2 py-1">{acc.lots}</td>
-                    <td className="px-2 py-1">{acc.deposits}</td>
-                    <td className="px-2 py-1">{acc.withdrawals}</td>
-                    <td className="px-2 py-1">{acc.commission}</td>
+                  <tr key={acc.account_id} className={`border-b border-yellow-500 hover:bg-yellow-500/10 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                    <td className="px-2 py-1">{acc.account_id}</td>
+                    <td className="px-2 py-1">{acc.account_type}</td>
+                    <td className="px-2 py-1">{acc.group_alias}</td>
+                    <td className="px-2 py-1">{acc.total_lots}</td>
+                    <td className="px-2 py-1">{acc.total_deposits}</td>
+                    <td className="px-2 py-1">{acc.total_withdrawals}</td>
+                    <td className="px-2 py-1">{acc.total_commission}</td>
                     <td>
                       <button
                         className="text-yellow-400 cursor-pointer font-semibold"
                         onClick={() => {
                           setSelectedAccount(acc);
                           setIsDetailModalOpen(true);
+                          fetchPositions(acc.account_id);
+                          fetchAccountDetails(acc.account_id);
                         }}
                       >
                         View
@@ -171,22 +193,141 @@ const ClientItem = ({ client, level }) => {
       )}
 
       {/* Nested Modal for Account Details */}
-      {isDetailModalOpen && selectedAccount && (
-        <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-60">
-          <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-5xl overflow-auto max-h-[80vh]`}>
-            <button
-              className="absolute top-3 right-3 text-yellow-500 font-bold"
-              onClick={() => setIsDetailModalOpen(false)}
-            >
-              ✖
-            </button>
-            <h2 className="text-yellow-300 text-2xl font-bold mb-6 text-center">
-              Details for Account {selectedAccount.id}
-            </h2>
-            <p className="text-center text-yellow-200">No transactions available</p>
+{isDetailModalOpen && selectedAccount && (
+  <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-60 ">
+    <div
+      className={`${isDarkMode ? 'bg-black' : 'bg-white'}
+        shadow-[0_0_25px_rgba(255,215,0,0.5)] rounded-lg p-6 w-full max-w-7xl 
+        max-h-[90vh] relative`}  // ← Replaced border with glowing shadow
+    >
+      {/* Close Button */}
+      <button
+        className="absolute top-3 right-3 text-yellow-500 font-bold text-xl"
+        onClick={() => setIsDetailModalOpen(false)}
+      >
+        ✖
+      </button>
+
+      {/* Header */}
+      <h2 className="text-yellow-300 text-2xl font-bold mb-6 text-center">
+        Account Details for {selectedAccount.account_id}
+      </h2>
+
+      {/* Account Information */}
+      {accountDetailsLoading && (
+        <p className="text-center text-yellow-200">Loading account details...</p>
+      )}
+      {accountDetailsError && (
+        <p className="text-center text-red-500">{accountDetailsError}</p>
+      )}
+
+      {!accountDetailsLoading && !accountDetailsError && accountDetails && (
+        <div className="mb-6 max-w-md mx-auto">
+          <h3 className="text-yellow-300 text-lg font-semibold mb-4">
+            Account Information
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            {Object.entries(accountDetails)
+              .filter(([key]) => ['balance', 'equity'].includes(key))
+              .map(([key, value]) => (
+                <div
+                  key={key}
+                  className="flex justify-between bg-white/5 hover:bg-yellow-500/10 p-3 rounded-md transition-colors"
+                >
+                  <span className="text-yellow-200 font-medium">
+                    {formatKey(key)}:
+                  </span>
+                  <span className="text-yellow-300">{value}</span>
+                </div>
+              ))}
           </div>
         </div>
       )}
+
+      {/* OPEN POSITIONS TABLE */}
+      <h3 className="text-yellow-300 text-lg font-semibold mb-4">
+        Open Positions
+      </h3>
+
+      {positionsLoading && (
+        <p className="text-center text-yellow-200">Loading positions...</p>
+      )}
+      {positionsError && (
+        <p className="text-center text-red-500">{positionsError}</p>
+      )}
+      {!positionsLoading &&
+        !positionsError &&
+        positionsData.length === 0 && (
+          <p className="text-center text-yellow-200">
+            No open positions available
+          </p>
+        )}
+
+      {!positionsLoading &&
+        !positionsError &&
+        positionsData.length > 0 && (
+          <div className="shadow-[0_0_20px_rgba(255,215,0,0.35)] rounded-md max-h-[60vh] overflow-hidden bg-black/20">
+            {/* ↑ glowing shadow instead of border */}
+
+            <table className="min-w-[1200px] w-full text-yellow-200">
+              <thead className="bg-black/40">
+                <tr className="border-b border-yellow-200">
+                  {[
+                    'Ticket',
+                    'Symbol',
+                    'Type',
+                    'Volume',
+                    'Open Price',
+                    'Current Price',
+                    'SL',
+                    'TP',
+                    'Profit',
+                    'Swap',
+                    'Open Time',
+                    'Comment',
+                  ].map((header, i) => (
+                    <th
+                      key={i}
+                      className="px-4 py-3 font-bold text-left border-r border-white/20 text-yellow-300"
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {positionsData.map((position, index) => (
+                  <tr
+                    key={index}
+                    className={`border-b border-white/20 hover:bg-yellow-500/10 transition ${
+                      isDarkMode ? 'text-white' : 'text-black'
+                    }`}
+                  >
+                    <td className="px-4 py-3 border-r border-white/20">{position.ticket}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.symbol}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.type}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.volume}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.open_price}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.current_price}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.sl}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.tp}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.profit}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.swap}</td>
+                    <td className="px-4 py-3 border-r border-white/20">{position.open_time}</td>
+                    <td className="px-4 py-3">{position.comment}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 };
@@ -222,6 +363,32 @@ const App = () => {
   const [commissionLoading, setCommissionLoading] = useState(false);
   const [error, setError] = useState("");
   const [commissionError, setCommissionError] = useState("");
+  const [clientData, setClientData] = useState([]);
+  const [clientLoading, setClientLoading] = useState(false);
+  const [clientError, setClientError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalClients, setTotalClients] = useState(0);
+  // Pagination for Commission
+  const [commissionCurrentPage, setCommissionCurrentPage] = useState(1);
+  const [commissionPerPage, setCommissionPerPage] = useState(10);
+  const [commissionTotalPages, setCommissionTotalPages] = useState(1);
+  const [commissionTotalItems, setCommissionTotalItems] = useState(0);
+  const [commissionSearchQuery, setCommissionSearchQuery] = useState("");
+
+
+  // Add User Form State
+  const [addUserForm, setAddUserForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    dob: '',
+    country: '',
+  });
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserError, setAddUserError] = useState('');
 
   const tabs = [
     { name: 'Dashboard', icon: <LayoutDashboard size={16} /> },
@@ -230,44 +397,22 @@ const App = () => {
     { name: 'Withdraw', icon: <DollarSign size={16} /> },
   ];
 
-  const clientData = [
-    {
-      id: 1,
-      username: 'John Doe',
-      email: 'john@example.com',
-      phone: '+1 234 567 890',
-      children: [
-        {
-          id: 2,
-          username: 'Jane Smith',
-          email: 'jane@example.com',
-          phone: '+1 111 222 333',
-          children: [],
-        },
-      ],
-    },
-    {
-      id: 3,
-      username: 'Sarah Lee',
-      email: 'sarah@example.com',
-      phone: '+1 222 333 444',
-      children: [
-        {
-          id: 4,
-          username: 'Tom Clark',
-          email: 'tom@example.com',
-          phone: '+1 777 888 999',
-          children: [],
-        },
-      ],
-    },
-  ];
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const data = await apiCall("/ib/stats/");
+        const data = await apiCall("client/ib/stats/");
         console.log("Dashboard data:", data);
+        // Aggregate earningsPerMonth by month (JAN to DEC), summing totals across years, filling missing months with 0
+        const aggregatedMonthly = {};
+        data.earnings_per_month.forEach(item => {
+          const monthName = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][item.month - 1];
+          if (!aggregatedMonthly[monthName]) aggregatedMonthly[monthName] = 0;
+          aggregatedMonthly[monthName] += item.total;
+        });
+        const allMonths = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+        const aggregatedEarningsPerMonth = allMonths.map(month => ({ month, total: aggregatedMonthly[month] || 0 }));
+        // Sort earningsPerClient by total_commission descending and take top 10
+        const sortedEarningsPerClient = data.earnings_per_client.sort((a, b) => b.total_commission - a.total_commission).slice(0, 10);
         setDashboardData({
           totalClients: data.total_clients,
           directClients: data.direct_clients,
@@ -278,8 +423,8 @@ const App = () => {
           currentMonthVolume: data.current_month_volume_traded,
           totalVolume: data.total_volume_traded,
           referralLink: data.referralLink,
-          earningsPerClient: data.earnings_per_client,
-          earningsPerMonth: data.earnings_per_month,
+          earningsPerClient: sortedEarningsPerClient,
+          earningsPerMonth: aggregatedEarningsPerMonth,
         });
       } catch (err) {
         console.error("Failed to fetch dashboard:", err);
@@ -304,25 +449,40 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'Commission') {
-      const fetchCommissionData = async () => {
-        setCommissionLoading(true);
-        setCommissionError("");
-        try {
-          const data = await apiCall("client/ib/commission-transactions/");
-          console.log("Commission data:", data);
-          setCommissionData(data);
-        } catch (err) {
-          console.error("Failed to fetch commission data:", err);
-          setCommissionError(err.message || "An error occurred");
-        } finally {
-          setCommissionLoading(false);
-        }
-      };
+  if (activeTab === 'Commission') {
+    const fetchCommissionData = async () => {
+      setCommissionLoading(true);
+      setCommissionError("");
 
-      fetchCommissionData();
-    }
-  }, [activeTab]);
+      try {
+        const params = new URLSearchParams({
+          page: commissionCurrentPage,
+          per_page: commissionPerPage,
+          ...(commissionSearchQuery && { q: commissionSearchQuery }),
+        });
+
+        const data = await apiCall(`client/ib/commission-transactions/?${params}`);
+        console.log("Commission data:", data);
+
+        setCommissionData(data.results || data);
+        setCommissionTotalPages(data.pagination?.total_pages || 1);
+        setCommissionTotalItems(data.pagination?.total || 0);
+      } catch (err) {
+        console.error("Failed to fetch commission data:", err);
+        setCommissionError(err.message || "An error occurred");
+      } finally {
+        setCommissionLoading(false);
+      }
+    };
+
+    fetchCommissionData();
+  }
+}, [
+  activeTab,
+  commissionCurrentPage,
+  commissionPerPage,
+  commissionSearchQuery
+]);
 
   useEffect(() => {
     if (activeTab === 'Withdraw') {
@@ -345,7 +505,7 @@ const App = () => {
         try {
           const data = await apiCall("client/api/user-trading-accounts/");
           console.log("Trading accounts:", data);
-          setTradingAccounts(data);
+          setTradingAccounts(data.accounts || []);
         } catch (err) {
           console.error("Failed to fetch trading accounts:", err);
         }
@@ -356,13 +516,41 @@ const App = () => {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'Client') {
+      const fetchClientData = async () => {
+        setClientLoading(true);
+        setClientError("");
+        try {
+          const params = new URLSearchParams({
+            page: currentPage,
+            per_page: perPage,
+            ...(searchQuery && { q: searchQuery }),
+          });
+          const data = await apiCall(`client/ib/client-tree/?${params}`);
+          console.log("Client tree data:", data);
+          setClientData(data.clients || []);
+          setTotalPages(data.pagination?.total_pages || 1);
+          setTotalClients(data.pagination?.total || 0);
+        } catch (err) {
+          console.error("Failed to fetch client tree:", err);
+          setClientError(err.message || "An error occurred");
+        } finally {
+          setClientLoading(false);
+        }
+      };
+
+      fetchClientData();
+    }
+  }, [activeTab, currentPage, perPage, searchQuery]);
+
   const handleWithdrawalSubmit = async () => {
     if (!selectedAccount || !amount) {
       alert("Please select an account and enter an amount.");
       return;
     }
     try {
-      const response = await apiCall("client/ib/transactions/", {
+      const response = await apiCall("client/ib/request-withdrawal/", {
         method: 'POST',
         body: JSON.stringify({
           amount: parseFloat(amount),
@@ -371,7 +559,6 @@ const App = () => {
         }),
       });
       console.log("Withdrawal request submitted:", response);
-      alert("Withdrawal request submitted successfully.");
       setAmount("");
       setComment("");
       setSelectedAccount("");
@@ -384,10 +571,91 @@ const App = () => {
     }
   };
 
+  const handleAddUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!addUserForm.name || !addUserForm.email || !addUserForm.phone || !addUserForm.country) {
+      setAddUserError("Please fill in all required fields.");
+      return;
+    }
+    setAddUserLoading(true);
+    setAddUserError("");
+    try {
+      const response = await apiCall("client/ib/add-client/", {
+        method: 'POST',
+        body: JSON.stringify(addUserForm),
+      });
+      console.log("Add user response:", response);
+      alert("User added successfully!");
+      setAddUserForm({ name: '', email: '', phone: '', country: '' });
+      setShowAddUserForm(false);
+      // Optionally refetch client data
+      const params = new URLSearchParams({
+        page: currentPage,
+        per_page: perPage,
+        ...(searchQuery && { q: searchQuery }),
+      });
+      const data = await apiCall(`client/ib/client-tree/?${params}`);
+      setClientData(data.clients || []);
+      setTotalPages(data.pagination?.total_pages || 1);
+      setTotalClients(data.pagination?.total || 0);
+    } catch (err) {
+      console.error("Failed to add user:", err);
+      setAddUserError(err.message || "An error occurred while adding the user.");
+    } finally {
+      setAddUserLoading(false);
+    }
+  };
+
+  const handleDownloadClients = () => {
+    // Flatten the client tree into a CSV-friendly format
+    const flattenClients = (clients, level = 1) => {
+      let flat = [];
+      clients.forEach(client => {
+        flat.push({
+          Level: level,
+          Name: client.name,
+          Email: client.email,
+          Phone: client.phone,
+          Accounts: client.accounts ? client.accounts.length : 0,
+        });
+        if (client.clients && client.clients.length > 0) {
+          flat = flat.concat(flattenClients(client.clients, level + 1));
+        }
+      });
+      return flat;
+    };
+
+    const csvData = flattenClients(clientData);
+    return csvData;
+  };
+
+  const handleDownloadCommission = () => {
+    return commissionData.map((row, index) => ({
+      'S.No': index + 1,
+      'Position ID': row.position_id,
+      'Deal Ticket': row.deal_ticket,
+      'Client': row.client_user,
+      'Trading Account': row.client_trading_account,
+      'Symbol': row.position_symbol,
+      'Volume': row.volume,
+      'P/L': row.profit,
+      'Commission to IB': row.amount,
+      'MT5 Close Time': row.mt5_close_time,
+      'Commission Created': row.created_at,
+    }));
+  };
+
 
 
   return (
-    <div className={`p-6 ${isDarkMode ? 'bg-black text-gray-100' : 'bg-white text-gray-900'}`}>
+    <div className={`p-6 lg:max-w-[80vw] max-h-full ${isDarkMode ? 'bg-black text-gray-100' : 'bg-white text-gray-900'}`}>
+      {/* Global Scrollbar Styles */}
+      <style>{`
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: ${isDarkMode ? '#111' : '#f0f0f0'}; }
+        ::-webkit-scrollbar-thumb { background-color: #ffff00; border-radius: 10px; border: 2px solid ${isDarkMode ? '#111' : '#f0f0f0'}; }
+        * { scrollbar-width: thin; scrollbar-color: #ffff00 ${isDarkMode ? '#111' : '#f0f0f0'}; }
+      `}</style>
       {/* Tabs */}
       <div className="flex flex-col sm:flex-row items-center sm:justify-center gap-4 mb-8 w-full max-w-md mx-auto">
         {tabs.map((tab) => (
@@ -426,35 +694,49 @@ const App = () => {
             { label: "Current Month Earnings", value: dashboardData.currentMonthEarnings },
             { label: "Current Month Volume Traded (Lots)", value: dashboardData.currentMonthVolume },
             { label: "Total Volume Traded (Lots)", value: dashboardData.totalVolume },
-          ].map((item, index) => (
+          ].map((item, index) => ( 
             <div
               key={index}
               className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-lg border border-yellow-500 flex flex-col items-center justify-center text-center`}
             >
               <h3 className="text-yellow-400 font-semibold mb-1 text-sm">{item.label}</h3>
-              <p className="text-xl font-bold">{item.value}</p>
+              <p className="text-xl font-bold">
+        {["Commission Balance", "Current Month Volume Traded (Lots)", "Total Volume Traded (Lots)"].includes(item.label)
+          ? (parseFloat(item.value) || 0).toFixed(2)
+          : item.value}
+      </p>
             </div>
           ))}
         </div>
 
-        {/* Commission Earnings Cards */}
+        {/* Commission Earnings Charts */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-          <div
-            className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]`}
-          >
-            <h3 className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold mb-1 text-sm`}>
-              Monthly Commission Earnings
-            </h3>
-            <p className="text-xl font-bold text-yellow-300">--</p>
+          <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border border-yellow-500`}>
+            <h3 className="text-yellow-400 font-bold mb-4 text-center">Monthly Commission Earnings</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={dashboardData.earningsPerMonth}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#FFD700" />
+                <XAxis dataKey="month" stroke="#FFD700" />
+                <YAxis stroke="#FFD700" tickFormatter={(value) => `$${value.toFixed(2)}`} />
+                <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#000' : '#fff', border: '1px solid #FFD700' }} formatter={(value) => [`$${value.toFixed(2)}`, 'Total']} />
+                <Legend />
+                <Line type="monotone" dataKey="total" stroke="#FFD700" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          <div
-            className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border-2 border-dashed border-yellow-300 border-opacity-50 flex flex-col items-center justify-center text-center transition-all transform hover:scale-105 hover:shadow-[0_0_20px_#FFAA00]`}
-          >
-            <h3 className={`${isDarkMode ? 'text-white' : 'text-black'} font-bold mb-1 text-sm`}>
-              Commission Earnings Per Client
-            </h3>
-            <p className="text-yellow-300 text-xs mb-2">Top 10 clients by commission earnings</p>
-            <p className="text-xl font-bold text-yellow-300">--</p>
+          <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-md border border-yellow-500`}>
+            <h3 className="text-yellow-400 font-bold mb-4 text-center">Commission Earnings Per Client</h3>
+            <p className="text-yellow-300 text-xs mb-2 text-center">Top 10 clients by commission earnings</p>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={dashboardData.earningsPerClient.map(item => ({ name: item.name, total: item.total_commission }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#FFD700" />
+                <XAxis dataKey="name" stroke="#FFD700" tick={false} />
+                <YAxis stroke="#FFD700" tickFormatter={(value) => `$${value.toFixed(2)}`} />
+                <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#000' : '#fff', border: '1px solid #FFD700' }} />
+                <Legend />
+                <Bar dataKey="total" fill="#FFD700" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -487,24 +769,28 @@ const App = () => {
 
  {/* Client Tab */}
 {activeTab === 'Client' && (
-  <>
+  <div>
     {/* Search + Action Buttons */}
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 w-full">
       {/* Left: Search */}
       <div className={`flex items-center gap-2 ${isDarkMode ? 'bg-black' : 'bg-white'} border border-yellow-500 rounded-md px-3 py-2 w-auto max-w-[400px] sm:w-1/2`}>
         <Search size={14} className="text-yellow-500" />
         <input
-          type="text" 
+          type="text"
           placeholder="Search clients..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} placeholder-yellow-400 focus:outline-none w-full text-sm py-0.5`}
         />
       </div>
 
       {/* Right: Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-        <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
-          <DownloadCloud size={16} /> Download
-        </button>
+        <CSVLink data={handleDownloadClients()} filename={"clients.csv"}>
+          <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
+            <DownloadCloud size={16} /> Download
+          </button>
+        </CSVLink>
 
         <button
           className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full sm:w-auto"
@@ -516,39 +802,51 @@ const App = () => {
     </div>
 
 
-      {/* Client Tab */}
-      {activeTab === 'Client' && (
+      {clientLoading && <p>Loading...</p>}
+      {clientError && <p className="text-red-500">{clientError}</p>}
+      {!clientLoading && !clientError && (
         <>
           <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-2 rounded-md border-yellow-500 shadow-md hover:shadow-[0_4px_15px_rgba(255,215,0,0.4)] transition-shadow duration-300`}>
             <h2 className="text-yellow-400 text-lg font-bold mb-4">Client Tree</h2>
             <ClientTree clients={clientData} level={1} />
           </div>
+
+          {/* Per Page + Pagination below the tree */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4 w-full">
+            {/* Per Page */}
+            <div className="flex items-center gap-2">
+              <label className="text-yellow-400 text-sm font-semibold">Per Page:</label>
+              <select
+                value={perPage}
+                onChange={(e) => setPerPage(Number(e.target.value))}
+                className={`${isDarkMode ? 'bg-black' : 'bg-white'} text-yellow-300 border border-yellow-500 rounded-md px-2 py-1 focus:outline-none`}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className="flex items-center justify-center bg-yellow-500 text-black px-2 py-1 rounded-md hover:bg-yellow-400 shadow-md transition-all"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="text-yellow-300 font-semibold text-sm">Page {currentPage} of {totalPages} ({totalClients} clients)</span>
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className="flex items-center justify-center bg-yellow-500 text-black px-2 py-1 rounded-md hover:bg-yellow-400 shadow-md transition-all"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
         </>
       )}
-      {/* Per Page + Pagination below the tree */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4 w-full">
-        {/* Per Page */}
-        <div className="flex items-center gap-2">
-          <label className="text-yellow-400 text-sm font-semibold">Per Page:</label>
-          <select className={`${isDarkMode ? 'bg-black' : 'bg-white'} text-yellow-300 border border-yellow-500 rounded-md px-2 py-1 focus:outline-none`}>
-            <option>10</option>
-            <option>20</option>
-            <option>50</option>
-            <option>100</option>
-          </select>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center gap-3">
-          <button className="flex items-center justify-center bg-yellow-500 text-black px-2 py-1 rounded-md hover:bg-yellow-400 shadow-md transition-all">
-            <ChevronLeft size={16} />
-          </button>
-          <span className="text-yellow-300 font-semibold text-sm">Page 1 of 10</span>
-          <button className="flex items-center justify-center bg-yellow-500 text-black px-2 py-1 rounded-md hover:bg-yellow-400 shadow-md transition-all">
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
     
 
     {/* Add User Form Modal */}
@@ -564,28 +862,41 @@ const App = () => {
           </button>
 
           <h3 className="text-yellow-400 font-semibold mb-4 text-lg">Add New User</h3>
-          <form className="flex flex-col gap-3">
+          {addUserError && <p className="text-red-500 mb-4">{addUserError}</p>}
+          <form onSubmit={handleAddUserSubmit} className="flex flex-col gap-3">
             <input
               type="text"
               placeholder="Name"
-              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
+              value={addUserForm.name}
+              onChange={(e) => setAddUserForm({ ...addUserForm, name: e.target.value })}
+              className="px-3 py-2 rounded-md border border-yellow-500 focus:outline-none"
             />
             <input
               type="email"
               placeholder="Email"
-              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
+              value={addUserForm.email}
+              onChange={(e) => setAddUserForm({ ...addUserForm, email: e.target.value })}
+              className="px-3 py-2 rounded-md border border-yellow-500 focus:outline-none"
             />
             <input
               type="text"
               placeholder="Phone"
-              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
+              value={addUserForm.phone}
+              onChange={(e) => setAddUserForm({ ...addUserForm, phone: e.target.value })}
+              className="px-3 py-2 rounded-md border border-yellow-500 focus:outline-none"
             />
             <input
               type="date"
               placeholder="DOB"
-              className="px-3 py-2 rounded-md border border-yellow-500   focus:outline-none"
+              value={addUserForm.dob}
+              onChange={(e) => setAddUserForm({ ...addUserForm, dob: e.target.value })}
+              className="px-3 py-2 rounded-md border border-yellow-500 focus:outline-none"
             />
-            <select className={`px-3 py-2 rounded-md border border-yellow-500 focus:outline-none ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}`}>
+            <select
+              value={addUserForm.country}
+              onChange={(e) => setAddUserForm({ ...addUserForm, country: e.target.value })}
+              className={`px-3 py-2 rounded-md border border-yellow-500 focus:outline-none ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}`}
+            >
               <option value="">Select Country</option>
               <option value="US">United States</option>
               <option value="UK">United Kingdom</option>
@@ -594,22 +905,23 @@ const App = () => {
             </select>
             <button
               type="submit"
-              className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition"
+              disabled={addUserLoading}
+              className="bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition disabled:opacity-50"
             >
-              Submit
+              {addUserLoading ? 'Submitting...' : 'Submit'}
             </button>
           </form>
         </div>
       </div>
     )}
-  </>
+  </div>
 )}
 
     
 
       {/* Commission Tab */}
       {activeTab === 'Commission' && (
-        <div className={`${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}rounded-xl shadow-2xl border-yellow-500 p-2 space-y-4 transition-shadow`}>
+        <div className={`${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'} rounded-xl shadow-2xl border-yellow-500 p-2 space-y-4 transition-shadow`}>
           {/* Top Controls */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
   <div className={`flex items-center gap-2 ${isDarkMode ? 'bg-black' : 'bg-white'} border border-yellow-500 rounded-md px-3 py-2 w-auto max-w-[400px] sm:w-1/2`}>
@@ -617,14 +929,18 @@ const App = () => {
     <input
       type="text"
       placeholder="Search..."
+      value={commissionSearchQuery}
+      onChange={(e) => setCommissionSearchQuery(e.target.value)}
       className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} placeholder-yellow-400 focus:outline-none w-[120px] sm:w-full`}
     />
   </div>
 
 
-            <button className="flex items-center gap-2 bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all mt-2 sm:mt-0 w-full sm:w-auto justify-center">
-              <DownloadCloud size={16} /> Download
-            </button>
+            <CSVLink data={handleDownloadCommission()} filename={"commission.csv"}>
+              <button className="flex items-center gap-2 bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all mt-2 sm:mt-0 w-full sm:w-auto justify-center">
+                <DownloadCloud size={16} /> Download
+              </button>
+            </CSVLink>
           </div>
 
           {/* Commission Table */}
@@ -647,40 +963,84 @@ const App = () => {
                 </tr>
               </thead>
               <tbody>
-                {commissionLoading && (
-                  <tr>
-                    <td colSpan="11" className="px-4 py-2 text-center">Loading...</td>
-                  </tr>
-                )}
-                {commissionError && (
-                  <tr>
-                    <td colSpan="11" className="px-4 py-2 text-center text-red-500">{commissionError}</td>
-                  </tr>
-                )}
-                {!commissionLoading && !commissionError && commissionData.length === 0 && (
-                  <tr>
-                    <td colSpan="11" className="px-4 py-2 text-center">No data found</td>
-                  </tr>
-                )}
-                {!commissionLoading && !commissionError && commissionData.map((row, index) => (
-                  <tr key={index} className="border-b border-gray-700">
-                    <td className="px-4 py-2">{index + 1}</td>
-                    <td className="px-4 py-2">{row.position_id}</td>
-                    <td className="px-4 py-2">{row.deal_ticket}</td>
-                    <td className="px-4 py-2">{row.client}</td>
-                    <td className="px-4 py-2">{row.trading_account}</td>
-                    <td className="px-4 py-2">{row.symbol}</td>
-                    <td className="px-4 py-2">{row.volume}</td>
-                    <td className="px-4 py-2">{row.pl}</td>
-                    <td className="px-4 py-2">{row.commission_to_ib}</td>
-                    <td className="px-4 py-2">{row.mt5_close_time}</td>
-                    <td className="px-4 py-2">{row.commission_created}</td>
-                  </tr>
-                ))}
-              </tbody>
+  {commissionLoading && (
+    <tr>
+      <td colSpan="11" className="px-4 py-2 text-center">Loading...</td>
+    </tr>
+  )}
+
+  {commissionError && (
+    <tr>
+      <td colSpan="11" className="px-4 py-2 text-center text-red-500">
+        {commissionError}
+      </td>
+    </tr>
+  )}
+
+  {!commissionLoading && !commissionError && commissionData.length === 0 && (
+    <tr>
+      <td colSpan="11" className="px-4 py-2 text-center">
+        No data found
+      </td>
+    </tr>
+  )}
+
+  {!commissionLoading && !commissionError && commissionData.map((row, index) => (
+    <tr key={index} className="border-b border-gray-700">
+      <td className="px-4 py-2">{index + 1}</td>
+      <td className="px-4 py-2">{row.position_id}</td>
+      <td className="px-4 py-2">{row.deal_ticket}</td>
+      <td className="px-4 py-2">{row.client_user}</td>
+      <td className="px-4 py-2">{row.client_trading_account}</td>
+      <td className="px-4 py-2">{row.position_symbol}</td>
+      <td className="px-4 py-2">{row.volume}</td>
+      <td className="px-4 py-2">{row.profit}</td>
+      <td className="px-4 py-2">{row.amount}</td>
+      <td className="px-4 py-2">{row.mt5_close_time}</td>
+      <td className="px-4 py-2">{row.created_at}</td>
+    </tr>
+  ))}
+</tbody>
+
             </table>
-            
+
 </div>
+
+</div>
+
+          {/* Pagination for Commission */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4 w-full">
+            {/* Per Page */}
+            <div className="flex items-center gap-2">
+              <label className="text-yellow-400 text-sm font-semibold">Per Page:</label>
+              <select
+                value={commissionPerPage}
+                onChange={(e) => setCommissionPerPage(Number(e.target.value))}
+                className={`${isDarkMode ? 'bg-black' : 'bg-white'} text-yellow-300 border border-yellow-500 rounded-md px-2 py-1 focus:outline-none`}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCommissionCurrentPage(Math.max(1, commissionCurrentPage - 1))}
+                className="flex items-center justify-center bg-yellow-500 text-black px-2 py-1 rounded-md hover:bg-yellow-400 shadow-md transition-all"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="text-yellow-300 font-semibold text-sm">Page {commissionCurrentPage} of {commissionTotalPages} ({commissionTotalItems} items)</span>
+              <button
+                onClick={() => setCommissionCurrentPage(Math.min(commissionTotalPages, commissionCurrentPage + 1))}
+                className="flex items-center justify-center bg-yellow-500 text-black px-2 py-1 rounded-md hover:bg-yellow-400 shadow-md transition-all"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -688,7 +1048,7 @@ const App = () => {
       {/* Withdraw Tab */}
 {activeTab === 'Withdraw' && (
   <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-xl shadow-2xl border-yellow-500 p-6 space-y-6 transition-shadow`}>
-    {/* Balance Display */}
+     {/* Balance Display */}
     <div className="text-center flex flex-col items-center">
       <h2 className="text-xl font-bold text-yellow-400 mb-2 flex items-center gap-2">
         Balance
@@ -701,7 +1061,7 @@ const App = () => {
           }}
         />
       </h2>
-      <p className="text-3xl font-extrabold text-white">${dashboardData.commissionBalance}</p>
+      <p className="text-3xl font-extrabold text-white">${dashboardData.commissionBalance.toFixed(2)}</p>
 
       <style>
         {`
@@ -713,20 +1073,26 @@ const App = () => {
       </style>
     </div>
 
+      
+
  {/* Trading Account Select + Amount + Comment */}
 <div className="flex flex-col gap-4">
-  <div className="flex flex-col sm:flex-row items-center w-full gap-4 sm:gap-0 justify-between">
-    {/* Left: Select */}
-    <div className="w-full sm:w-1/3">
+  {/* Select */}
+<div className="w-full flex flex-col md:flex-row justify-between items-center md:items-start gap-4">
+  {/* Left Side: Select Dropdown */}
+  <div className="w-full md:w-1/3 flex justify-center">
       <select
         value={selectedAccount}
         onChange={(e) => setSelectedAccount(e.target.value)}
-        className={` ${isDarkMode ? 'bg-black text-yellow-300 hover:bg-gray-900' : 'bg-white text-black hover:bg-gray-100'} p-3 rounded-md border border-yellow-500 w-full transition-colors`}
+        className={`w-full ${isDarkMode ? 'bg-black text-yellow-300 hover:bg-gray-900' : 'bg-white text-black hover:bg-gray-100'} p-3 rounded-md border border-yellow-500 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-colors`}
+        style={{ maxWidth: '200px' }}
       >
         <option value="">Select Trading Account</option>
         {Array.isArray(tradingAccounts) && tradingAccounts.length > 0 ? (
           tradingAccounts.map((acc) => (
-            <option key={acc.account_id} value={acc.account_id}>{acc.account_id}</option>
+            <option key={acc.account_id} value={acc.account_id} title={acc.account_id}>
+              {acc.account_id.length > 15 ? acc.account_id.substring(0, 15) + '...' : acc.account_id}
+            </option>
           ))
         ) : (
           <option disabled>No accounts found</option>
@@ -734,34 +1100,24 @@ const App = () => {
       </select>
     </div>
 
-    {/* Right: Input + Button */}
-    <div className="flex gap-2 w-full sm:w-1/3 items-stretch ml-auto">
-      <input
+  {/* Right Side: Input + Submit Button */}
+  <div className="w-full md:w-2/3 flex gap-4 flex-row items-center justify-start">
+   <input
         type="number"
         placeholder="Amount"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className={`flex-1 ${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} p-3 rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
+        className={`w-full md:w-3/5 ${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} p-3 text-sm rounded-md border border-yellow-500 h-12 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
       />
       <button
         onClick={handleWithdrawalSubmit}
-        className="bg-yellow-500 text-black px-4 py-2 text-sm rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all"
+        className="bg-yellow-500 text-black px-4 py-3 text-sm rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full md:w-2/5 h-12"
       >
         Submit
       </button>
-    </div>
   </div>
+</div>
 
-  {/* Comment Input */}
-  <div className="w-full">
-    <input
-      type="text"
-      placeholder="Comment (optional)"
-      value={comment}
-      onChange={(e) => setComment(e.target.value)}
-      className={`w-full ${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} p-3 rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
-    />
-  </div>
 </div>
 
 
@@ -786,7 +1142,7 @@ const App = () => {
       <table className={`min-w-full border-collapse  border-yellow-500 ${isDarkMode ? 'text-yellow-300' : 'text-black'}`}>
         <thead>
           <tr className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} border-b-2 border-yellow-500 `}>
-            {['#', 'Date', 'User', 'Type', 'Amount', 'Status'].map((header, i) => (
+            {['#', 'Date','Account Id', 'User', 'Type', 'Amount', 'Status'].map((header, i) => (
               <th key={i} className="px-4 py-2 text-center whitespace-nowrap">{header}</th>
             ))}
           </tr>
@@ -813,8 +1169,9 @@ const App = () => {
                 <tr key={index} className="border-b border-gray-700">
                   <td className="px-4 py-2 text-center">{index + 1}</td>
                   <td className="px-4 py-2 text-center">{new Date(row.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-2 text-center">{row.trading_account || row.account_id}</td>
-                  <td className="px-4 py-2 text-center">{row.source}</td>
+                  <td className="px-4 py-2 text-center">{row.trading_account}</td>
+                  <td className="px-4 py-2 text-center">{row.account_name}</td>
+                  <td className="px-4 py-2 text-center">{row.account_type}</td>
                   <td className="px-4 py-2 text-center">{row.amount}</td>
                   <td className="px-4 py-2 text-center">{row.status}</td>
                 </tr>
@@ -827,9 +1184,9 @@ const App = () => {
   </div>
 )}
 
-
     </div>
   );
+
 };
 
 export default App;

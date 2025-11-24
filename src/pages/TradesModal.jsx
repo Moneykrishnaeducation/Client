@@ -1,8 +1,59 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { apiCall } from "../utils/api";
 
-export default function TradesModal({ showTradesModal, setShowTradesModal, selectedAccount }) {
+export default function TradesModal({ showTradesModal, setShowTradesModal, selectedAccount, tradeRole }) {
   const { isDarkMode } = useTheme();
+  const [positions, setPositions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (showTradesModal && selectedAccount) {
+      fetchPositions();
+    }
+  }, [showTradesModal, selectedAccount]);
+
+  const fetchPositions = async () => {
+    setLoading(true);
+    try {
+      let data;
+      if (tradeRole === "manager") {
+        // Fetch from external URL for manager
+        const token = localStorage.getItem("accessToken");
+        if (!token) throw new Error("Missing auth token.");
+        const url = `http://client.localhost:8000/open-positions/${selectedAccount.master_account_id }/`;
+        const res = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+        });
+        if (!res.ok) {
+          throw new Error(`Error fetching positions: ${res.statusText || res.status}`);
+        }
+        data = await res.json();
+      } else {
+        // Investor fetch using apiCall internal API
+        data = await apiCall(`api/get-trading-positions/${selectedAccount.account_id}/`);
+      }
+      setPositions(data.positions || data || []);
+    } catch (err) {
+      console.error('Error fetching positions:', err);
+
+      // Display user-friendly message for duplicate TradingAccount backend error
+      if (err.message && err.message.includes('more than one TradingAccount')) {
+        alert("Error: Multiple trading accounts found for the selected master account. Please contact support.");
+      }
+
+      setPositions([]);
+    } finally {
+      setLoading(false);
+      console.log(selectedAccount,tradeRole)
+      tradeRole=" "
+    }
+  };
   return (
     <>
       {showTradesModal && (
@@ -18,7 +69,7 @@ export default function TradesModal({ showTradesModal, setShowTradesModal, selec
 
             {/* Modal Title */}
             <h2 className="text-2xl font-semibold mb-6 text-center text-[#FFD700]">
-              Open Positions for Account: {selectedAccount.login}
+              Open Positions for Account: {tradeRole === "investor" ?  selectedAccount.account_id : selectedAccount.account_id}
             </h2>
 
             {/* Table */}
@@ -41,11 +92,36 @@ export default function TradesModal({ showTradesModal, setShowTradesModal, selec
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className={`border-b ${isDarkMode ? 'border-[#333]' : 'border-gray-300'}`}>
-                    <td className="p-3 text-center" colSpan="12">
-                      No open positions found
-                    </td>
-                  </tr>
+                  {loading ? (
+                    <tr className={`border-b ${isDarkMode ? 'border-[#333]' : 'border-gray-300'}`}>
+                      <td className="p-3 text-center" colSpan="12">
+                        Loading positions...
+                      </td>
+                    </tr>
+                  ) : positions.length > 0 ? (
+                    positions.map((position, index) => (
+                      <tr key={index} className={`border-b ${isDarkMode ? 'border-[#333]' : 'border-gray-300'}`}>
+                        <td className="p-3">{position.ticket}</td>
+                        <td className="p-3">{position.symbol}</td>
+                        <td className="p-3">{position.type}</td>
+                        <td className="p-3">{position.volume}</td>
+                        <td className="p-3">{position.open_price}</td>
+                        <td className="p-3">{position.current_price}</td>
+                        <td className="p-3">{position.sl}</td>
+                        <td className="p-3">{position.tp}</td>
+                        <td className="p-3">{position.profit}</td>
+                        <td className="p-3">{position.swap}</td>
+                        <td className="p-3">{position.open_time}</td>
+                        <td className="p-3">{position.comment}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr className={`border-b ${isDarkMode ? 'border-[#333]' : 'border-gray-300'}`}>
+                      <td className="p-3 text-center" colSpan="12">
+                        No open positions found
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

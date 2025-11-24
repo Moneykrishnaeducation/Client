@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { apiCall } from "../utils/api";
 import {
   Camera,
   User,
@@ -17,13 +18,16 @@ import { useTheme } from "../context/ThemeContext";
 const ProfilePage = () => {
   const { isDarkMode } = useTheme();
   const [user, setUser] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+91 9876543210",
-    dob: "1998-06-15",
+    name: "",
+    email: "",
+    phone: "",
+    dob: "",
+    address: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState('/static/client/images/default-profile.jpg');
   const [bannerImage, setBannerImage] = useState(null);
 
   const [bankDetails, setBankDetails] = useState(null);
@@ -32,10 +36,152 @@ const ProfilePage = () => {
   const [showCryptoModal, setShowCryptoModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const [identityFile, setIdentityFile] = useState(null);
-  const [residentialFile, setResidentialFile] = useState(null);
+  const [identityStatus, setIdentityStatus] = useState('not_uploaded');
+  const [residentialStatus, setResidentialStatus] = useState('not_uploaded');
+  const [identityFileName, setIdentityFileName] = useState('');
+  const [residentialFileName, setResidentialFileName] = useState('');
+  const [identityLoading, setIdentityLoading] = useState(false);
+  const [residentialLoading, setResidentialLoading] = useState(false);
+  const [identityError, setIdentityError] = useState('');
+  const [residentialError, setResidentialError] = useState('');
+
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankError, setBankError] = useState('');
+  const [cryptoLoading, setCryptoLoading] = useState(false);
+  const [cryptoError, setCryptoError] = useState('');
 
   const inputClass = `w-full p-2 ${isDarkMode ? 'bg-[#1a1a1a] border-gray-700 text-white' : 'bg-gray-100 border-gray-300 text-black'} border rounded-md focus:outline-none focus:border-[#FFD700] placeholder-gray-500`;
+
+  const fetchBanner = async () => {
+    try {
+      const data = await apiCall('profile/banner/');
+      if (data) {
+        setBannerImage(data);
+      } else {
+        setBannerImage(null);
+      }
+    } catch (err) {
+      console.error('Error fetching banner:', err);
+      setBannerImage(null);
+    }
+  };
+
+  // Fetch user profile data on component mount
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        setLoading(true);
+        const data = await apiCall('api/profile/');
+        setUser({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          dob: data.dob || '',
+          address: data.address || '',
+        });
+        setProfileImage(data.profile_pic || '/static/client/images/default-profile.jpg');
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+        setError('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchBankDetails = async () => {
+      try {
+        const data = await apiCall('api/profile/bank-details/');
+        if (data && Object.keys(data).length > 0) {
+          setBankDetails({
+            bankName: data.bank_name || '',
+            accountNumber: data.account_number || '',
+            ifscCode: data.ifsc_code || '',
+            branch: data.branch_name || '',
+            status: data.status || 'pending',
+          });
+        } else {
+          setBankDetails(null);
+        }
+      } catch (err) {
+        console.error('Error fetching bank details:', err);
+        setBankDetails(null);
+      }
+    };
+
+    const fetchCryptoDetails = async () => {
+      try {
+        const data = await apiCall('api/profile/crypto-details/');
+        if (data && Object.keys(data).length > 0) {
+          setCryptoDetails({
+            walletId: data.wallet_id || '',
+            currency: data.currency || '',
+            status: data.status || 'pending',
+          });
+        } else {
+          setCryptoDetails(null);
+        }
+      } catch (err) {
+        console.error('Error fetching crypto details:', err);
+        setCryptoDetails(null);
+      }
+    };
+
+    const fetchDocuments = async () => {
+      try {
+        const data = await apiCall('api/profile/documents/');
+        if (data && data.length > 0) {
+          const identityDoc = data.find(doc => doc.document_type === 'identity');
+          const residentialDoc = data.find(doc => doc.document_type === 'residence');
+          if (identityDoc) {
+            setIdentityStatus(identityDoc.status || 'pending');
+            setIdentityFileName(identityDoc.document || '');
+          }
+          if (residentialDoc) {
+            setResidentialStatus(residentialDoc.status || 'pending');
+            setResidentialFileName(residentialDoc.document || '');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching documents:', err);
+      }
+    };
+
+    fetchUserProfile();
+    fetchBanner();
+    fetchBankDetails();
+    fetchCryptoDetails();
+    fetchDocuments();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} flex items-center justify-center`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFD700] mx-auto"></div>
+          <p className="mt-4 text-[#FFD700]">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} flex items-center justify-center`}>
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-[#FFD700] text-black px-4 py-2 rounded-md font-semibold hover:bg-white transition-colors duration-300"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} pb-20`}>
@@ -66,12 +212,28 @@ const ProfilePage = () => {
     id="bannerUpload"
     accept="image/*"
     hidden
-    onChange={(e) => {
+    onChange={async (e) => {
       const file = e.target.files[0];
       if (file) {
+        // Immediate preview
         const reader = new FileReader();
-        reader.onloadend = () => setBannerImage(reader.result); // preview immediately
+        reader.onloadend = () => setBannerImage(reader.result);
         reader.readAsDataURL(file);
+
+        // Upload to API
+        const formData = new FormData();
+        formData.append('banner', file);
+        try {
+          await apiCall('api/profile/banner/', {
+            method: 'POST',
+            body: formData,
+          });
+          // Refetch to ensure persistence
+          fetchBanner();
+        } catch (err) {
+          console.error('Error uploading banner image:', err);
+          // Optionally show error to user
+        }
       }
     }}
   />
@@ -99,12 +261,27 @@ const ProfilePage = () => {
             id="profileUpload"
             accept="image/*"
             hidden
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files[0];
               if (file) {
+                // Immediate preview
                 const reader = new FileReader();
                 reader.onloadend = () => setProfileImage(reader.result);
                 reader.readAsDataURL(file);
+
+                // Upload to API
+                const formData = new FormData();
+                formData.append('profile_pic', file);
+                try {
+                  await apiCall('api/profile/image/', {
+                    method: 'POST',
+                    body: formData,
+                  });
+                  // No refetch needed, preview is already set
+                } catch (err) {
+                  console.error('Error uploading profile image:', err);
+                  // Optionally show error to user
+                }
               }
             }}
           />
@@ -129,6 +306,7 @@ const ProfilePage = () => {
           <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{user.email}</p>
           <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{user.phone}</p>
           <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-600'} text-sm`}>DOB: {user.dob}</p>
+          <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-600'} text-sm`}>Address: {user.address}</p>
         </div>
       </div>
 
@@ -152,22 +330,65 @@ const ProfilePage = () => {
     </div>
   </div>
   <div className="flex flex-col items-center justify-center">
-    {identityFile ? (
+    {identityStatus !== 'not_uploaded' ? (
       <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-center`}>
         <p className="text-[#FFD700] font-semibold">
-          File Uploaded: {identityFile.name}
+          Document Uploaded
         </p>
-        <p className="text-sm mt-1">Status: Verified</p>
+        {identityFileName && <p className="text-sm mt-1">File: {identityFileName.split('/').pop()}</p>}
+        <p className="text-sm mt-1">Status: Pending</p>
+        {identityError && <p className="text-red-500 text-sm mt-1">{identityError}</p>}
       </div>
     ) : (
-      <label className={`cursor-pointer px-4 py-2 rounded-md font-semibold ${isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]'} transition-colors duration-300`}>
-        <FileUp size={18} className="inline mr-2" />
-        Upload ID Proof
+      <label className={`cursor-pointer px-4 py-2 rounded-md font-semibold ${identityLoading ? 'bg-gray-500 cursor-not-allowed' : (isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]')} transition-colors duration-300`}>
+        {identityLoading ? 'Uploading...' : (
+          <>
+            <FileUp size={18} className="inline mr-2" />
+            Upload Document
+          </>
+        )}
         <input
           type="file"
           accept="image/*,.pdf"
           hidden
-          onChange={(e) => setIdentityFile(e.target.files[0])}
+          disabled={identityLoading}
+          onChange={async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              setIdentityLoading(true);
+              setIdentityError('');
+              const formData = new FormData();
+              formData.append('document', file);
+              try {
+                await apiCall('/documents/identity/', {
+                  method: 'POST',
+                  body: formData,
+                });
+                // Refetch documents to update status
+                const data = await apiCall('api/profile/documents/');
+                if (data && data.length > 0) {
+                  const identityDoc = data.find(doc => doc.document_type === 'identity');
+                  if (identityDoc) {
+                    setIdentityStatus(identityDoc.status || 'pending');
+                  }
+                }
+              } catch (err) {
+                console.error('Error uploading identity document:', err);
+                let errorMsg = 'Failed to upload document';
+                try {
+                  const parsed = JSON.parse(err.message);
+                  if (parsed.error) {
+                    errorMsg = parsed.error;
+                  }
+                } catch {
+                  errorMsg = err.message || 'Failed to upload document';
+                }
+                setIdentityError(errorMsg);
+              } finally {
+                setIdentityLoading(false);
+              }
+            }
+          }}
         />
       </label>
     )}
@@ -192,22 +413,65 @@ const ProfilePage = () => {
     </div>
   </div>
   <div className="flex flex-col items-center justify-center">
-    {residentialFile ? (
+    {residentialStatus !== 'not_uploaded' ? (
       <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-center`}>
         <p className="text-[#FFD700] font-semibold">
-          File Uploaded: {residentialFile.name}
+          Document Uploaded
         </p>
-        <p className="text-sm mt-1">Status: Verified</p>
+        {residentialFileName && <p className="text-sm mt-1">File: {residentialFileName.split('/').pop()}</p>}
+        <p className="text-sm mt-1">Status: Pending</p>
+        {residentialError && <p className="text-red-500 text-sm mt-1">{residentialError}</p>}
       </div>
     ) : (
-      <label className={`cursor-pointer px-4 py-2 rounded-md font-semibold ${isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]'} transition-colors duration-300`}>
-        <FileUp size={18} className="inline mr-2" />
-        Upload Address Proof
+      <label className={`cursor-pointer px-4 py-2 rounded-md font-semibold ${residentialLoading ? 'bg-gray-500 cursor-not-allowed' : (isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]')} transition-colors duration-300`}>
+        {residentialLoading ? 'Uploading...' : (
+          <>
+            <FileUp size={18} className="inline mr-2" />
+            Upload Document
+          </>
+        )}
         <input
           type="file"
           accept="image/*,.pdf"
           hidden
-          onChange={(e) => setResidentialFile(e.target.files[0])}
+          disabled={residentialLoading}
+          onChange={async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              setResidentialLoading(true);
+              setResidentialError('');
+              const formData = new FormData();
+              formData.append('document', file);
+              try {
+                await apiCall('/documents/residence/', {
+                  method: 'POST',
+                  body: formData,
+                });
+                // Refetch documents to update status
+                const data = await apiCall('api/profile/documents/');
+                if (data && data.length > 0) {
+                  const residentialDoc = data.find(doc => doc.document_type === 'residence');
+                  if (residentialDoc) {
+                    setResidentialStatus(residentialDoc.status || 'pending');
+                  }
+                }
+              } catch (err) {
+                console.error('Error uploading residential document:', err);
+                let errorMsg = 'Failed to upload document';
+                try {
+                  const parsed = JSON.parse(err.message);
+                  if (parsed.error) {
+                    errorMsg = parsed.error;
+                  }
+                } catch {
+                  errorMsg = err.message || 'Failed to upload document';
+                }
+                setResidentialError(errorMsg);
+              } finally {
+                setResidentialLoading(false);
+              }
+            }
+          }}
         />
       </label>
     )}
@@ -314,21 +578,57 @@ const ProfilePage = () => {
           className={inputClass}
           id="branch"
         />
+        {bankError && <p className="text-red-500 text-sm">{bankError}</p>}
         <button
-          onClick={() => {
-            const newDetails = {
-              bankName: document.getElementById("bankName").value,
-              accountNumber: document.getElementById("accountNumber").value,
-              ifscCode: document.getElementById("ifscCode").value,
-              branch: document.getElementById("branch").value,
-              status: "Verified",
-            };
-            setBankDetails(newDetails);
-            setShowBankModal(false);
+          onClick={async () => {
+            const bankName = document.getElementById("bankName").value.trim();
+            const accountNumber = document.getElementById("accountNumber").value.trim();
+            const ifscCode = document.getElementById("ifscCode").value.trim();
+            const branch = document.getElementById("branch").value.trim();
+
+            if (!bankName || !accountNumber || !ifscCode || !branch) {
+              setBankError('All fields are required.');
+              return;
+            }
+
+            setBankLoading(true);
+            setBankError('');
+
+            try {
+              await apiCall('api/profile/bank-details/', {
+                method: 'POST',
+                body: JSON.stringify({
+                  bank_name: bankName,
+                  account_number: accountNumber,
+                  ifsc_code: ifscCode,
+                  branch_name: branch,
+                })
+              });
+
+              // Refresh bank details after successful save
+              const updatedData = await apiCall('api/profile/bank-details/');
+              if (updatedData && Object.keys(updatedData).length > 0) {
+                setBankDetails({
+                  bankName: updatedData.bank_name || '',
+                  accountNumber: updatedData.account_number || '',
+                  ifscCode: updatedData.ifsc_code || '',
+                  branch: updatedData.branch_name || '',
+                  status: updatedData.status || 'pending',
+                });
+              }
+
+              setShowBankModal(false);
+            } catch (err) {
+              console.error('Error saving bank details:', err);
+              setBankError(err.message || 'Failed to save bank details');
+            } finally {
+              setBankLoading(false);
+            }
           }}
-          className="mt-4 w-full bg-[#FFD700] text-black py-2 rounded-md font-semibold hover:bg-white transition-colors duration-300"
+          disabled={bankLoading}
+          className={`mt-4 w-full py-2 rounded-md font-semibold ${bankLoading ? 'bg-gray-500 cursor-not-allowed' : 'bg-[#FFD700] text-black hover:bg-white'} transition-colors duration-300`}
         >
-          Save Details
+          {bankLoading ? 'Saving...' : 'Save Details'}
         </button>
       </div>
     </div>
@@ -364,19 +664,51 @@ const ProfilePage = () => {
           className={inputClass}
           id="currency"
         />
+        {cryptoError && <p className="text-red-500 text-sm">{cryptoError}</p>}
         <button
-          onClick={() => {
-            const newDetails = {
-              walletId: document.getElementById("walletId").value,
-              currency: document.getElementById("currency").value,
-              status: "Verified",
-            };
-            setCryptoDetails(newDetails);
-            setShowCryptoModal(false);
+          onClick={async () => {
+            const walletId = document.getElementById("walletId").value.trim();
+            const currency = document.getElementById("currency").value.trim();
+
+            if (!walletId || !currency) {
+              setCryptoError('Both fields are required.');
+              return;
+            }
+
+            setCryptoLoading(true);
+            setCryptoError('');
+
+            try {
+              await apiCall('api/profile/crypto-details/', {
+                method: 'POST',
+                body: JSON.stringify({
+                  wallet_id: walletId,
+                  currency: currency,
+                })
+              });
+
+              // Refresh crypto details after successful save
+              const updatedData = await apiCall('api/profile/crypto-details/');
+              if (updatedData && Object.keys(updatedData).length > 0) {
+                setCryptoDetails({
+                  walletId: updatedData.wallet_id || '',
+                  currency: updatedData.currency || '',
+                  status: updatedData.status || 'pending',
+                });
+              }
+
+              setShowCryptoModal(false);
+            } catch (err) {
+              console.error('Error saving crypto details:', err);
+              setCryptoError(err.message || 'Failed to save crypto details');
+            } finally {
+              setCryptoLoading(false);
+            }
           }}
-          className="mt-4 w-full bg-[#FFD700] text-black py-2 rounded-md font-semibold hover:bg-white transition-colors duration-300"
+          disabled={cryptoLoading}
+          className={`mt-4 w-full py-2 rounded-md font-semibold ${cryptoLoading ? 'bg-gray-500 cursor-not-allowed' : 'bg-[#FFD700] text-black hover:bg-white'} transition-colors duration-300`}
         >
-          Save Details
+          {cryptoLoading ? 'Saving...' : 'Save Details'}
         </button>
       </div>
     </div>
@@ -404,6 +736,7 @@ const ProfilePage = () => {
                 defaultValue={user.email}
                 className={inputClass}
                 id="editEmail"
+                disabled
               />
               <input
                 type="text"
@@ -419,19 +752,54 @@ const ProfilePage = () => {
                 className={inputClass}
                 id="editDob"
               />
+              <input
+                type="text"
+                placeholder="Address"
+                defaultValue={user.address}
+                className={inputClass}
+                id="editAddress"
+              />
+              {editError && <p className="text-red-500 text-sm">{editError}</p>}
               <button
-                onClick={() => {
-                  setUser({
-                    ...user,
-                    email: document.getElementById("editEmail").value,
-                    phone: document.getElementById("editPhone").value,
-                    dob: document.getElementById("editDob").value,
-                  });
-                  setShowEditModal(false);
+                onClick={async () => {
+                  const phone = document.getElementById("editPhone").value;
+                  const dob = document.getElementById("editDob").value;
+                  const address = document.getElementById("editAddress").value;
+
+                  if (!phone && !dob && !address) {
+                    setEditError('At least one field (phone, dob, address) is required.');
+                    return;
+                  }
+
+                  setEditLoading(true);
+                  setEditError('');
+
+                  try {
+                    await apiCall('profile/edit/', {
+                      method: 'POST',
+                      body: JSON.stringify({
+                        phone: phone,
+                        dob: dob,
+                        address: address
+                      })
+                    });
+                    setShowEditModal(false);
+                  } catch (err) {
+                    console.error('Error submitting change request:', err);
+                    if (err.message && err.message.includes('unique_pending_request_per_user')) {
+                      setEditError('You already have a pending change request. Please wait for it to be processed before submitting another one.');
+                    } else if (err.message === 'You already have a pending personal info change request') {
+                      setEditError('You already have a pending personal info change request');
+                    } else {
+                      setEditError(err.message || 'Failed to submit change request');
+                    }
+                    setEditLoading(false);
+                  }
                 }}
-                className={`mt-4 w-full py-2 rounded-md font-semibold ${isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]'} transition-colors duration-300`}
+                disabled={editLoading}
+                className={`mt-4 w-full py-2 rounded-md font-semibold ${editLoading ? 'bg-gray-500 cursor-not-allowed' : (isDarkMode ? 'bg-gray-700 text-white hover:bg-[#FFD700] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#FFD700]')} transition-colors duration-300`}
               >
-                Save Changes
+                {editLoading ? 'Submitting...' : 'Submit Change Request'}
               </button>
             </div>
           </div>

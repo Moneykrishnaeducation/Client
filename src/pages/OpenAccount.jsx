@@ -3,9 +3,11 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"; // adjust path if needed
 import { useTheme } from "../context/ThemeContext";
 import { ModalWrapper } from "./Dashboard";
 import { apiCall } from "../utils/api";
+import { useToast } from "../hooks/useToast";
 
 function OpenAccount({ onClose }) {
   const { isDarkMode } = useTheme();
+  const { toasts, addToast, removeToast } = useToast();
   const generatePassword = (length = 8) => {
     const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const lowercase = "abcdefghijklmnopqrstuvwxyz";
@@ -41,26 +43,28 @@ function OpenAccount({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [leverages, setLeverages] = useState([]);
   const [groups, setGroups] = useState([]);
-  const [userInfo, setUserInfo] = useState({});
+  
 
   useEffect(() => {
     const fetchOptions = async () => {
-      // try {
-      //   // Fetch user info
-      //   const userData = await apiCall('user-info/');
-      //   setUserInfo(userData || {});
-
-      //   // Fetch groups
-      //   const groupData = await apiCall('api/trading-groups/?type=real');
-      //   setGroups(groupData.groups || []);
-      // } catch (error) {
-      //   console.error('Failed to fetch options:', error);
-      //   // Fallback to static data
-      //   setGroups(["Standard", "Pro", "ECN", "VIP"]);
-      // }
-      setGroups(["Standard", "Pro", "ECN", "VIP"]);
+      try {
+        // Fetch user info
+        const userData = await apiCall('user-info/');
+        //Ensure accountName gets synced safely
+        setFormData((prev) => ({
+          ...prev,
+          accountName: userData?.name || "",
+        }));
+        // Fetch groups
+        const groupData = await apiCall('api/trading-groups/?type=real');
+        setGroups(groupData.groups || []);
+      } catch (error) {
+        console.error('Failed to fetch options:', error);
+        // Fallback to static data
+        setGroups(["Standard", "Pro", "ECN", "VIP"]);
+      }
       // Always set static leverages
-      setLeverages([1, 2, 5, 10, 20, 50, 100, 200]);
+      setLeverages([1, 2, 5, 10, 20, 50, 100, 200,500,1000]);
     };
 
     fetchOptions();
@@ -83,10 +87,18 @@ function OpenAccount({ onClose }) {
         accountType: 'real'
       };
 
-      const data = await apiCall('create-trading-account/', 'POST', accountData);
+      const data = await apiCall('create-trading-account/', {
+        method: 'POST',
+        body: JSON.stringify(accountData)
+      });
 
       if (data.success) {
-        alert(`✅ Account created successfully!\nAccount ID: ${data.account.account_id}\nMaster Password: ${data.account.master_password}\nInvestor Password: ${data.account.investor_password}\n\n📧 An email with your login details has been sent.`);
+        addToast({
+          title: "Account Created Successfully!",
+          description: `Account ID: ${data.account.account_id}\nMaster Password: ${data.account.master_password}\nInvestor Password: ${data.account.investor_password}\n\n📧 An email with your login details has been sent.`,
+          type: "success",
+          duration: 10000
+        });
         onClose();
         // Refresh accounts list after successful creation
         if (window.refreshAccounts) {
@@ -97,7 +109,12 @@ function OpenAccount({ onClose }) {
       }
     } catch (error) {
       console.error('Error creating account:', error);
-      alert(`❌ Failed to create account: ${error.message}`);
+      addToast({
+        title: "Failed to Create Account",
+        description: error.message,
+        type: "error",
+        duration: 5000
+      });
     } finally {
       setLoading(false);
     }
@@ -105,7 +122,7 @@ function OpenAccount({ onClose }) {
 
   return (
     <ModalWrapper title="Create New Trading Account" onClose={onClose} isDarkMode={isDarkMode}>
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {/* Account Name */}
         <div>
           <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -157,7 +174,7 @@ function OpenAccount({ onClose }) {
           >
             <option value="">Select group</option>
             {groups.map((grp, idx) => (
-              <option key={grp.id || idx} value={grp.name}>
+              <option key={grp.id || idx} value={grp.id}>
                 {grp.alias || grp.name}
               </option>
             ))}

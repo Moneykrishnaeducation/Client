@@ -1,20 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { loginUser } from '../utils/api';
+// /mnt/data/Login.jsx
+import React, { useState, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { loginUser, apiCall } from "../utils/api";
+import { signup, sendResetOtp, verifyOtp, resetPassword, resendLoginOtp, getLoginOtpStatus } from "../utils/auth-functions";
 
-const Login = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function Login() {
+  const [rightPanelActive, setRightPanelActive] = useState(false);
+  const [forgotActive, setForgotActive] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Signup states
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [dob, setDob] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resetStep, setResetStep] = useState(0); // 0: enter email, 1: enter OTP, 2: set new password
+  const [notification, setNotification] = useState({ show: false, type: "success", message: "" });
+  // controlled password fields for strength calculation
+  const [signUpPassword, setSignUpPassword] = useState("");
+  const [signUpConfirm, setSignUpConfirm] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmNewPass, setConfirmNewPass] = useState("");
+
+  // Form states
+  const [signInEmail, setSignInEmail] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+  const [signUpName, setSignUpName] = useState("");
+  const [signUpEmail, setSignUpEmail] = useState("");
+  const [signUpPhone, setSignUpPhone] = useState("");
+  const [signUpDob, setSignUpDob] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // compute strength class (returns tailwind class name string)
+  function computeStrengthClass(pwd) {
+    if (!pwd) return "";
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    if (score >= 3 && pwd.length >= 8) return "strength-strong";
+    if (score >= 2) return "strength-medium";
+    return "strength-weak";
+  }
+
+  // Derived CSS classes for strength (Tailwind-friendly)
+  function strengthClasses(flag) {
+    // flag is one of '', 'strength-weak', 'strength-medium', 'strength-strong'
+    switch (flag) {
+      case "strength-weak":
+        return "ring-0 border-[#FF5252]/60 shadow-[0_0_18px_rgba(255,82,82,0.18)]";
+      case "strength-medium":
+        return "ring-0 border-[#F4A23B]/60 shadow-[0_0_20px_rgba(244,162,59,0.18)]";
+      case "strength-strong":
+        return "ring-0 border-[#23D396]/60 shadow-[0_0_22px_rgba(35,211,150,0.22)]";
+      default:
+        return "border-[#d4af3740] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
+    }
+  }
+
+  const containerClass = `${rightPanelActive ? "right-panel-active" : ""} ${forgotActive ? "forgot-password-active" : ""}`.trim();
+
+  // auto-hide notification after show
+  useEffect(() => {
+    if (notification.show) {
+      const t = setTimeout(() => setNotification({ show: false, type: "success", message: "" }), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [notification]);
 
   useEffect(() => {
     // Auto-login on page load if a token exists (and validate it),
@@ -59,7 +109,7 @@ const Login = () => {
         // Immediate redirect — assume token validity; server will reject protected endpoints if invalid
         window.location.href = '/dashboard';
       } else if (initialRef) {
-        setIsSignUp(true);
+        setRightPanelActive(true);
       }
 
       // Cross-tab: when other tab writes a token, redirect immediately
@@ -74,299 +124,591 @@ const Login = () => {
     })();
   }, []);
 
-  const handleLoginSubmit = async (e) => {
+  // Handle sign in
+  const handleSignIn = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-
     try {
-      const data = await loginUser(email, password);
+      const response = await loginUser(signInEmail, signInPassword);
 
-      console.log("Login successful", data);
+      if (response && response.success) {
+        const successMessage = response.message || 'Login successful! Welcome back!';
+        setNotification({ show: true, type: "success", message: successMessage });
 
-      // Respect Remember Me preference (assuming always true for now)
-      const remember = true;
-      const storage = remember ? localStorage : sessionStorage;
+        // Check if auto-login tokens are provided
+        if (response.auto_login && response.access && response.refresh) {
+          // Remember preference (default to true for login)
+          const remember = true; // Could be made configurable later
+          const storage = remember ? localStorage : sessionStorage;
 
-      // Batch localStorage operations for better performance
-      const userEmail = (data.user && data.user.email) ? data.user.email.toLowerCase() : '';
-      const storageData = {
-        'jwt_token': data.access,
-        'accessToken': data.access,
-        'refresh_token': data.refresh,
-        'refreshToken': data.refresh,
-        'user_role': data.role,
-        'userRole': data.role,
-        'user_email': userEmail,
-        'userEmail': userEmail,
-        'user_name': data.user.name,
-        'userName': data.user.name
-      };
+          // Store auth tokens and user info for auto-login
+          storage.setItem('jwt_token', response.access);
+          storage.setItem('accessToken', response.access);
+          storage.setItem('refresh_token', response.refresh);
+          storage.setItem('refreshToken', response.refresh);
+          storage.setItem('user_role', response.role);
+          storage.setItem('userRole', response.role);
 
-      // Set all storage items at once
-      Object.entries(storageData).forEach(([key, value]) => {
-        storage.setItem(key, value);
-      });
+          // Store emails in lowercase for frontend consistency
+          const signinEmail = (response.user && response.user.email) ? response.user.email.toLowerCase() : '';
+          storage.setItem('user_email', signinEmail);
+          storage.setItem('userEmail', signinEmail);
+          storage.setItem('user_name', response.user.name);
+          storage.setItem('userName', response.user.name);
 
-      // Clear any pending verification marker since login succeeded
-      try { localStorage.removeItem('login_verification_pending'); } catch(e){}
+          // Show auto-login notification
+          setNotification({
+            show: true,
+            type: "success",
+            message: `Welcome back, ${response.user.name}! Redirecting to dashboard...`
+          });
 
-      // Allow admin, manager, and client roles to access client panel
-      const allowedRoles = ['admin', 'manager', 'client'];
-      const userRole = (data.role || '').toString().toLowerCase();
-
-      if (allowedRoles.includes(userRole)) {
-        window.location.href = "/dashboard";
+          // Redirect to main dashboard immediately after login auto-login
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
+        } else {
+          // Fallback: direct redirect if no auto-login
+          window.location.href = '/dashboard';
+        }
       } else {
-        setError(`Your account role (${data.role}) does not have access to the client panel.`);
+        const errorMessage = response.error || 'Login failed.';
+        setNotification({ show: true, type: "error", message: errorMessage });
       }
-    } catch (err) {
-      setError(err.message || "Network error. Please try again.");
+    } catch (error) {
+      setNotification({ show: true, type: "error", message: error.message || "Login failed" });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSignupSubmit = async (e) => {
+  // Handle sign up
+  const handleSignUp = async (e) => {
     e.preventDefault();
+    if (signUpPassword !== signUpConfirm) {
+      setNotification({ show: true, type: "error", message: "Passwords do not match" });
+      return;
+    }
     setLoading(true);
-    setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const signupData = {
-        name,
-        email: email.toLowerCase(),
-        phone,
-        dob,
-        password,
-        confirm_password: confirmPassword
+      const userData = {
+        name: signUpName,
+        email: signUpEmail,
+        phone: signUpPhone,
+        dob: signUpDob,
+        password: signUpPassword,
       };
+      const result = await signup(userData);
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const refCode = urlParams.get('ref');
-      if (refCode) {
-        signupData.referral_code = refCode;
-      }
+      if (result && result.success) {
+        const successMessage = result.message || 'Registration successful! Welcome to VT-Index!';
+        setNotification({ show: true, type: "success", message: successMessage });
 
-      const response = await fetch('/client/signup/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(signupData),
-      });
+        // Check if auto-login tokens are provided
+        if (result.auto_login && result.access && result.refresh) {
+          // Remember preference (default to true for signup)
+          const remember = true; // Could be made configurable later
+          const storage = remember ? localStorage : sessionStorage;
 
-      const data = await response.json();
+          // Store auth tokens and user info for auto-login
+          storage.setItem('jwt_token', result.access);
+          storage.setItem('accessToken', result.access);
+          storage.setItem('refresh_token', result.refresh);
+          storage.setItem('refreshToken', result.refresh);
+          storage.setItem('user_role', result.role);
+          storage.setItem('userRole', result.role);
 
-      if (response.ok && data.success) {
-        // Auto-login if tokens provided
-        if (data.auto_login && data.access && data.refresh) {
-          const storage = localStorage;
-          const userEmail = (data.user && data.user.email) ? data.user.email.toLowerCase() : '';
-          const storageData = {
-            'jwt_token': data.access,
-            'accessToken': data.access,
-            'refresh_token': data.refresh,
-            'refreshToken': data.refresh,
-            'user_role': data.role,
-            'userRole': data.role,
-            'user_email': userEmail,
-            'userEmail': userEmail,
-            'user_name': data.user.name,
-            'userName': data.user.name
-          };
-          Object.entries(storageData).forEach(([key, value]) => {
-            storage.setItem(key, value);
+          // Store emails in lowercase for frontend consistency
+          const signupEmail = (result.user && result.user.email) ? result.user.email.toLowerCase() : '';
+          storage.setItem('user_email', signupEmail);
+          storage.setItem('userEmail', signupEmail);
+          storage.setItem('user_name', result.user.name);
+          storage.setItem('userName', result.user.name);
+
+          // Show auto-login notification
+          setNotification({
+            show: true,
+            type: "success",
+            message: `Welcome to VT-Index, ${result.user.name}! Redirecting to dashboard...`
           });
-          window.location.href = '/dashboard';
+
+          // Redirect to main dashboard immediately after signup auto-login
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
         } else {
-          setError("Signup successful! Please log in.");
-          setIsSignUp(false);
+          // Fallback: Switch to login form if no auto-login
+          setTimeout(() => {
+            setRightPanelActive(false);
+            setForgotActive(false);
+            // Clear form
+            setSignUpName("");
+            setSignUpEmail("");
+            setSignUpPhone("");
+            setSignUpDob("");
+            setSignUpPassword("");
+            setSignUpConfirm("");
+          }, 2500);
         }
       } else {
-        setError(data.error || "Signup failed.");
+        const errorMessage = result.error || 'Failed to sign up.';
+        setNotification({ show: true, type: "error", message: errorMessage });
       }
-    } catch (err) {
-      setError("Network error. Please try again.");
+    } catch (error) {
+      setNotification({ show: true, type: "error", message: error.message || "Signup failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle send reset OTP
+  const handleSendResetOtp = async () => {
+    setLoading(true);
+    try {
+      await sendResetOtp(resetEmail);
+      setNotification({ show: true, type: "success", message: "OTP sent to your email!" });
+      setResetStep(1);
+    } catch (error) {
+      setNotification({ show: true, type: "error", message: error.message || "Failed to send OTP" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle verify OTP
+  const handleVerifyOtp = async () => {
+    setLoading(true);
+    try {
+      await verifyOtp(resetEmail, otp);
+      setNotification({ show: true, type: "success", message: "OTP verified!" });
+      setResetStep(2);
+    } catch (error) {
+      setNotification({ show: true, type: "error", message: error.message || "OTP verification failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle reset password
+  const handleResetPassword = async () => {
+    if (newPass !== confirmNewPass) {
+      setNotification({ show: true, type: "error", message: "Passwords do not match" });
+      return;
+    }
+    setLoading(true);
+    try {
+      await resetPassword(resetEmail, newPass);
+      setNotification({ show: true, type: "success", message: "Password reset successfully!" });
+      setForgotActive(false);
+      setResetStep(0);
+    } catch (error) {
+      setNotification({ show: true, type: "error", message: error.message || "Password reset failed" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center w-full min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-        <div className="flex justify-center mb-6">
-          <button
-            onClick={() => setIsSignUp(false)}
-            className={`px-4 py-2 ${!isSignUp ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'} rounded-l-md`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => setIsSignUp(true)}
-            className={`px-4 py-2 ${isSignUp ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'} rounded-r-md`}
-          >
-            Sign Up
-          </button>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-r from-black via-[#111111] to-black text-white px-4">
+      {/* container card */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 text-center pointer-events-none">
+          {/* Keep empty or add logo here if needed */}
+          <img src="https://vtindex.com/img/logo/logo.svg" alt="logo" />
+        </div>
+      <div
+        className={`relative  lg:h-[70vh] overflow-hidden rounded-2xl border border-[#D4AF37] w-full max-w-[768px] min-h-[480px] ${containerClass} transition-all duration-500 ease-in-out shadow-[0_10px_30px_rgba(212,175,55,0.6),_inset_0_1px_0_rgba(255,255,255,0.02)]`}
+      >
+        {/* Logo area (optional) */}
+        
+
+        {/* Sign In Form */}
+        <div
+          className={`form-container sign-in-container absolute top-0 left-0 h-full w-1/2 z-20 transition-transform duration-600 ease-in-out ${
+            rightPanelActive ? "translate-x-full hidden" : "translate-x-0"
+          } ${forgotActive ? "-translate-x-[200%] scale-90 opacity-0 pointer-events-none" : ""}`}
+        >
+          <form className="h-full flex flex-col items-center justify-center text-center px-12 bg-black/60" onSubmit={handleSignIn}>
+            <h2 className="form-title text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
+              Sign In
+            </h2>
+
+            <input
+              type="email"
+              placeholder="Email"
+              value={signInEmail}
+              onChange={(e) => setSignInEmail(e.target.value)}
+              className="w-full rounded-2xl bg-white/5 text-[#bfb38a] px-4 py-2 outline-none border transition-all mt-6"
+              required
+            />
+
+            <div className={`password-container relative w-full mt-4 ${strengthClasses("")}`}>
+              <input
+                value={signInPassword}
+                onChange={(e) => setSignInPassword(e.target.value)}
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                className="w-full rounded-2xl bg-white/5 text-[#bfb38a] px-4 py-2 outline-none border transition-all"
+                required
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#D4AF37] p-1"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            <a
+              id="forgotPasswordLink"
+              onClick={() => {
+                setForgotActive(true);
+                setResetStep(0);
+              }}
+              className="mt-4 text-[#D4AF37] hover:underline cursor-pointer"
+            >
+              Forgot your password?
+            </a>
+
+            <div className="w-full mt-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-10 py-2 uppercase tracking-wider shadow-lg disabled:opacity-50"
+              >
+                {loading ? "Signing In..." : "Sign In"}
+              </button>
+            </div>
+          </form>
         </div>
 
-        {isSignUp ? (
-          <form onSubmit={handleSignupSubmit} className="space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-800">Sign Up</h2>
+        {/* Sign Up Form */}
+        <div
+          className={`form-container sign-up-container absolute top-0 left-0 h-full w-1/2 z-10 transition-all duration-600 ease-in-out ${
+            rightPanelActive ? "translate-x-full opacity-100 z-30" : "opacity-0 z-10"
+          } ${forgotActive ? "translate-x-[200%] scale-90 opacity-0 pointer-events-none" : ""}`}
+        >
+          <form className="h-full flex flex-col items-center justify-center text-center px-12 bg-black/50" onSubmit={handleSignUp}>
+            <h2 className="form-title text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
+              Create Account
+            </h2>
 
-            <div>
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="Name"
+              value={signUpName}
+              onChange={(e) => setSignUpName(e.target.value)}
+              className="w-full rounded-2xl bg-white/5 text-[#bfb38a] px-4 py-2 outline-none border mt-6"
+              required
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={signUpEmail}
+              onChange={(e) => setSignUpEmail(e.target.value)}
+              className="w-full rounded-2xl bg-white/5 text-[#bfb38a] px-4 py-2 outline-none border mt-4"
+              required
+            />
+            <input
+              type="tel"
+              placeholder="Phone"
+              value={signUpPhone}
+              onChange={(e) => setSignUpPhone(e.target.value)}
+              className="w-full rounded-2xl bg-white/5 text-[#bfb38a] px-4 py-2 outline-none border mt-4"
+              required
+            />
+            <input
+              type="date"
+              placeholder="Date of Birth"
+              value={signUpDob}
+              onChange={(e) => setSignUpDob(e.target.value)}
+              className="w-full rounded-2xl bg-white/5 text-[#bfb38a] px-4 py-2 outline-none border mt-4"
+              required
+            />
 
-            <div>
+            <div className={`password-container relative w-full mt-4 ${strengthClasses(computeStrengthClass(signUpPassword))}`}>
               <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <input
-                type="tel"
-                placeholder="Phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <input
-                type="date"
-                value={dob}
-                onChange={(e) => setDob(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
+                value={signUpPassword}
+                onChange={(e) => setSignUpPassword(e.target.value)}
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-2xl bg-white/5 text-[#bfb38a] px-4 py-2 outline-none border transition-all"
                 required
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowPassword((s) => !s)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#D4AF37] p-1"
               >
-                <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-gray-400`}></i>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            <div className="relative">
+            <div className={`password-container relative w-full mt-4 ${strengthClasses(computeStrengthClass(signUpConfirm))}`}>
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
+                value={signUpConfirm}
+                onChange={(e) => setSignUpConfirm(e.target.value)}
+                type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-2xl bg-white/5 text-[#bfb38a] px-4 py-2 outline-none border transition-all"
                 required
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowConfirmPassword((s) => !s)}
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#D4AF37] p-1"
               >
-                <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'} text-gray-400`}></i>
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {loading ? 'Signing Up...' : 'Sign Up'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleLoginSubmit} className="space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-800">Sign In</h2>
-
-            <div>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="w-full mt-6">
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-10 py-2 uppercase tracking-wider shadow-lg disabled:opacity-50"
               >
-                <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-gray-400`}></i>
+                {loading ? "Signing Up..." : "Sign Up"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Forgot Password (hidden unless forgotActive) */}
+        <div
+          className={`forgot-password-container absolute top-0 left-0 w-full h-full z-50 transition-all duration-500 ease-in-out ${
+            forgotActive ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible pointer-events-none"
+          } flex items-center justify-center`}
+        >
+          <div className="w-full max-w-md bg-black/80 rounded-2xl text-center shadow-xl">
+            {resetStep === 0 && (
+              <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5 items-center">
+                <h2 className="form-title flex  text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
+                  Reset Password
+                </h2>
+                <p className="text-sm text-[#bfb38a] mb-4">
+                  Enter your email address and we'll send you an OTP to reset your password.
+                </p>
+
+                <input
+                  id="resetEmail"
+                  type="email"
+                  placeholder="Email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full rounded-2xl bg-white/5 text-[#f6f4f0] px-4 py-2 outline-none border"
+                  required
+                />
+
+                <div className="mt-4 flex gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={handleSendResetOtp}
+                    disabled={loading}
+                    id="sendOtpBtn"
+                    className="rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-6 py-2 disabled:opacity-50"
+                  >
+                    {loading ? "Sending..." : "Send OTP"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="rounded-full border border-[#D4AF37] text-[#D4AF37] px-6 py-2"
+                    id="backToSignIn"
+                    onClick={() => {
+                      setForgotActive(false);
+                      setResetStep(0);
+                    }}
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {resetStep === 1 && (
+              <form onSubmit={(e) => e.preventDefault()}>
+                <h2 className="form-title text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
+                  Reset Password
+                </h2>
+                <p className="text-sm text-[#bfb38a] mb-4">Enter the OTP sent to your email.</p>
+
+                <input
+                  id="otpInput"
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full rounded-2xl bg-white/5 text-[#f6f4f0] px-4 py-2 outline-none border text-center tracking-widest"
+                  required
+                />
+
+                <div className="mt-4 flex gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={loading}
+                    id="verifyOtpBtn"
+                    className="rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-6 py-2 disabled:opacity-50"
+                  >
+                    {loading ? "Verifying..." : "Verify OTP"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="rounded-full border border-[#D4AF37] text-[#D4AF37] px-6 py-2"
+                    id="backToSignIn"
+                    onClick={() => {
+                      setForgotActive(false);
+                      setResetStep(0);
+                    }}
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {resetStep === 2 && (
+              <form onSubmit={(e) => e.preventDefault()}>
+                <h2 className="form-title text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
+                  Reset Password
+                </h2>
+                <p className="text-sm text-[#bfb38a] mb-4">Set your new password.</p>
+
+                <div className={`password-container relative w-full ${strengthClasses(computeStrengthClass(newPass))}`}>
+                  <input
+                    id="newPassword"
+                    value={newPass}
+                    onChange={(e) => setNewPass(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="New Password"
+                    className="w-full rounded-2xl bg-white/5 text-[#f6f4f0] px-4 py-2 outline-none border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#D4AF37] p-1"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
+                <div className="password-container relative w-full mt-4">
+                  <input
+                    id="confirmNewPassword"
+                    value={confirmNewPass}
+                    onChange={(e) => setConfirmNewPass(e.target.value)}
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm New Password"
+                    className="w-full rounded-2xl bg-white/5 text-[#f6f4f0] px-4 py-2 outline-none border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((s) => !s)}
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#D4AF37] p-1"
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
+                <div className="mt-4 flex gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={loading}
+                    className="rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-6 py-2 disabled:opacity-50"
+                  >
+                    {loading ? "Resetting..." : "Reset Password"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="rounded-full border border-[#D4AF37] text-[#D4AF37] px-6 py-2"
+                    id="backToSignIn"
+                    onClick={() => {
+                      setForgotActive(false);
+                      setResetStep(0);
+                    }}
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+
+        {/* Overlay container (hidden when forgotActive) */}
+        <div
+          className={`overlay-container absolute top-0 left-1/2 w-1/2 h-full overflow-hidden bg-black transition-transform duration-600 ease-in-out z-40 ${
+            rightPanelActive ? "-translate-x-full " : "translate-x-0"
+          } ${forgotActive ? "opacity-0 scale-90 invisible pointer-events-none" : ""}`}
+        >
+          <div
+            className={`overlay relative left-[-100%] h-full w-[200%] transform transition-transform duration-600 ease-in-out bg-gradient-to-r from-[#0a0a0a] via-[#181818] to-[#0c0c0c]`}
+            style={{ boxShadow: "inset -200px 0 120px rgba(212,175,55,0.04)" }}
+          >
+            <div
+              className={`overlay-panel overlay-right absolute top-0 right-0 h-full w-1/2 flex flex-col items-center justify-center px-10 text-center ${rightPanelActive ? "-translate-x-0" : "translate-x-0 hidden"}`}
+              style={{ color: "var(--gold)" }}
+            >
+              <h2 className="overlay-title text-3xl font-bold text-[#D4AF37]">Welcome Back!<br />to VTIndex</h2>
+              <p className="text-sm text-[#bfb38a] max-w-[70%] mt-2">Join us and explore your financial possibilities.</p>
+              <button
+                className="mt-4 rounded-full border border-[#D4AF37] text-[#D4AF37] px-6 py-2"
+                onClick={() => {
+                  setRightPanelActive(false);
+                  setForgotActive(false);
+                }}
+              >
+                Sign In
               </button>
             </div>
 
-            <div className="text-right">
-              <a href="#" className="text-sm text-blue-600 hover:underline">Forgot your password?</a>
-            </div>
-
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            <div
+              className={`overlay-panel overlay-right absolute top-0 right-0 h-full w-1/2 flex flex-col items-center justify-center px-10 text-center ${rightPanelActive ? "-translate-x-full hidden" : "translate-x-0"}`}
+              style={{ color: "var(--gold)" }}
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              <h2 className="overlay-title text-3xl font-bold text-[#D4AF37]">Welcome to Financial Freedom!</h2>
+              <p className="text-sm text-[#bfb38a] max-w-[70%] mt-2">Join VTIndex and embark on a journey toward financial growth and stability.</p>
+              <button
+                className="mt-4 rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-6 py-2"
+                onClick={() => setRightPanelActive(true)}
+              >
+                Sign Up
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Notification */}
+        <div
+          className={`notification fixed top-6 right-6 z-50 transform transition-all duration-300 ${
+            notification.show ? "translate-x-0 opacity-100" : "translate-x-40 opacity-0 pointer-events-none"
+          }`}
+        >
+          <div
+            className={`flex items-center gap-3 rounded-md px-4 py-2 ${
+              notification.type === "success" ? "bg-gradient-to-r from-[#28a745] to-[#20c997]" : "bg-gradient-to-r from-[#dc3545] to-[#e74c3c]"
+            } text-white`}
+            style={{ boxShadow: "0 4px 15px rgba(0,0,0,0.25)" }}
+          >
+            <span className="text-sm font-semibold">{notification.message}</span>
+            <button
+              onClick={() => setNotification({ show: false, type: "success", message: "" })}
+              className="ml-3 text-white text-sm font-medium"
+            >
+              ✕
             </button>
-          </form>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default Login;
+}

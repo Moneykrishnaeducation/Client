@@ -20,14 +20,10 @@ function getApiBase() {
     
     if (isProduction) {
         // On production, all API calls go to /client/ regardless of subdomain
-        return '/client/api';
+        return '/client';
     } else {
-        // Development behavior (existing)
-        if (isClientSubdomain) {
-            return '/api';
-        } else {
-            return '/client';
-        }
+        // Development: use backend URL
+        return 'http://client.localhost:8000';
     }
 }
 
