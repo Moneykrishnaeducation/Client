@@ -29,7 +29,9 @@ const Transactions = () => {
         setLoading(true);
         const data = await apiCall('user-transactions/');
         console.log('API response:', data);
-        setTransactions(data.transactions || []);
+        // API may return either an array of transactions or an object with a `transactions` key
+        const txns = Array.isArray(data) ? data : (data && data.transactions) ? data.transactions : [];
+        setTransactions(txns);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch transactions:', err);
@@ -195,14 +197,25 @@ const Transactions = () => {
                 }
 
                 const filteredData = displayData.filter((transaction) => {
-                  const matchesSearch = searchQuery === "" ||
-                    (transaction.account_name && transaction.account_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                    (transaction.account_id && transaction.account_id.toString().toLowerCase().includes(searchQuery.toLowerCase())) ||
-                    (transaction.note && transaction.note.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                    (transaction.amount && transaction.amount.toString().includes(searchQuery)) ||
-                    (transaction.type && transaction.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                    (transaction.status && transaction.status.toLowerCase().includes(searchQuery.toLowerCase()));
-                  return matchesSearch;
+                  const q = searchQuery.trim().toLowerCase();
+                  if (q === "") return true;
+                  const accountName = (transaction.trading_account_name || transaction.username || "").toString().toLowerCase();
+                  const accountId = (transaction.trading_account_id || transaction.trading_account || transaction.account_id || "").toString().toLowerCase();
+                  const note = (transaction.description || transaction.admin_comment || transaction.note || "").toString().toLowerCase();
+                  const txnType = (transaction.transaction_type || transaction.type || "").toString().toLowerCase();
+                  const status = (transaction.status || "").toString().toLowerCase();
+                  const amount = (transaction.amount || "").toString().toLowerCase();
+
+                  return (
+                    accountName.includes(q) ||
+                    accountId.includes(q) ||
+                    note.includes(q) ||
+                    txnType.includes(q) ||
+                    status.includes(q) ||
+                    amount.includes(q) ||
+                    (transaction.username || "").toString().toLowerCase().includes(q) ||
+                    (transaction.email || "").toString().toLowerCase().includes(q)
+                  );
                 });
 
                 if (filteredData.length === 0) {
@@ -224,15 +237,15 @@ const Transactions = () => {
                 const endIndex = startIndex + itemsPerPage;
                 const paginatedData = filteredData.slice(startIndex, endIndex);
 
-                return paginatedData.map((transaction, index) => (
+                return paginatedData.map((transaction) => (
                     <tr
-                      key={index}
+                      key={transaction.id || transaction.trading_account_id || JSON.stringify(transaction)}
                       className={`${
                         isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"
                       } transition-colors duration-200`}
                     >
                       <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                        {new Date(transaction.created_at).toLocaleString()}
+                        {transaction.created_at ? new Date(transaction.created_at).toLocaleString() : 'N/A'}
                       </td>
 
                       {selectedCategory === "Internal Transfer" ? (
@@ -247,31 +260,31 @@ const Transactions = () => {
                       ) : (
                         <>
                           <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                            {transaction.trading_account_id || 'N/A'}
+                            {transaction.trading_account_id || transaction.trading_account || 'N/A'}
                           </td>
                           <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                            {transaction.trading_account_name || 'N/A'}
+                            {transaction.trading_account_name || transaction.username || 'N/A'}
                           </td>
                         </>
                       )}
 
                       <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                        ${transaction.amount || 0}
+                        ${Number(transaction.amount || 0).toFixed(2)}
                       </td>
                       <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                        {transaction.admin_comment || 'N/A'}
+                        {transaction.admin_comment || transaction.description || 'N/A'}
                       </td>
                       <td className={`p-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            transaction.status === 'Completed'
-                              ? 'bg-green-100 text-green-800'
-                              : transaction.status === 'Pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${(() => {
+                            const s = (transaction.status || '').toString().toLowerCase();
+                            if (s.includes('approved') || s.includes('completed') || s.includes('success')) return 'bg-green-100 text-green-800';
+                            if (s.includes('pending') || s.includes('in_progress') || s.includes('processing')) return 'bg-yellow-100 text-yellow-800';
+                            if (s.includes('rejected') || s.includes('failed') || s.includes('cancel')) return 'bg-red-100 text-red-800';
+                            return 'bg-gray-100 text-gray-800';
+                          })()}`}
                         >
-                          {transaction.status || 'Unknown'}
+                          {transaction.status ? (transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)) : 'Unknown'}
                         </span>
                       </td>
                     </tr>

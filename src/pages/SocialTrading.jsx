@@ -28,21 +28,21 @@ export default function MamDashboard() {
   const [toggleError, setToggleError] = useState(null);
 
   const [showDepositModal, setShowDepositModal] = useState(false);
-const [activeTab, setActiveTab] = useState("cheesepay");
-const [cheeseAmount, setCheeseAmount] = useState("");
-const [currency, setCurrency] = useState("USD");
-const [convertedAmount, setConvertedAmount] = useState("");
-const [selectedDepositAccount, setSelectedDepositAccount] = useState(null);
+  const [activeTab, setActiveTab] = useState("cheesepay");
+  const [cheeseAmount, setCheeseAmount] = useState("");
+  const [currency, setCurrency] = useState("USD");
+  const [convertedAmount, setConvertedAmount] = useState("");
+  const [selectedDepositAccount, setSelectedDepositAccount] = useState(null);
 
-const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-const [showSettingsModal, setShowSettingsModal] = useState(false);
-const [showTradesModal, setShowTradesModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showTradesModal, setShowTradesModal] = useState(false);
 
-const [newLeverage, setNewLeverage] = useState("");
-const [selectedPasswordType, setSelectedPasswordType] = useState("");
-const [newPassword, setNewPassword] = useState("");
-const [confirmPassword, setConfirmPassword] = useState("");
-const [showPasswords, setShowPasswords] = useState(false);
+  const [newLeverage, setNewLeverage] = useState("");
+  const [selectedPasswordType, setSelectedPasswordType] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPasswords, setShowPasswords] = useState(false);
 
 
   const [form, setForm] = useState({
@@ -83,43 +83,43 @@ const [showPasswords, setShowPasswords] = useState(false);
   }, []);
 
   const fetchMAMAccounts = async () => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
 
-    const response = await fetch(
-      "http://client.localhost:8000/user-mam-accounts/",
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
+      const response = await fetch(
+        "http://client.localhost:8000/user-mam-accounts/",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to fetch MAM accounts");
+        return;
       }
-    );
 
-    if (!response.ok) {
-      console.error("Failed to fetch MAM accounts");
-      return;
+      const data = await response.json();
+
+      const formatted = data.map((acc) => ({
+        account_id: acc.account_id,
+        accountName: acc.account_name,
+        profitPercentage: acc.profit_sharing_percentage || acc.profit_percentage,
+        leverage: acc.leverage,
+        enabled: acc.is_enabled,
+      }));
+
+      setMamAccounts(formatted);
+      localStorage.setItem("mamAccounts", JSON.stringify(formatted));
+    } catch (error) {
+      console.error("Error fetching MAM accounts:", error);
     }
-
-    const data = await response.json();
-
-    const formatted = data.map((acc) => ({
-      account_id: acc.account_id,
-      accountName: acc.account_name,
-      profitPercentage: acc.profit_sharing_percentage || acc.profit_percentage,
-      leverage: acc.leverage,
-      enabled: acc.is_enabled,
-    }));
-
-    setMamAccounts(formatted);
-    localStorage.setItem("mamAccounts", JSON.stringify(formatted));
-  } catch (error) {
-    console.error("Error fetching MAM accounts:", error);
-  }
-};
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.id]: e.target.value });
@@ -157,7 +157,7 @@ const [showPasswords, setShowPasswords] = useState(false);
           try {
             const j = await res.json();
             errTxt = j.error || JSON.stringify(j);
-          } catch (e) {}
+          } catch (e) { }
           throw new Error(errTxt);
         }
 
@@ -166,8 +166,8 @@ const [showPasswords, setShowPasswords] = useState(false);
 
         // server may return new state in payload.is_enabled or payload.enabled
         const newEnabled = (typeof payload.is_enabled !== 'undefined') ? Boolean(payload.is_enabled) :
-                           (typeof payload.enabled !== 'undefined') ? Boolean(payload.enabled) :
-                           enableTrading;
+          (typeof payload.enabled !== 'undefined') ? Boolean(payload.enabled) :
+            enableTrading;
 
         setMamAccounts((prev) => {
           const updated = prev.map((acc) =>
@@ -256,59 +256,59 @@ const [showPasswords, setShowPasswords] = useState(false);
       console.error("Create MAM error:", error);
       alert("Something went wrong. Check console.");
     }
-  };  
+  };
 
 
 
   //Total Profits
 
   const fetchMamProfitDetails = async (mamId) => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      console.error("Token missing");
-      return;
-    }
-
-    const response = await fetch(
-      `http://client.localhost:8000/mam/${mamId}/profits/`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        console.error("Token missing");
+        return;
       }
-    );
 
-    if (!response.ok) {
-      console.error("Failed to fetch profit details");
-      return;
+      const response = await fetch(
+        `http://client.localhost:8000/mam/${mamId}/profits/`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to fetch profit details");
+        return;
+      }
+
+      const data = await response.json();
+
+      // Calculate TOTAL PROFIT = mam + investors
+      const investorTotal = data.investor_profits.reduce(
+        (sum, inv) => sum + inv.profit,
+        0
+      );
+
+      const totalProfit = data.mam_profit + investorTotal;
+
+      // Update selected account
+      setSelectedAccount((prev) => ({
+        ...prev,
+        totalProfit: totalProfit,
+        mamProfit: data.mam_profit,
+        investorProfits: data.investor_profits,
+      }));
+
+    } catch (error) {
+      console.error("Error fetching MAM profit details:", error);
     }
-
-    const data = await response.json();
-
-    // Calculate TOTAL PROFIT = mam + investors
-    const investorTotal = data.investor_profits.reduce(
-      (sum, inv) => sum + inv.profit,
-      0
-    );
-
-    const totalProfit = data.mam_profit + investorTotal;
-
-    // Update selected account
-    setSelectedAccount((prev) => ({
-      ...prev,
-      totalProfit: totalProfit,
-      mamProfit: data.mam_profit,
-      investorProfits: data.investor_profits,
-    }));
-
-  } catch (error) {
-    console.error("Error fetching MAM profit details:", error);
-  }
-};
+  };
 
 
   return (
@@ -372,9 +372,8 @@ const [showPasswords, setShowPasswords] = useState(false);
                   <td className="px-4 py-2">{acc.profitPercentage}%</td>
                   <td className="px-4 py-2">{acc.leverage}%</td>
                   <td
-                    className={`px-4 py-2 font-semibold ${
-                      acc.enabled ? "text-green-400" : "text-red-400"
-                    }`}
+                    className={`px-4 py-2 font-semibold ${acc.enabled ? "text-green-400" : "text-red-400"
+                      }`}
                   >
                     {acc.enabled ? "Enabled" : "Disabled"}
                   </td>
@@ -389,37 +388,37 @@ const [showPasswords, setShowPasswords] = useState(false);
                       View
                     </button>
                     <button
-                          onClick={() => {
-                            setSelectedDepositAccount(acc.account_id || acc.id);
-                            setShowDepositModal(true);
-                          }}
-                          className="bg-yellow-500 text-white px-5 py-1 rounded text-sm"
-                        >
-                          Deposit
-                        </button>
-                   
-
-                        <DepositModal
-        showDepositModal={showDepositModal}
-        setShowDepositModal={setShowDepositModal}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        cheeseAmount={cheeseAmount}
-        setCheeseAmount={setCheeseAmount}
-        currency={currency}
-        setCurrency={setCurrency}
-        convertedAmount={convertedAmount}
-        selectedDepositAccount={selectedDepositAccount}
-      />
+                      onClick={() => {
+                        setSelectedDepositAccount(acc.account_id || acc.id);
+                        setShowDepositModal(true);
+                      }}
+                      className="bg-yellow-500 text-white px-5 py-1 rounded text-sm"
+                    >
+                      Deposit
+                    </button>
 
 
+                    <DepositModal
+                      showDepositModal={showDepositModal}
+                      setShowDepositModal={setShowDepositModal}
+                      activeTab={activeTab}
+                      setActiveTab={setActiveTab}
+                      cheeseAmount={cheeseAmount}
+                      setCheeseAmount={setCheeseAmount}
+                      currency={currency}
+                      setCurrency={setCurrency}
+                      convertedAmount={convertedAmount}
+                      selectedDepositAccount={selectedDepositAccount}
+                    />
 
 
 
 
 
 
-                    
+
+
+
                   </td>
                 </tr>
               ))}
@@ -452,75 +451,75 @@ const [showPasswords, setShowPasswords] = useState(false);
             </div>
 
 
-            
+
 
             {/* ACTION BUTTONS */}
 
-                <div className="flex flex-wrap justify-center gap-4 pt-4">
-                  <button
-                    onClick={() => {
-                      setSelectedDepositAccount(selectedAccount.account_id); // ✔ FIXED
-                      setShowDepositModal(true);
-                    }}
-                    className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
-                  >
-                    Deposit
-                  </button>
+            <div className="flex flex-wrap justify-center gap-4 pt-4">
+              <button
+                onClick={() => {
+                  setSelectedDepositAccount(selectedAccount.account_id); // ✔ FIXED
+                  setShowDepositModal(true);
+                }}
+                className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
+              >
+                Deposit
+              </button>
 
-                  <DepositModal
-        showDepositModal={showDepositModal}
-        setShowDepositModal={setShowDepositModal}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        cheeseAmount={cheeseAmount}
-        setCheeseAmount={setCheeseAmount}
-        currency={currency}
-        setCurrency={setCurrency}
-        convertedAmount={convertedAmount}
-        selectedDepositAccount={selectedDepositAccount}
-      />
+              <DepositModal
+                showDepositModal={showDepositModal}
+                setShowDepositModal={setShowDepositModal}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                cheeseAmount={cheeseAmount}
+                setCheeseAmount={setCheeseAmount}
+                currency={currency}
+                setCurrency={setCurrency}
+                convertedAmount={convertedAmount}
+                selectedDepositAccount={selectedDepositAccount}
+              />
 
 
-                  <button
-                    className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
-                    onClick={() => {
-                      setSelectedDepositAccount(selectedAccount.account_id);
-                      setShowWithdrawModal(true);
-                    }}
-                  >
-                    Withdraw
-                  </button>
+              <button
+                className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
+                onClick={() => {
+                  setSelectedDepositAccount(selectedAccount.account_id);
+                  setShowWithdrawModal(true);
+                }}
+              >
+                Withdraw
+              </button>
 
-                  <button className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
-                  onClick={() => setShowTradesModal(true)}>
-                    Investors
-                  </button>
+              <button className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
+                onClick={() => setShowTradesModal(true)}>
+                Investors
+              </button>
 
-                   <InvestorManagement
-                              showTradesModal={showTradesModal}
-                              setShowTradesModal={setShowTradesModal}
-                              selectedAccount={selectedAccount}
-                            />
+              <InvestorManagement
+                showTradesModal={showTradesModal}
+                setShowTradesModal={setShowTradesModal}
+                selectedAccount={selectedAccount}
+              />
 
-                  <button
-                    className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
-                    onClick={() => {
-                      setSelectedDepositAccount(selectedAccount.account_id);
-                      setShowSettingsModal(true);
-                    }}
-                  >
-                    Settings
-                  </button>
+              <button
+                className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-[#FFD700] transition"
+                onClick={() => {
+                  setSelectedDepositAccount(selectedAccount.account_id);
+                  setShowSettingsModal(true);
+                }}
+              >
+                Settings
+              </button>
 
-                  <button
-                      disabled={toggleLoadingIds.includes(selectedAccount.account_id)}
-                      className={`px-4 py-2 rounded transition text-black ${selectedAccount.enabled ? (toggleLoadingIds.includes(selectedAccount.account_id) ? 'bg-red-300' : 'bg-red-500') : (toggleLoadingIds.includes(selectedAccount.account_id) ? 'bg-yellow-300' : 'bg-yellow-400')} hover:opacity-90`}
-                      onClick={() => handleToggleStatus(selectedAccount.account_id)}
-                    >
-                      {toggleLoadingIds.includes(selectedAccount.account_id) ? (selectedAccount.enabled ? 'Disabling...' : 'Enabling...') : (selectedAccount.enabled ? 'Disable' : 'Enable')}
-                    </button>
-                    {toggleError && <div className="text-red-400 mt-2">{toggleError}</div>}
-                </div>
+              <button
+                disabled={toggleLoadingIds.includes(selectedAccount.account_id)}
+                className={`px-4 py-2 rounded transition text-black ${selectedAccount.enabled ? (toggleLoadingIds.includes(selectedAccount.account_id) ? 'bg-red-300' : 'bg-red-500') : (toggleLoadingIds.includes(selectedAccount.account_id) ? 'bg-yellow-300' : 'bg-yellow-400')} hover:opacity-90`}
+                onClick={() => handleToggleStatus(selectedAccount.account_id)}
+              >
+                {toggleLoadingIds.includes(selectedAccount.account_id) ? (selectedAccount.enabled ? 'Disabling...' : 'Enabling...') : (selectedAccount.enabled ? 'Disable' : 'Enable')}
+              </button>
+              {toggleError && <div className="text-red-400 mt-2">{toggleError}</div>}
+            </div>
 
           </div>
         </div>
@@ -663,7 +662,9 @@ const [showPasswords, setShowPasswords] = useState(false);
       {showWithdrawModal && (
         <Withdraw
           onClose={() => setShowWithdrawModal(false)}
-          accountId={selectedAccount?.account_id}
+          currentAccount={selectedAccount}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
       )}
 

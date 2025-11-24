@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { apiCall } from "../utils/api";
 
-export default function TradesModal({ showTradesModal, setShowTradesModal, selectedAccount }) {
+export default function TradesModal({ showTradesModal, setShowTradesModal, selectedAccount, tradeRole }) {
   const { isDarkMode } = useTheme();
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,13 +16,42 @@ export default function TradesModal({ showTradesModal, setShowTradesModal, selec
   const fetchPositions = async () => {
     setLoading(true);
     try {
-      const data = await apiCall(`api/get-trading-positions/${selectedAccount.account_id}/`);
-      setPositions(data.positions || []);
+      let data;
+      if (tradeRole === "manager") {
+        // Fetch from external URL for manager
+        const token = localStorage.getItem("accessToken");
+        if (!token) throw new Error("Missing auth token.");
+        const url = `http://client.localhost:8000/open-positions/${selectedAccount.master_account_id }/`;
+        const res = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+        });
+        if (!res.ok) {
+          throw new Error(`Error fetching positions: ${res.statusText || res.status}`);
+        }
+        data = await res.json();
+      } else {
+        // Investor fetch using apiCall internal API
+        data = await apiCall(`api/get-trading-positions/${selectedAccount.account_id}/`);
+      }
+      setPositions(data.positions || data || []);
     } catch (err) {
       console.error('Error fetching positions:', err);
+
+      // Display user-friendly message for duplicate TradingAccount backend error
+      if (err.message && err.message.includes('more than one TradingAccount')) {
+        alert("Error: Multiple trading accounts found for the selected master account. Please contact support.");
+      }
+
       setPositions([]);
     } finally {
       setLoading(false);
+      console.log(selectedAccount,tradeRole)
+      tradeRole=" "
     }
   };
   return (
@@ -40,7 +69,7 @@ export default function TradesModal({ showTradesModal, setShowTradesModal, selec
 
             {/* Modal Title */}
             <h2 className="text-2xl font-semibold mb-6 text-center text-[#FFD700]">
-              Open Positions for Account: {selectedAccount.login}
+              Open Positions for Account: {tradeRole === "investor" ?  selectedAccount.account_id : selectedAccount.account_id}
             </h2>
 
             {/* Table */}

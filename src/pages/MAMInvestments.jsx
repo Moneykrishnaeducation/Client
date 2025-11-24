@@ -61,6 +61,13 @@ const Maminvestments = () => {
   const [positionsLoading, setPositionsLoading] = useState(false);
   const [positionsError, setPositionsError] = useState(null);
   const [showTradesModal, setShowTradesModal] = useState(false);
+  const [showCopyCoefficientModal, setShowCopyCoefficientModal] = useState(false);
+
+  // Copy Coefficient modal states
+  const [copyCoefficientMode, setCopyCoefficientMode] = useState("balance"); // "balance" or "fixed"
+  const [multiTradeEnabled, setMultiTradeEnabled] = useState(false);
+  const [multiTradeCount, setMultiTradeCount] = useState(2);
+
   const navigate = useNavigate();
   // Deposit/Withdraw modal state
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -152,6 +159,7 @@ const Maminvestments = () => {
         // Map server response to local shape
         const mapped = (Array.isArray(data) ? data : []).map((it) => ({
           id: it.accountId || it.id || it.account_id,
+          master_account_id: it.master_account_id || it.masterAccountId || it.master_id || null,
           accountName: it.name || it.account_name || it.username || (it.mam_account_name ? `${it.mam_account_name} - Investment` : "Investment"),
           profitPercentage: it.profit_sharing_percentage || it.profit_sharing || (it.profitShare ? parseFloat(it.profitShare) : 0) || 0,
           leverage: it.leverage || it.package_leverage || "",
@@ -298,10 +306,10 @@ const Maminvestments = () => {
       const newEnabled = !currentEnabled; // Flip the state
 
       // Update selected account view
-      setSelectedAccount((prev) => (prev && String(prev.id) === String(accountId) ? { ...prev, enabled: newEnabled } : prev));
+      setSelectedAccount((prev) => (prev && String(prev.id) === String(accountId) ? { ...prev, enabled: newEnabled, master_account_id: prev.master_account_id } : prev));
 
       // Update investments list if present
-      setInvestments((prev) => prev.map((it) => (String(it.id) === String(accountId) ? { ...it, enabled: newEnabled } : it)));
+      setInvestments((prev) => prev.map((it) => (String(it.id) === String(accountId) ? { ...it, enabled: newEnabled, master_account_id: it.master_account_id } : it)));
 
       // Small user feedback
       alert(data.message || (newEnabled ? 'Copying resumed for account.' : 'Copying paused for account.'));
@@ -631,7 +639,9 @@ const Maminvestments = () => {
 
           {/* Account Details Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            <Info label="Account ID" value={selectedAccount.id} isDarkMode={true} />
+          <Info label="Account ID" value={selectedAccount.id || selectedAccount.account_id} isDarkMode={true} />
+          <Info label="Master Account ID" value={selectedAccount.master_account_id || ""} isDarkMode={true} />
+            <Info label="Account Name" value={selectedAccount.accountName} isDarkMode={true} />
             <Info label="Account Name" value={selectedAccount.accountName} isDarkMode={true} />
             <Info label="Profit Percentage" value={`${selectedAccount.profitPercentage}%`} isDarkMode={true} />
             <Info label="Leverage" value={selectedAccount.leverage} isDarkMode={true} />
@@ -719,7 +729,7 @@ const Maminvestments = () => {
               onClick={() => {
                 const acct = {
                   ...(selectedAccount || {}),
-                  account_id: (selectedAccount && (selectedAccount.account_id || selectedAccount.id)) || undefined,
+                  account_id: (selectedAccount && (selectedAccount.master_account_id || selectedAccount.masterAccountId)) || undefined,
                 };
                 setSelectedAccount(acct);
                 setShowTradesModal(true);
@@ -730,7 +740,9 @@ const Maminvestments = () => {
               {positionsLoading ? 'Loading...' : '💼 Manager'}
             </button>
             {positionsError && <div className="text-red-400 w-full text-center">{positionsError}</div>}
-            <button className="bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition">
+            <button
+             onClick={() => setShowCopyCoefficientModal(true)}
+             className="bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition">
               ✏️ Edit
             </button>
           </div>
@@ -759,14 +771,183 @@ const Maminvestments = () => {
         setUsdtAmount={setUsdtAmount}
       />
       {showWithdrawModal && (
-        <Withdraw onClose={() => setShowWithdrawModal(false)} />
+        <Withdraw 
+          onClose={() => setShowWithdrawModal(false)} 
+          currentAccount={selectedAccount}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
       )}
       {/* Trades Modal (open positions) */}
       <TradesModal
         showTradesModal={showTradesModal}
         setShowTradesModal={setShowTradesModal}
         selectedAccount={selectedAccount}
+        // Add role prop to indicate if showing manager or investor trades
+        tradeRole={showTradesModal && selectedAccount && selectedAccount.account_id === (selectedAccount.master_account_id || selectedAccount.masterAccountId) ? "manager" : "investor"}
       />
+      {/* Copy Coefficient Modal */}
+      {showCopyCoefficientModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="copyCoefficientTitle"
+        >
+          <div className="bg-[#111] relative p-6 rounded-2xl shadow-lg max-w-md w-full text-white border border-yellow-500">
+            {/* Title */}
+            <h3 id="copyCoefficientTitle" className="text-2xl font-bold mb-4 flex items-center gap-2">
+              Copy Coefficient <span>ⓘ</span>
+            </h3>
+
+            {/* Current Mode & Select Mode */}
+            <div>
+              <p className="mb-2">
+                Account Id : {selectedAccount?.account_id || selectedAccount?.id || "Loading..."}
+              </p>
+              <div className="mb-2">
+                <span className="font-semibold">Current Mode:</span> {copyCoefficientMode === "balance" ? "By Balance Ratio" : "By Fixed Multiple"}
+              </div>
+
+              <div className="mb-4 flex gap-4">
+                <button
+                  className={`px-4 py-2 rounded ${copyCoefficientMode === "balance" ? "bg-yellow-500 text-black" : "bg-gray-700 text-yellow-300"}`}
+                  onClick={() => setCopyCoefficientMode("balance")}
+                >
+                  By Balance Ratio
+                </button>
+                <button
+                  className={`px-4 py-2 rounded ${copyCoefficientMode === "fixed" ? "bg-yellow-500 text-black" : "bg-gray-700 text-yellow-300"}`}
+                  onClick={() => setCopyCoefficientMode("fixed")}
+                >
+                  By Fixed Multiple
+                </button>
+              </div>
+            </div>
+
+            {/* Factor input (only visible if fixed mode) */}
+            {copyCoefficientMode === "fixed" && (
+              <div className="mb-4">
+                <label htmlFor="factorInput" className="block mb-1">Factor:</label>
+                <input
+                  id="factorInput"
+                  type="text"
+                  placeholder="Enter factor 1x"
+                  className="w-full p-2 rounded bg-gray-700 text-yellow-300 border border-yellow-500"
+                  // onChange or bind state if needed
+                />
+              </div>
+            )}
+
+            {/* Multi Trade Mode toggle */}
+            <div className="mb-4 border-t border-yellow-500 pt-4">
+              <div className="flex justify-between items-center mb-2">
+                <div>
+                  <div className="text-lg font-semibold flex items-center gap-2">
+                    <span>🔄</span> Multi Trade Mode
+                  </div>
+                  <p className="text-sm text-yellow-400">
+                    Copy each master trade multiple times to your investor account
+                  </p>
+                </div>
+                <label className="inline-flex relative items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={multiTradeEnabled}
+                    onChange={(e) => setMultiTradeEnabled(e.target.checked)}
+                    id="multiTradeToggle"
+                  />
+                  <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-yellow-500 peer-focus:ring-4 peer-focus:ring-yellow-400 transition"></div>
+                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition"></div>
+                </label>
+              </div>
+
+              {/* Number of trades selector, visible only when toggle is ON */}
+              {multiTradeEnabled && (
+                <div>
+                  <label htmlFor="multiTradeCount" className="block mb-1">📊 Number of Trades:</label>
+                  <select
+                    id="multiTradeCount"
+                    value={multiTradeCount}
+                    onChange={(e) => setMultiTradeCount(Number(e.target.value))}
+                    className="w-full p-2 rounded bg-gray-700 text-yellow-300 border border-yellow-500"
+                  >
+                    {[...Array(10)].map((_, i) => {
+                      const val = i + 1;
+                      return (
+                        <option key={val} value={val}>
+                          {val} {val === 1 ? "Trade (Normal)" : `Trades (${val}x)`}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Save Button */}
+            <button
+              className="w-full py-3 mt-4 bg-yellow-500 text-black font-semibold rounded hover:bg-yellow-400 transition"
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem("accessToken");
+                  if (!token) throw new Error("Missing auth token. Please log in again.");
+  
+                  const modeToSend = copyCoefficientMode === "balance" ? "balance_ratio" : "fixed_multiple";
+                  const factor = copyCoefficientMode === "fixed" ? (document.getElementById("factorInput")?.value || "1.00") : "1.00";
+                  const payload = {
+                    mode: modeToSend,
+                    factor: factor,
+                    account_id: selectedAccount?.account_id || selectedAccount?.id,
+                    multi_trade_enabled: multiTradeEnabled,
+                    multi_trade_count: multiTradeCount,
+                  };
+  
+                  const res = await fetch("http://client.localhost:8000/api/save-coefficient/", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    credentials: "include",
+                    body: JSON.stringify(payload),
+                  });
+  
+                  if (!res.ok) {
+                    let errText = `${res.status} ${res.statusText}`;
+                    try {
+                      const j = await res.json();
+                      errText = j.error || JSON.stringify(j);
+                    } catch (e) {}
+                    throw new Error(errText);
+                  }
+  
+                  const data = await res.json();
+                  alert(data.message || "Coefficient saved successfully.");
+                  setShowCopyCoefficientModal(false);
+                } catch (e) {
+                  alert(`Failed to save coefficient: ${e.message || e}`);
+                  console.error("Save Coefficient error:", e);
+                }
+              }}
+            >
+              ✅ Save Coefficient
+            </button>
+            {/* Close Icon Button */}
+            <button
+              type="button"
+              aria-label="Close copy coefficient modal"
+              onClick={() => setShowCopyCoefficientModal(false)}
+              className="absolute top-3 right-3 text-yellow-300 hover:text-yellow-500 transition"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

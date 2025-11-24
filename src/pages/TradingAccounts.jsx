@@ -158,7 +158,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   }, [cheeseAmount, currency]);
 
   const Modal = ({ title, onClose, children }) => (
-    <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} flex items-center justify-center z-50`}>
+    <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/25' : 'bg-white/70'} flex items-center justify-center z-50`}>
       <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-lg w-[90%] max-w-lg relative`}>
         <h3 className="text-lg font-semibold mb-3 text-[#FFD700] text-center">
           {title}
@@ -201,11 +201,11 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
           </button>
 
           {/* Conditional rendering for each component */}
-         {activeComponent === "openAccount" && (
+          {activeComponent === "openAccount" && (
             <Modal title="Open Account" onClose={closeComponent}>
               <OpenAccount onClose={closeComponent} />
             </Modal>
-          )} 
+          )}
 
           {/* =======================
            INTERNAL TRANSFER SECTION
@@ -497,7 +497,12 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
 
           {/* Withdraw Modal */}
           {showWithdrawModal && (
-            <Withdraw onClose={() => setShowWithdrawModal(false)} />
+            <Withdraw
+              onClose={() => setShowWithdrawModal(false)}
+              currentAccount={selectedAccount}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
           )}
 
           <TradesModal
@@ -505,10 +510,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
             setShowTradesModal={setShowTradesModal}
             selectedAccount={selectedAccount}
           />
-          
-          {showWithdrawModal && (
-            <Withdraw onClose={() => setShowWithdrawModal(false)} />
-          )}
+
           <SettingsModal
             showSettingsModal={showSettingsModal}
             setShowSettingsModal={setShowSettingsModal}
