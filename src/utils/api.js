@@ -30,6 +30,9 @@ export const getAuthHeaders = () => {
   return headers;
 };
 
+// Minimal whitelist for endpoints that do not require an auth token
+const PUBLIC_ENDPOINT_HINTS = ["login/", "public/", "get-usd-inr-rate/", "finance/quote"];
+
 /**
  * Immediately logs out the user on unauthorized access.
  * - Clears all auth/session data instantly
@@ -38,22 +41,37 @@ export const getAuthHeaders = () => {
  */
 export function handleUnauthorized() {
   try {
-    // Immediate cleanup
-    localStorage.clear();
-    sessionStorage.clear();
+    // Prevent re-entrancy - only run once per tab
+    if (window.__unauthorizedHandled) return;
+    window.__unauthorizedHandled = true;
 
-    // Trigger cross-tab logout if available
+    // Remove only auth/session related keys instead of clearing everything
+    try { localStorage.removeItem('jwt_token'); } catch {};
+    try { localStorage.removeItem('accessToken'); } catch {};
+    try { localStorage.removeItem('access_token'); } catch {};
+    try { sessionStorage.removeItem('auth_state'); } catch {};
+
+    // Trigger cross-tab logout (fires storage event in other tabs)
     if (typeof triggerCrossTabLogout === 'function') {
       triggerCrossTabLogout();
     }
 
-    // Call app-defined logout if available
+    // Call app-defined logout hook if available
     if (typeof performLogout === 'function') {
-      performLogout(); // Should handle redirect internally
-    } else {
-      // Force redirect immediately
-      window.location.replace('/');
+      try { performLogout(); } catch (e) { console.error('performLogout failed:', e); }
     }
+
+    // Give a tiny tick for any app handler to run, then force navigation
+    // Use replace so back button doesn't resurface protected pages
+    setTimeout(() => {
+      try {
+        // Best-effort stop further network activity in this tab
+        if (typeof window.stop === 'function') {
+          try { window.stop(); } catch (e) {}
+        }
+      } catch (e) {}
+      window.location.replace('/');
+    }, 0);
   } catch (error) {
     console.error('Immediate logout failed:', error);
     // Always redirect as last resort
@@ -104,6 +122,17 @@ export const apiCall = async (endpoint, options = {}) => {
   }
 
   // Headers were already merged above into config.headers
+
+  // If there's no authorization header and this looks like a protected API
+  // then bail out immediately rather than sending the request. This ensures
+  // the app triggers logout before other UI (like the dashboard) continues.
+  const hasAuth = !!(config.headers && (config.headers.Authorization || config.headers.authorization));
+  const isPublic = PUBLIC_ENDPOINT_HINTS.some(hint => endpoint.includes(hint));
+  if (!hasAuth && !isPublic && !url.startsWith('http') ) {
+    // No token for an internal protected endpoint — force logout now.
+    handleUnauthorized();
+    throw new Error('No auth token');
+  }
 
   try {
     const response = await fetch(url, config);

@@ -25,7 +25,7 @@ export const signup = async (userData) => {
 // Send reset OTP function
 export const sendResetOtp = async (email) => {
   try {
-    const response = await fetch('http://client.localhost:8000/send-reset-otp/', {
+    const response = await fetch('http://client.localhost:8000/api/send-reset-otp/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -47,7 +47,7 @@ export const sendResetOtp = async (email) => {
 // Verify OTP function
 export const verifyOtp = async (email, otp) => {
   try {
-    const response = await fetch('http://client.localhost:8000/verify-otp/', {
+    const response = await fetch('http://client.localhost:8000/api/verify-otp/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, otp }),
@@ -69,7 +69,7 @@ export const verifyOtp = async (email, otp) => {
 // Reset password function
 export const resetPassword = async (email, newPassword) => {
   try {
-    const response = await fetch('http://client.localhost:8000/reset-password/confirm/', {
+    const response = await fetch('http://client.localhost:8000/api/reset-password/confirm/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, new_password: newPassword }),

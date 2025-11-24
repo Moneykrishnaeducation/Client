@@ -316,7 +316,7 @@ export default function Login() {
           <img src="https://vtindex.com/img/logo/logo.svg" alt="logo" />
         </div>
       <div
-        className={`relative  lg:h-[70vh] overflow-hidden rounded-2xl border border-[#D4AF37] w-full max-w-[768px] min-h-[480px] ${containerClass} transition-all duration-500 ease-in-out shadow-[0_10px_30px_rgba(212,175,55,0.6),_inset_0_1px_0_rgba(255,255,255,0.02)]`}
+        className={`relative  lg:h-[55vh] overflow-hidden rounded-2xl border border-[#D4AF37] w-full max-w-[768px] min-h-[480px] ${containerClass} transition-all duration-500 ease-in-out shadow-[0_10px_30px_rgba(212,175,55,0.6),_inset_0_1px_0_rgba(255,255,255,0.02)]`}
       >
         {/* Logo area (optional) */}
         
