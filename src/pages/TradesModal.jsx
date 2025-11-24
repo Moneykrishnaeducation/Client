@@ -2,33 +2,56 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { apiCall } from "../utils/api";
 
-export default function TradesModal({ showTradesModal, setShowTradesModal, selectedAccount, tradeRole }) {
+export default function TradesModal({ showTradesModal, setShowTradesModal, selectedAccount, tradeRole, tradesAccountId, tradesFetchConfig }) {
   const { isDarkMode } = useTheme();
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Use a snapshot parameter to avoid closure over mutable state causing race conditions.
   useEffect(() => {
-    if (showTradesModal && selectedAccount) {
-      fetchPositions();
-    }
-  }, [showTradesModal, selectedAccount]);
+    if (!showTradesModal) return;
 
-  const fetchPositions = async () => {
+    // Build snapshot: prefer explicit snapshot prop, otherwise derive from current props
+    const snapshot =
+      tradesFetchConfig ||
+      (tradesAccountId || selectedAccount
+        ? {
+            role: tradeRole,
+            accountId:
+              tradesAccountId || (selectedAccount && (selectedAccount.account_id || selectedAccount.id || selectedAccount.master_account_id || selectedAccount.masterAccountId)),
+          }
+        : null);
+
+    if (snapshot && snapshot.accountId) {
+      fetchPositions(snapshot);
+    }
+  }, [showTradesModal, selectedAccount, tradesAccountId, tradeRole, tradesFetchConfig]);
+
+  const fetchPositions = async (snapshot) => {
     setLoading(true);
     try {
       let data;
-      if (tradeRole === "manager") {
+      const acctIdToUse = snapshot.accountId;
+      const roleToUse = snapshot.role || tradeRole;
+
+      console.debug('TradesModal.fetchPositions snapshot', { acctIdToUse, roleToUse });
+
+      if (!acctIdToUse) {
+        throw new Error('Missing account id for fetching positions');
+      }
+
+      if (roleToUse === 'manager') {
         // Fetch from external URL for manager
-        const token = localStorage.getItem("accessToken");
-        if (!token) throw new Error("Missing auth token.");
-        const url = `http://client.localhost:8000/open-positions/${selectedAccount.master_account_id }/`;
+        const token = localStorage.getItem('accessToken');
+        if (!token) throw new Error('Missing auth token.');
+        const url = `http://client.localhost:8000/open-positions/${acctIdToUse}/`;
         const res = await fetch(url, {
-          method: "GET",
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          credentials: "include",
+          credentials: 'include',
         });
         if (!res.ok) {
           throw new Error(`Error fetching positions: ${res.statusText || res.status}`);
@@ -36,22 +59,20 @@ export default function TradesModal({ showTradesModal, setShowTradesModal, selec
         data = await res.json();
       } else {
         // Investor fetch using apiCall internal API
-        data = await apiCall(`api/get-trading-positions/${selectedAccount.account_id}/`);
+        data = await apiCall(`api/get-trading-positions/${acctIdToUse}/`);
       }
       setPositions(data.positions || data || []);
     } catch (err) {
       console.error('Error fetching positions:', err);
 
-      // Display user-friendly message for duplicate TradingAccount backend error
       if (err.message && err.message.includes('more than one TradingAccount')) {
-        alert("Error: Multiple trading accounts found for the selected master account. Please contact support.");
+        alert('Error: Multiple trading accounts found for the selected master account. Please contact support.');
       }
 
       setPositions([]);
     } finally {
       setLoading(false);
-      console.log(selectedAccount,tradeRole)
-      tradeRole=" "
+      console.log('TradesModal fetch complete (snapshot)', { snapshot, selectedAccount, tradesAccountId, tradeRole, tradesFetchConfig });
     }
   };
   return (

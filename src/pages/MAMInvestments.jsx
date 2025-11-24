@@ -63,6 +63,13 @@ const Maminvestments = () => {
   const [showTradesModal, setShowTradesModal] = useState(false);
   const [showCopyCoefficientModal, setShowCopyCoefficientModal] = useState(false);
 
+  // Explicit role for TradesModal: 'investor' or 'manager'
+  const [tradesRole, setTradesRole] = useState("investor");
+  // Explicit account id for TradesModal fetches
+  const [tradesAccountId, setTradesAccountId] = useState(null);
+  // Snapshot config passed to TradesModal to avoid race conditions
+  const [tradesFetchConfig, setTradesFetchConfig] = useState(null);
+
   // Copy Coefficient modal states
   const [copyCoefficientMode, setCopyCoefficientMode] = useState("balance"); // "balance" or "fixed"
   const [multiTradeEnabled, setMultiTradeEnabled] = useState(false);
@@ -715,9 +722,20 @@ const Maminvestments = () => {
               onClick={() => {
                 const acct = {
                   ...(selectedAccount || {}),
-                  account_id: (selectedAccount && (selectedAccount.account_id || selectedAccount.id)) || undefined,
+                  // Prefer the canonical `id` for investor account to avoid using a previously-set `account_id` (which may have been set to master id)
+                  account_id:
+                    (selectedAccount &&
+                      (selectedAccount.id ?? selectedAccount.account_id ?? selectedAccount.accountId)) ||
+                    undefined,
                 };
                 setSelectedAccount(acct);
+                setTradesRole("investor");
+                const acctId = acct.id || acct.account_id || acct.accountId || null;
+                // set an atomic snapshot used by TradesModal to fetch correct data
+                setTradesFetchConfig({ role: 'investor', accountId: acctId });
+                setTradesAccountId(acctId);
+                console.debug('Opening TradesModal (investor)', { acct, tradesRole: 'investor', tradesAccountId: acctId });
+                // open modal after setting snapshot
                 setShowTradesModal(true);
               }}
               disabled={positionsLoading}
@@ -729,9 +747,18 @@ const Maminvestments = () => {
               onClick={() => {
                 const acct = {
                   ...(selectedAccount || {}),
-                  account_id: (selectedAccount && (selectedAccount.master_account_id || selectedAccount.masterAccountId)) || undefined,
+                  // Manager account lives on master_account_id in some responses
+                  account_id:
+                    (selectedAccount &&
+                      (selectedAccount.master_account_id ?? selectedAccount.masterAccountId ?? selectedAccount.masterAccount)) ||
+                    undefined,
                 };
                 setSelectedAccount(acct);
+                setTradesRole("manager");
+                const acctIdMgr = acct.account_id || acct.master_account_id || acct.masterAccountId || null;
+                setTradesFetchConfig({ role: 'manager', accountId: acctIdMgr });
+                setTradesAccountId(acctIdMgr);
+                console.debug('Opening TradesModal (manager)', { acct, tradesRole: 'manager', tradesAccountId: acctIdMgr });
                 setShowTradesModal(true);
               }}
               disabled={positionsLoading}
@@ -784,7 +811,9 @@ const Maminvestments = () => {
         setShowTradesModal={setShowTradesModal}
         selectedAccount={selectedAccount}
         // Add role prop to indicate if showing manager or investor trades
-        tradeRole={showTradesModal && selectedAccount && selectedAccount.account_id === (selectedAccount.master_account_id || selectedAccount.masterAccountId) ? "manager" : "investor"}
+        tradeRole={tradesRole}
+        tradesAccountId={tradesAccountId}
+        tradesFetchConfig={tradesFetchConfig}
       />
       {/* Copy Coefficient Modal */}
       {showCopyCoefficientModal && (
