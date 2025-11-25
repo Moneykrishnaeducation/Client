@@ -6,4 +6,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(),tailwindcss()],
   base: "/static/clientPanel/",
+  build: {
+    outDir: '../static/clientPanel',
+    emptyOutDir: true,
+  },
 })
