@@ -1,8 +1,7 @@
 // /mnt/data/Login.jsx
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { loginUser, apiCall } from "../utils/api";
-import { signup, sendResetOtp, verifyOtp, resetPassword, resendLoginOtp, getLoginOtpStatus } from "../utils/auth-functions";
+import { login, signup, sendResetOtp, verifyOtp, resetPassword, resendLoginOtp, getLoginOtpStatus } from "../utils/auth-functions";
 
 export default function Login() {
   const [rightPanelActive, setRightPanelActive] = useState(false);
@@ -27,6 +26,11 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [otpExpiry, setOtpExpiry] = useState(60);
+  const [verificationError, setVerificationError] = useState("");
 
   // compute strength class (returns tailwind class name string)
   function computeStrengthClass(pwd) {
@@ -65,6 +69,22 @@ export default function Login() {
       return () => clearTimeout(t);
     }
   }, [notification]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  // OTP expiry timer
+  useEffect(() => {
+    if (showVerificationModal && otpExpiry > 0) {
+      const timer = setTimeout(() => setOtpExpiry(otpExpiry - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showVerificationModal, otpExpiry]);
 
   useEffect(() => {
     // Auto-login on page load if a token exists (and validate it),
@@ -129,47 +149,62 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await loginUser(signInEmail, signInPassword);
+      // Check OTP status before attempting login
+      const otpStatus = await getLoginOtpStatus(signInEmail);
+      if (otpStatus.otp_required) {
+        setShowVerificationModal(true);
+        setNotification({ show: true, type: "success", message: "OTP verification required. Please verify to continue." });
+        setLoading(false);
+        return;
+      }
+
+      const response = await login({ email: signInEmail, password: signInPassword });
 
       if (response && response.success) {
-        const successMessage = response.message || 'Login successful! Welcome back!';
-        setNotification({ show: true, type: "success", message: successMessage });
-
-        // Check if auto-login tokens are provided
-        if (response.auto_login && response.access && response.refresh) {
-          // Remember preference (default to true for login)
-          const remember = true; // Could be made configurable later
-          const storage = remember ? localStorage : sessionStorage;
-
-          // Store auth tokens and user info for auto-login
-          storage.setItem('jwt_token', response.access);
-          storage.setItem('accessToken', response.access);
-          storage.setItem('refresh_token', response.refresh);
-          storage.setItem('refreshToken', response.refresh);
-          storage.setItem('user_role', response.role);
-          storage.setItem('userRole', response.role);
-
-          // Store emails in lowercase for frontend consistency
-          const signinEmail = (response.user && response.user.email) ? response.user.email.toLowerCase() : '';
-          storage.setItem('user_email', signinEmail);
-          storage.setItem('userEmail', signinEmail);
-          storage.setItem('user_name', response.user.name);
-          storage.setItem('userName', response.user.name);
-
-          // Show auto-login notification
-          setNotification({
-            show: true,
-            type: "success",
-            message: `Welcome back, ${response.user.name}! Redirecting to dashboard...`
-          });
-
-          // Redirect to main dashboard immediately after login auto-login
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 2000);
+        // Check if OTP verification is required
+        if (response.otp_required) {
+          setShowVerificationModal(true);
+          setNotification({ show: true, type: "success", message: "OTP sent to your email. Please verify to continue." });
         } else {
-          // Fallback: direct redirect if no auto-login
-          window.location.href = '/dashboard';
+          const successMessage = response.message || 'Login successful! Welcome back!';
+          setNotification({ show: true, type: "success", message: successMessage });
+
+          // Check if auto-login tokens are provided
+          if (response.auto_login && response.access && response.refresh) {
+            // Remember preference (default to true for login)
+            const remember = true; // Could be made configurable later
+            const storage = remember ? localStorage : sessionStorage;
+
+            // Store auth tokens and user info for auto-login
+            storage.setItem('jwt_token', response.access);
+            storage.setItem('accessToken', response.access);
+            storage.setItem('refresh_token', response.refresh);
+            storage.setItem('refreshToken', response.refresh);
+            storage.setItem('user_role', response.role);
+            storage.setItem('userRole', response.role);
+
+            // Store emails in lowercase for frontend consistency
+            const signinEmail = (response.user && response.user.email) ? response.user.email.toLowerCase() : '';
+            storage.setItem('user_email', signinEmail);
+            storage.setItem('userEmail', signinEmail);
+            storage.setItem('user_name', response.user.name);
+            storage.setItem('userName', response.user.name);
+
+            // Show auto-login notification
+            setNotification({
+              show: true,
+              type: "success",
+              message: `Welcome back, ${response.user.name}! Redirecting to dashboard...`
+            });
+
+            // Redirect to main dashboard immediately after login auto-login
+            setTimeout(() => {
+              window.location.href = '/dashboard';
+            }, 2000);
+          } else {
+            // Fallback: direct redirect if no auto-login
+            window.location.href = '/dashboard';
+          }
         }
       } else {
         const errorMessage = response.error || 'Login failed.';
@@ -308,6 +343,72 @@ export default function Login() {
     }
   };
 
+  // Handle verify login OTP
+  const handleVerifyLoginOtp = async () => {
+    setLoading(true);
+    try {
+      const response = await verifyOtp(signInEmail, verificationCode);
+      if (response && response.success) {
+        setNotification({ show: true, type: "success", message: "Verification successful! Redirecting to dashboard..." });
+        setShowVerificationModal(false);
+
+        // Store auth tokens and user info for auto-login
+        if (response.access && response.refresh) {
+          const storage = localStorage; // Use localStorage for login
+
+          storage.setItem('jwt_token', response.access);
+          storage.setItem('accessToken', response.access);
+          storage.setItem('refresh_token', response.refresh);
+          storage.setItem('refreshToken', response.refresh);
+          storage.setItem('user_role', response.role);
+          storage.setItem('userRole', response.role);
+
+          // Store emails in lowercase for frontend consistency
+          const userEmail = (response.user && response.user.email) ? response.user.email.toLowerCase() : '';
+          storage.setItem('user_email', userEmail);
+          storage.setItem('userEmail', userEmail);
+          storage.setItem('user_name', response.user.name);
+          storage.setItem('userName', response.user.name);
+        }
+
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 2000);
+      } else {
+        setVerificationError(response.error || "Verification failed");
+      }
+    } catch (error) {
+      setVerificationError(error.message || "Verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle resend login OTP
+  const handleResendLoginOtp = async () => {
+    setLoading(true);
+    try {
+      await resendLoginOtp(signInEmail);
+      setNotification({ show: true, type: "success", message: "OTP resent to your email!" });
+      setResendCooldown(30);
+      setOtpExpiry(60);
+      setVerificationError("");
+    } catch (error) {
+      setNotification({ show: true, type: "error", message: error.message || "Failed to resend OTP" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle close modal
+  const handleCloseModal = () => {
+    setShowVerificationModal(false);
+    setVerificationCode("");
+    setResendCooldown(0);
+    setOtpExpiry(60);
+    setVerificationError("");
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-r from-black via-[#111111] to-black text-white px-4">
       {/* container card */}
@@ -316,18 +417,18 @@ export default function Login() {
           <img src="https://vtindex.com/img/logo/logo.svg" alt="logo" />
         </div>
       <div
-        className={`relative  lg:h-[55vh] overflow-hidden rounded-2xl border border-[#D4AF37] w-full max-w-[768px] min-h-[480px] ${containerClass} transition-all duration-500 ease-in-out shadow-[0_10px_30px_rgba(212,175,55,0.6),_inset_0_1px_0_rgba(255,255,255,0.02)]`}
+        className={`relative h-[70vh] sm:h-[60vh] lg:h-[55vh] overflow-hidden rounded-2xl border border-[#D4AF37] w-full max-w-[768px] min-h-[480px] ${containerClass} transition-all duration-500 ease-in-out shadow-[0_10px_30px_rgba(212,175,55,0.6),_inset_0_1px_0_rgba(255,255,255,0.02)]`}
       >
         {/* Logo area (optional) */}
         
 
         {/* Sign In Form */}
         <div
-          className={`form-container sign-in-container absolute top-0 left-0 h-full w-1/2 z-20 transition-transform duration-600 ease-in-out ${
-            rightPanelActive ? "translate-x-full hidden" : "translate-x-0"
+          className={`form-container sign-in-container absolute top-0 left-0 h-full w-full md:w-1/2 z-20 transition-transform duration-600 ease-in-out ${
+            rightPanelActive ? "md:translate-x-full hidden" : "translate-x-0"
           } ${forgotActive ? "-translate-x-[200%] scale-90 opacity-0 pointer-events-none" : ""}`}
         >
-          <form className="h-full flex flex-col items-center justify-center text-center px-12 bg-black/60" onSubmit={handleSignIn}>
+          <form className="h-full flex flex-col items-center justify-center text-center px-6 sm:px-12 bg-black/60" onSubmit={handleSignIn}>
             <h2 className="form-title text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
               Sign In
             </h2>
@@ -380,16 +481,18 @@ export default function Login() {
                 {loading ? "Signing In..." : "Sign In"}
               </button>
             </div>
+
+            <p className="mt-4 text-[#bfb38a] md:hidden">Don't have an account? <a onClick={() => setRightPanelActive(true)} className="text-[#D4AF37] hover:underline cursor-pointer">Sign Up</a></p>
           </form>
         </div>
 
         {/* Sign Up Form */}
         <div
-          className={`form-container sign-up-container absolute top-0 left-0 h-full w-1/2 z-10 transition-all duration-600 ease-in-out ${
-            rightPanelActive ? "translate-x-full opacity-100 z-30" : "opacity-0 z-10"
+          className={`form-container sign-up-container absolute top-0 left-0 h-full w-full md:w-1/2 z-10 transition-all duration-600 ease-in-out ${
+            rightPanelActive ? "md:translate-x-full opacity-100 z-30" : "opacity-0 z-10"
           } ${forgotActive ? "translate-x-[200%] scale-90 opacity-0 pointer-events-none" : ""}`}
         >
-          <form className="h-full flex flex-col items-center justify-center text-center px-12 bg-black/50" onSubmit={handleSignUp}>
+          <form className="h-full flex flex-col items-center justify-center text-center px-6 sm:px-12 bg-black/50" onSubmit={handleSignUp}>
             <h2 className="form-title text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
               Create Account
             </h2>
@@ -474,6 +577,8 @@ export default function Login() {
                 {loading ? "Signing Up..." : "Sign Up"}
               </button>
             </div>
+
+            <p className="mt-4 text-[#bfb38a] md:hidden">Already have an account? <a onClick={() => setRightPanelActive(false)} className="text-[#D4AF37] hover:underline cursor-pointer">Sign In</a></p>
           </form>
         </div>
 
@@ -483,7 +588,7 @@ export default function Login() {
             forgotActive ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible pointer-events-none"
           } flex items-center justify-center`}
         >
-          <div className="w-full max-w-md bg-black/80 rounded-2xl text-center shadow-xl">
+          <div className="w-full px-3 max-w-md bg-black/80 rounded-2xl text-center shadow-xl">
             {resetStep === 0 && (
               <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5 items-center">
                 <h2 className="form-title flex  text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
@@ -530,7 +635,7 @@ export default function Login() {
             )}
 
             {resetStep === 1 && (
-              <form onSubmit={(e) => e.preventDefault()}>
+              <form onSubmit={(e) => e.preventDefault()} className="px-3">
                 <h2 className="form-title text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] to-[#b8860b]">
                   Reset Password
                 </h2>
@@ -646,7 +751,7 @@ export default function Login() {
 
         {/* Overlay container (hidden when forgotActive) */}
         <div
-          className={`overlay-container absolute top-0 left-1/2 w-1/2 h-full overflow-hidden bg-black transition-transform duration-600 ease-in-out z-40 ${
+          className={`overlay-container absolute top-0 left-1/2 w-1/2 h-full overflow-hidden bg-black transition-transform duration-600 ease-in-out z-40 hidden md:block ${
             rightPanelActive ? "-translate-x-full " : "translate-x-0"
           } ${forgotActive ? "opacity-0 scale-90 invisible pointer-events-none" : ""}`}
         >
@@ -708,6 +813,60 @@ export default function Login() {
             </button>
           </div>
         </div>
+
+        {/* Verification Modal */}
+        {showVerificationModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-black/90 rounded-2xl p-6 w-full max-w-md mx-4 border border-[#D4AF37]">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-[#D4AF37] mb-4">Verify Your Email</h2>
+                <p className="text-[#bfb38a] mb-4">Enter the OTP sent to {signInEmail}</p>
+
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  className="w-full rounded-2xl bg-white/5 text-[#f6f4f0] px-4 py-2 outline-none border text-center tracking-widest mb-4"
+                  maxLength={6}
+                />
+
+                {verificationError && (
+                  <p className="text-red-400 text-sm mb-4">{verificationError}</p>
+                )}
+
+                <div className="text-sm text-[#bfb38a] mb-4">
+                  OTP expires in: {Math.floor(otpExpiry / 60)}:{(otpExpiry % 60).toString().padStart(2, '0')}
+                </div>
+
+                <div className="flex gap-3 justify-center mb-4">
+                  <button
+                    onClick={handleVerifyLoginOtp}
+                    disabled={loading || verificationCode.length < 6}
+                    className="rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-6 py-2 disabled:opacity-50"
+                  >
+                    {loading ? "Verifying..." : "Verify"}
+                  </button>
+
+                  <button
+                    onClick={handleCloseModal}
+                    className="rounded-full border border-[#D4AF37] text-[#D4AF37] px-6 py-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleResendLoginOtp}
+                  disabled={resendCooldown > 0 || loading}
+                  className="text-[#D4AF37] hover:underline disabled:opacity-50"
+                >
+                  {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : "Resend OTP"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
