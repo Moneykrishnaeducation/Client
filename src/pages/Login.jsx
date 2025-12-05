@@ -400,14 +400,6 @@ export default function Login() {
     }
   };
 
-  // Handle close modal
-  const handleCloseModal = () => {
-    setShowVerificationModal(false);
-    setVerificationCode("");
-    setResendCooldown(0);
-    setOtpExpiry(60);
-    setVerificationError("");
-  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-r from-black via-[#111111] to-black text-white px-4">
@@ -839,20 +831,13 @@ export default function Login() {
                   OTP expires in: {Math.floor(otpExpiry / 60)}:{(otpExpiry % 60).toString().padStart(2, '0')}
                 </div>
 
-                <div className="flex gap-3 justify-center mb-4">
+                <div className="flex justify-center mb-4">
                   <button
                     onClick={handleVerifyLoginOtp}
                     disabled={loading || verificationCode.length < 6}
                     className="rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-6 py-2 disabled:opacity-50"
                   >
                     {loading ? "Verifying..." : "Verify"}
-                  </button>
-
-                  <button
-                    onClick={handleCloseModal}
-                    className="rounded-full border border-[#D4AF37] text-[#D4AF37] px-6 py-2"
-                  >
-                    Cancel
                   </button>
                 </div>
 
