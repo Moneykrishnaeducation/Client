@@ -7,6 +7,7 @@ import Withdraw from "./Withdraw";
 import DepositModal from "./DepositModal";
 import InvestorManagement from "./InvestorManagement";
 import SettingsModal from "./SettingsModal";
+import { Eye, EyeOff } from "lucide-react";
 
 // ✔ InfoBox Component
 function InfoBox({ label, value, isDarkMode }) {
@@ -33,7 +34,7 @@ export default function MamDashboard() {
   const [activeTab, setActiveTab] = useState("cheesepay");
   const [cheeseAmount, setCheeseAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
-  const [convertedAmount, setConvertedAmount] = useState("");
+
   const [selectedDepositAccount, setSelectedDepositAccount] = useState(null);
 
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -45,6 +46,8 @@ export default function MamDashboard() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
+  const [showMasterPwd, setShowMasterPwd] = useState(false);
+  const [showInvestorPwd, setShowInvestorPwd] = useState(false);
 
 
   const [form, setForm] = useState({
@@ -57,7 +60,7 @@ export default function MamDashboard() {
     investor_password: "",
   });
 
-  const [accessToken, setAccessToken] = useState("");
+
 
   const getCookie = (name) => {
     let cookieValue = null;
@@ -74,9 +77,6 @@ export default function MamDashboard() {
   };
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("accessToken");
-    if (savedToken) setAccessToken(savedToken);
-
     const savedAccounts = localStorage.getItem("mamAccounts");
     if (savedAccounts) setMamAccounts(JSON.parse(savedAccounts));
 
@@ -159,12 +159,14 @@ export default function MamDashboard() {
           try {
             const j = await res.json();
             errTxt = j.error || JSON.stringify(j);
-          } catch (e) { }
+          } catch {
+            // Ignore JSON parsing errors
+          }
           throw new Error(errTxt);
         }
 
         let payload = {};
-        try { payload = await res.json(); } catch (e) { payload = {}; }
+        try { payload = await res.json(); } catch { payload = {}; }
 
         // server may return new state in payload.is_enabled or payload.enabled
         const newEnabled = (typeof payload.is_enabled !== 'undefined') ? Boolean(payload.is_enabled) :
@@ -182,9 +184,9 @@ export default function MamDashboard() {
         if (selectedAccount && selectedAccount.account_id === id) {
           setSelectedAccount((prev) => ({ ...prev, enabled: newEnabled }));
         }
-      } catch (e) {
-        console.error('Toggle MAM account error:', e);
-        setToggleError(String(e));
+      } catch (error) {
+        console.error('Toggle MAM account error:', error);
+        setToggleError(String(error));
       } finally {
         setToggleLoadingIds((prev) => prev.filter((v) => v !== id));
       }
@@ -234,7 +236,7 @@ export default function MamDashboard() {
         let err;
         try {
           err = await response.json();
-        } catch (e) {
+        } catch {
           err = { error: "Server error occurred. Please try again." };
         }
         alert("Error: " + JSON.stringify(err));
@@ -421,7 +423,6 @@ export default function MamDashboard() {
                       setCheeseAmount={setCheeseAmount}
                       currency={currency}
                       setCurrency={setCurrency}
-                      convertedAmount={convertedAmount}
                       selectedDepositAccount={selectedDepositAccount}
                     />
 
@@ -487,7 +488,6 @@ export default function MamDashboard() {
                 setCheeseAmount={setCheeseAmount}
                 currency={currency}
                 setCurrency={setCurrency}
-                convertedAmount={convertedAmount}
                 selectedDepositAccount={selectedDepositAccount}
               />
 
@@ -540,47 +540,47 @@ export default function MamDashboard() {
       {/* CREATE MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-gray-900 text-white p-6 rounded-lg shadow-lg w-[90%] max-w-lg">
+          <div className={`p-6 rounded-lg shadow-lg w-[90%] max-w-lg ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-yellow-400">Create New MAM Account</h2>
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-yellow-400' : 'text-black'}`}>Create New MAM Account</h2>
               <X
-                className="w-6 h-6 cursor-pointer text-gray-400 hover:text-yellow-400"
+                className={`w-6 h-6 cursor-pointer ${isDarkMode ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-600 hover:text-black'}`}
                 onClick={() => setShowModal(false)}
               />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="block text-sm mb-1">Account Name</label>
+                <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Account Name</label>
                 <input
                   type="text"
                   id="account_name"
                   value={form.account_name}
                   onChange={handleChange}
                   required
-                  className="w-full p-2 rounded bg-gray-800"
+                  className={`w-full p-2 rounded ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black border border-gray-300'}`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Profit Sharing (%)</label>
+                <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Profit Sharing (%)</label>
                 <input
                   type="number"
                   id="profit_percentage"
                   value={form.profit_percentage}
                   onChange={handleChange}
                   required
-                  className="w-full p-2 rounded bg-gray-800"
+                  className={`w-full p-2 rounded ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black border border-gray-300'}`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Risk Level</label>
+                <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Risk Level</label>
                 <select
                   id="risk_level"
                   value={form.risk_level}
                   onChange={handleChange}
-                  className="w-full p-2 rounded bg-gray-800"
+                  className={`w-full p-2 rounded ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black border border-gray-300'}`}
                 >
                   <option>Low</option>
                   <option>Medium</option>
@@ -589,12 +589,12 @@ export default function MamDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Leverage</label>
+                <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Leverage</label>
                 <select
                   id="leverage"
                   value={form.leverage}
                   onChange={handleChange}
-                  className="w-full p-2 rounded bg-gray-800"
+                  className={`w-full p-2 rounded ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black border border-gray-300'}`}
                 >
                   <option>50x</option>
                   <option>100x</option>
@@ -604,12 +604,12 @@ export default function MamDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Payout Frequency</label>
+                <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Payout Frequency</label>
                 <select
                   id="payout_frequency"
                   value={form.payout_frequency}
                   onChange={handleChange}
-                  className="w-full p-2 rounded bg-gray-800"
+                  className={`w-full p-2 rounded ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black border border-gray-300'}`}
                 >
                   <option>Weekly</option>
                   <option>Monthly</option>
@@ -618,35 +618,85 @@ export default function MamDashboard() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm mb-1">Master Password</label>
-                <input
-                  type="password"
-                  id="master_password"
-                  value={form.master_password}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-2 rounded bg-gray-800"
-                />
-              </div>
+              {/* Master Password */}
+<div>
+  <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+    <span className="text-red-500">*</span> Master Password
+  </label>
 
-              <div>
-                <label className="block text-sm mb-1">Investor Password</label>
-                <input
-                  type="password"
-                  id="investor_password"
-                  value={form.investor_password}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-2 rounded bg-gray-800"
-                />
-              </div>
+  <div className="relative">
+    <input
+      type={showMasterPwd ? "text" : "password"}
+      id="master_password"
+      name="master_password"
+      value={form.master_password}
+      onChange={handleChange}
+      placeholder="Auto-generated secure password"
+      required
+      minLength={8}
+      className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} 
+      border border-[#FFD700] rounded-md pr-10 focus:ring-2 focus:ring-[#FFD700]`}
+    />
 
-              <div className="flex justify-end gap-2">
+    {/* Password Show / Hide */}
+    <button
+      type="button"
+      onClick={() => setShowMasterPwd(!showMasterPwd)}
+      className="absolute right-3 top-3 text-[#FFD700] hover:text-white"
+      title={showMasterPwd ? "Hide password" : "Show password"}
+    >
+      {showMasterPwd ? <EyeOff size={20} /> : <Eye size={20} />}
+    </button>
+  </div>
+
+  <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+    The master password allows full control of the trading account.<br />
+    Must be at least 8 characters including uppercase, numbers & symbols.
+  </p>
+</div>
+
+{/* Investor Password */}
+<div className="mt-4">
+  <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+    <span className="text-red-500">*</span> Investor Password
+  </label>
+
+  <div className="relative">
+    <input
+      type={showInvestorPwd ? "text" : "password"}
+      id="investor_password"
+      name="investor_password"
+      value={form.investor_password}
+      onChange={handleChange}
+      placeholder="Auto-generated secure password"
+      required
+      minLength={8}
+      className={`w-full p-3 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} 
+      border border-[#FFD700] rounded-md pr-10 focus:ring-2 focus:ring-[#FFD700]`}
+    />
+
+    {/* Password Show / Hide */}
+    <button
+      type="button"
+      onClick={() => setShowInvestorPwd(!showInvestorPwd)}
+      className="absolute right-3 top-3 text-[#FFD700] hover:text-white"
+      title={showInvestorPwd ? "Hide password" : "Show password"}
+    >
+      {showInvestorPwd ? <EyeOff size={20} /> : <Eye size={20} />}
+    </button>
+  </div>
+
+  <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+    The investor password allows read-only access for investors.<br />
+    Must be at least 8 characters including uppercase, numbers & symbols.
+  </p>
+</div>
+
+<div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="bg-gray-700 px-4 py-2 rounded"
+                  className={`px-4 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-black'}`}
                 >
                   Cancel
                 </button>
