@@ -33,7 +33,7 @@ function OpenAccount({ onClose }) {
 
   const [formData, setFormData] = useState({
     accountName: "",
-    leverage: "50",
+    leverage: "500",
     group: "",
     masterPassword: generatePassword(),
     investorPassword: generatePassword(),
@@ -57,14 +57,23 @@ function OpenAccount({ onClose }) {
         }));
         // Fetch groups
         const groupData = await apiCall('api/trading-groups/?type=real');
-        setGroups(groupData.groups || []);
+        const fetchedGroups = groupData.groups || [];
+        setGroups(fetchedGroups);
+        // Set default group
+        const defaultGroup = fetchedGroups.find(grp => grp.is_default);
+        if (defaultGroup) {
+          setFormData((prev) => ({
+            ...prev,
+            group: defaultGroup.id,
+          }));
+        }
       } catch (error) {
         console.error('Failed to fetch options:', error);
         // Fallback to static data
         setGroups(["Standard", "Pro", "ECN", "VIP"]);
       }
       // Always set static leverages
-      setLeverages([1, 2, 5, 10, 20, 50, 100, 200,500,1000]);
+      setLeverages([1, 2, 5, 10, 20, 50, 100, 200,500]);
     };
 
     fetchOptions();
@@ -154,7 +163,7 @@ function OpenAccount({ onClose }) {
             <option value="">Select leverage</option>
             {leverages.map((lev, idx) => (
               <option key={idx} value={lev}>
-                {lev}x
+                1:{lev}
               </option>
             ))}
           </select>
@@ -174,7 +183,7 @@ function OpenAccount({ onClose }) {
           >
             <option value="">Select group</option>
             {groups.map((grp, idx) => (
-              <option key={grp.id || idx} value={grp.id}>
+              <option key={grp.id || idx} value={grp.id} >
                 {grp.alias || grp.name}
               </option>
             ))}

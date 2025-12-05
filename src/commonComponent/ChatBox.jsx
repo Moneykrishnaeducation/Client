@@ -74,7 +74,7 @@ const ChatBot = () => {
             >
               {/* Hello icon only for Chat with us */}
               {!showWelcome && (
-                <span className="text-yellow-400 animate-bounce text-lg">👋</span>
+                <span className="text-yellow-400 animate-bounce hidden lg:block text-lg">👋</span>
               )}
 
               {showWelcome && username ? (
@@ -90,7 +90,7 @@ const ChatBot = () => {
                   ))}
                 </span>
               ) : (
-                <span className="flex space-x-0.5">
+                <span className="flex space-x-0.5 hidden lg:block" >
                   {displayText.map((char, index) => (
                     <span
                       key={index}

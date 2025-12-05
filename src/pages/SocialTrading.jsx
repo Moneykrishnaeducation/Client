@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Info as InfoIcon, Plus, Users, X } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 import Withdraw from "./Withdraw";
 import DepositModal from "./DepositModal";
@@ -8,17 +9,18 @@ import InvestorManagement from "./InvestorManagement";
 import SettingsModal from "./SettingsModal";
 
 // ✔ InfoBox Component
-function InfoBox({ label, value }) {
+function InfoBox({ label, value, isDarkMode }) {
   return (
-    <div className="border border-yellow-400 p-3 rounded-md bg-[#1a1a1a]">
-      <p className="text-xs text-gray-400">{label}</p>
-      <p className="text-sm font-semibold text-white">{value}</p>
+    <div className={`border p-3 rounded-md ${isDarkMode ? 'border-yellow-400 bg-[#1a1a1a]' : 'border-gray-300 bg-white'}`}>
+      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{label}</p>
+      <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{value}</p>
     </div>
   );
 }
 
 export default function MamDashboard() {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
 
   const [showModal, setShowModal] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -140,7 +142,7 @@ export default function MamDashboard() {
         const enableTrading = !currentEnabled; // send desired state
 
         const url = 'http://client.localhost:8000/toggle-mam-account/';
-        const body = { id: id, enable_trading: enableTrading };
+        const body = { mam_id: id, enable_trading: enableTrading };
 
         const res = await fetch(url, {
           method: 'POST',
@@ -312,7 +314,7 @@ export default function MamDashboard() {
 
 
   return (
-    <div className="w-full flex flex-col items-center text-white p-6">
+    <div className="w-full flex flex-col items-center text-white pt-6">
       <h2 className="text-2xl font-bold mb-2 text-center">Multi-Account Manager</h2>
 
       <div className="flex w-full justify-end gap-1 px-10 text-sm mb-4">
@@ -326,11 +328,26 @@ export default function MamDashboard() {
       </div>
 
       {showInfo && (
-        <div className="mb-6 bg-gray-900/70 p-6 rounded-md text-gray-300 max-w-3xl w-[90%] text-left">
-          <h3 className="text-lg font-semibold mb-2 text-yellow-400">
-            Understanding MAM Accounts
-          </h3>
-          <p className="text-sm">Auto-copied trades system explained...</p>
+        <div className={`mb-6 p-6 rounded-md max-w-3xl w-[90%] text-left ${isDarkMode ? 'bg-gray-900/70 text-gray-300' : 'bg-white text-black border border-gray-300'}`}>
+          <div className="noticed-header mb-4">
+            <strong className={`text-lg font-semibold ${isDarkMode ? 'text-yellow-400' : 'text-black'}`}>Understanding MAM Accounts</strong>
+          </div>
+          <div className="noticed-content space-y-3">
+            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <strong className={isDarkMode ? 'text-yellow-400' : 'text-black'}>Manager Trades, Auto-Copied:</strong> Trades by the manager are automatically replicated in your investment account in real time.
+            </p>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <strong className={isDarkMode ? 'text-yellow-400' : 'text-black'}>Proportional Lot Sizing:</strong> Lot size adjusts based on your account balance relative to the manager's.
+            </p>
+            <ul className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} list-disc list-inside space-y-1`}>
+              <li><strong className={isDarkMode ? 'text-yellow-400' : 'text-black'}>Example:</strong> Manager trades 1 lot for $10,000.</li>
+              <li>$20,000 Investor: Gets 2 lots.</li>
+              <li>$5,000 Investor: Gets 0.5 lots.</li>
+            </ul>
+            <p className={`important-note text-sm ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+              ✅ <span id="ttl-important-note" className="font-semibold">Important Note:</span> All trades will be copied with a minimum size of 0.01 lot, ensuring you participate in every trading opportunity.
+            </p>
+          </div>
         </div>
       )}
 
@@ -352,9 +369,9 @@ export default function MamDashboard() {
 
       {/* ACCOUNTS TABLE */}
       {!selectedAccount && mamAccounts.length > 0 && (
-        <div className="overflow-x-auto w-[90%] max-w-6xl mb-6">
+        <div className="overflow-x-auto w-[95%] px-3 mb-6">
           <table className="min-w-full text-left">
-            <thead className="bg-gray-800 text-yellow-400">
+            <thead className="text-yellow-400">
               <tr>
                 <th className="px-4 py-2">Account ID</th>
                 <th className="px-4 py-2">Account Name</th>
@@ -366,7 +383,7 @@ export default function MamDashboard() {
             </thead>
             <tbody>
               {mamAccounts.map((acc) => (
-                <tr key={acc.account_id} className="bg-[#1a1a1a] hover:bg-gray-700 transition">
+                <tr key={acc.account_id} className={`${isDarkMode ? 'bg-[#1a1a1a] text-yellow-600 hover:bg-gray-700' : 'bg-white text-black hover:bg-gray-100'} transition`}>
                   <td className="px-4 py-2">{acc.account_id}</td>
                   <td className="px-4 py-2">{acc.accountName}</td>
                   <td className="px-4 py-2">{acc.profitPercentage}%</td>
@@ -429,7 +446,7 @@ export default function MamDashboard() {
 
       {/* VIEW ACCOUNT */}
       {selectedAccount && (
-        <div className="mt-6 w-[90%] max-w-5xl">
+        <div className="mt-6 w-full px-3">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-yellow-400">Account Details</h3>
             <button
@@ -440,14 +457,14 @@ export default function MamDashboard() {
             </button>
           </div>
 
-          <div className="bg-[#111] border border-yellow-400 rounded-lg p-6 space-y-4">
+          <div className="border border-yellow-400 rounded-lg p-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <InfoBox label="Account ID" value={selectedAccount.account_id} />
-              <InfoBox label="Account Name" value={selectedAccount.accountName} />
-              <InfoBox label="Profit Sharing" value={selectedAccount.profitPercentage + "%"} />
-              <InfoBox label="Total Profit" value={selectedAccount.totalProfit} />
-              <InfoBox label="Leverage" value={selectedAccount.leverage} />
-              <InfoBox label="Status" value={selectedAccount.enabled ? "Enabled" : "Disabled"} />
+              <InfoBox label="Account ID" value={selectedAccount.account_id} isDarkMode={isDarkMode} />
+              <InfoBox label="Account Name" value={selectedAccount.accountName} isDarkMode={isDarkMode} />
+              <InfoBox label="Profit Sharing" value={selectedAccount.profitPercentage + "%"} isDarkMode={isDarkMode} />
+              <InfoBox label="Total Profit" value={selectedAccount.totalProfit} isDarkMode={isDarkMode} />
+              <InfoBox label="Leverage" value={selectedAccount.leverage} isDarkMode={isDarkMode} />
+              <InfoBox label="Status" value={selectedAccount.enabled ? "Enabled" : "Disabled"} isDarkMode={isDarkMode} />
             </div>
 
 

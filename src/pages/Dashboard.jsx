@@ -73,7 +73,7 @@ const DepositModal = ({ onClose, showToast }) => {
         );
         const formattedAccounts = filteredAccounts.map(account => ({
           id: account.account_id,
-          name: `${account.account_name} - $${account.balance.toFixed(2)}`
+          name: `${account.account_name} - ${account.account_id} - $${account.balance.toFixed(2)}`
         }));
         setAccounts(formattedAccounts);
         // Set default selected account if available
