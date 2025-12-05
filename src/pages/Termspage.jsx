@@ -12,6 +12,8 @@ import {
   Briefcase,
   FileText,
   Star,
+  Mail,
+  MapPin,
 } from "lucide-react";
 import { useTheme } from '../context/ThemeContext';
 
@@ -132,16 +134,31 @@ const TermsPage = () => {
       title: "Contact Us",
       content: (
         <div>
-          <p>
-            Email: <span className="text-yellow-400">support@vtindex.com</span>
-          </p>
+          <div className="flex items-center gap-3 mb-4">
+            <Mail className="w-8 h-8 text-yellow-400 animate-pulse" />
+            <a
+              href="mailto:support@vtindex.com"
+              className="text-xl font-semibold text-yellow-400 hover:text-yellow-300 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_10px_#FFD700]"
+            >
+              support@vtindex.com
+            </a>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Address",
+      content: (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <MapPin className="w-8 h-8 text-yellow-400 animate-pulse" />
+            <span className="text-xl font-semibold text-yellow-400">Our Location</span>
+          </div>
           <p className="mt-2">
-            <strong>Registered Address:</strong> Suite #1705, Festival Tower,
-            Dubai Festival City, Dubai, UAE
+            <strong>Registered Address:</strong> #1805, 18th Floor, Al Fahid heights , near Sharaf DG Exit-4, Dubai, UAE
           </p>
           <p>
-            <strong>Operational Address:</strong> Suite #1705, Festival Tower,
-            Dubai Festival City, Dubai, UAE
+            <strong>Operational Address:</strong> #1805, 18th Floor, Al Fahid heights , near Sharaf DG Exit-4, Dubai, UAE
           </p>
         </div>
       ),

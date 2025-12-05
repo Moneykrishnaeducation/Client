@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from '../context/ThemeContext';
 import DepositModal from "./DepositModal";
 import Withdraw from "./Withdraw";
 import TradesModal from "./TradesModal";
-
+import { ArrowLeftCircle, ArrowRight } from "lucide-react";
 // Simple Error Boundary to catch render errors and show a helpful message
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -50,16 +51,15 @@ const Maminvestments = () => {
   const [investments, setInvestments] = useState([]);
 
   // ✅ Added missing states
+  const { isDarkMode } = useTheme();
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [isDarkMode] = useState(true);
   const [investorPassword, setInvestorPassword] = useState("");
   const [confirmInvestorPassword, setConfirmInvestorPassword] = useState("");
   const [investLoading, setInvestLoading] = useState(false);
   const [investError, setInvestError] = useState(null);
   const [toggleLoading, setToggleLoading] = useState(false);
   const [toggleError, setToggleError] = useState(null);
-  const [positionsLoading, setPositionsLoading] = useState(false);
-  const [positionsError, setPositionsError] = useState(null);
+
   const [showTradesModal, setShowTradesModal] = useState(false);
   const [showCopyCoefficientModal, setShowCopyCoefficientModal] = useState(false);
 
@@ -75,6 +75,11 @@ const Maminvestments = () => {
   const [multiTradeEnabled, setMultiTradeEnabled] = useState(false);
   const [multiTradeCount, setMultiTradeCount] = useState(2);
 
+  const [positionsLoading] = useState(false);
+  const [positionsError] = useState(null);
+
+
+
   const navigate = useNavigate();
   // Deposit/Withdraw modal state
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -82,9 +87,10 @@ const Maminvestments = () => {
   const [depositActiveTab, setDepositActiveTab] = useState("cheesepay");
   const [cheeseAmount, setCheeseAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
-  const [convertedAmount, setConvertedAmount] = useState("");
+
   const [selectedDepositAccount, setSelectedDepositAccount] = useState(null);
   const [usdtAmount, setUsdtAmount] = useState("");
+  const [convertedAmount] = useState("");
 
   // Load managers and investments: prefer API, fallback to localStorage
   useEffect(() => {
@@ -157,7 +163,9 @@ const Maminvestments = () => {
           try {
             const j = await res.json();
             txt = j.error || JSON.stringify(j);
-          } catch (e) {}
+          } catch {
+            // ignore
+          }
           throw new Error(txt);
         }
 
@@ -239,7 +247,7 @@ const Maminvestments = () => {
         try {
           const json = await res.json();
           errText = json.error || JSON.stringify(json);
-        } catch (e) {
+        } catch {
           errText = `${res.status} ${res.statusText}`;
         }
         throw new Error(errText);
@@ -303,7 +311,9 @@ const Maminvestments = () => {
         try {
           const j = await res.json();
           errText = j.error || JSON.stringify(j);
-        } catch (e) {}
+        } catch {
+          // ignore
+        }
         throw new Error(errText);
       }
 
@@ -328,49 +338,7 @@ const Maminvestments = () => {
     }
   };
 
-  // Fetch open positions for an account and attach them to selectedAccount
-  const handleOpenPositions = async (accountId) => {
-    setPositionsError(null);
-    setPositionsLoading(true);
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) throw new Error('Missing auth token. Please log in again.');
 
-      const url = `http://client.localhost:8000/open-positions/${accountId}/`;
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        let errText = `${res.status} ${res.statusText}`;
-        try {
-          const j = await res.json();
-          errText = j.error || JSON.stringify(j);
-        } catch (e) {}
-        throw new Error(errText);
-      }
-
-      const data = await res.json();
-
-      // Attach positions to selectedAccount if it matches
-      setSelectedAccount((prev) => (prev && String(prev.id) === String(accountId) ? { ...prev, positions: data } : prev));
-
-      // Also attach to investments list if present
-      setInvestments((prev) => prev.map((it) => (String(it.id) === String(accountId) ? { ...it, positions: data } : it)));
-
-      console.debug('Open positions loaded:', data);
-    } catch (e) {
-      console.error('Open positions API error:', e);
-      setPositionsError(String(e));
-    } finally {
-      setPositionsLoading(false);
-    }
-  };
 
   // ✅ Show account details when View button is clicked
   useEffect(() => {
@@ -386,16 +354,25 @@ const Maminvestments = () => {
         MAM Investments
       </h1>
    <div className="flex w-full mb-4">
-  <button
-    onClick={() => navigate("/socialtrading")}
-    className={`ml-auto px-5 py-2 rounded-md font-semibold border border-yellow-500 transition-all ${
-      activeTab === "availableManagers"
-        ? "bg-yellow-500 text-black"
-        : "bg-black text-yellow-300 hover:bg-yellow-500 hover:text-black"
-    }`}
-  >
-    Go Manage Accounts
-  </button>
+<button
+  onClick={() => navigate("/socialtrading")}
+  className={`ml-auto px-5 py-2 rounded-md font-semibold border border-yellow-500 transition-all hidden md:flex ${
+    activeTab === "availableManagers"
+      ? "bg-yellow-500 text-black"
+      : "bg-black text-yellow-300 hover:bg-yellow-500 hover:text-black"
+  }`}
+>
+  Go Manage Accounts
+</button>
+
+{/* Mobile View – Only Arrow Icon */}
+<button
+  onClick={() => navigate("/socialtrading")}
+  className="md:hidden p-2 ml-auto"
+>
+  <ArrowLeftCircle className="w-8 h-8 text-yellow sm:text-black" />
+</button>
+
 </div>
 
       {/* Tabs */}
@@ -424,138 +401,130 @@ const Maminvestments = () => {
       </div>
 
       {/* Available Managers */}
-      {activeTab === "availableManagers" && (
-        <div className="w-full">
-          <h2 className="text-xl font-bold text-yellow-400 mb-4">
-            Explore Top MAM Managers
-          </h2>
+{activeTab === "availableManagers" && (
+  <div className="w-full">
+    <h2 className="text-xl font-bold text-yellow-400 mb-4 text-center sm:text-left">
+      Explore Top MAM Managers
+    </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {managers.length > 0 ? (
-              managers.map((manager) => (
-                <div
-                  key={manager.id}
-                  className="w-72 bg-[#1c1c1c] text-white border-2 border-yellow-500 rounded-xl p-4 hover:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all duration-300 hover:-translate-y-1"
-                >
-                  <h3 className="font-bold text-[20px] mb-1 text-yellow-400 uppercase text-center">
-                    {manager.accountName}
-                  </h3>
-                  <p className="text-sm text-gray-300 mb-3 text-center">
-                    ID: {manager.id}
-                  </p>
-
-                  {/* Stats */}
-                  <div className="space-y-2 text-[16px]">
-                    <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
-                      <span className="font-semibold">Balance : ${formatNumber(manager.balance)}</span>
-                    </p>
-                    <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
-                      <span className="font-semibold">Equity : ${formatNumber(manager.equity)}</span>
-                    </p>
-                    <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
-                      <span className="font-semibold">
-                        Profit Share : {manager.profitPercentage}%
-                      </span>
-                    </p>
-                    <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
-                      <span className="font-semibold">
-                        Account Age : {manager.accountAge} days
-                      </span>
-                    </p>
-                    <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
-                      <span className="font-semibold">
-                        Risk Level : {manager.riskLevel || "Medium"}
-                      </span>
-                    </p>
-                    <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
-                      <span className="font-semibold">
-                        Growth : {manager.growth}%
-                      </span>
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleInvestClick(manager)}
-                    className="mt-4 mx-auto block w-40 text-center bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-2 text-sm rounded-md transition-all duration-300"
-                  >
-                    👥 Invest
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="text-yellow-300 text-center col-span-full">
-                No MAM Managers available. Create one first.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* My Investments */}
-      {activeTab === "myInvestments" && (
-        <div className="bg-[#111] rounded-2xl p-6 w-full max-w-6xl shadow-[0_0_15px_rgba(255,215,0,0.4)]">
-          <div className="text-xl font-bold mb-4 text-yellow-400">
-            My Investments
-          </div>
-
-          {investments.length > 0 ? (
-            <table className="w-full text-left  rounded-md overflow-hidden">
-              <thead className="bg-black-500 text-">
-                <tr>
-                  <th className="px-4 py-2 ">ID</th>
-                  <th className="px-4 py-2">Account Name</th>
-                  <th className="px-4 py-2">Profit %</th>
-                  <th className="px-4 py-2">Leverage</th>
-                  <th className="px-4 py-2">Total Profit</th>
-                  <th className="px-4 py-2">Status</th>
-                  <th className="px-4 py-2 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {investments.map((inv, index) => (
-                  <tr
-                    key={index}
-                    className="border-t border-yellow-700 hover:bg-[#1c1c1c]"
-                  >
-                    <td className="px-4 py-2 text-white">{inv.id}</td>
-                    <td className="px-4 py-2 text-white ">{inv.accountName}</td>
-                    <td className="px-4 py-2 text-white">{inv.profitPercentage}%</td>
-                    <td className="px-4 py-2 text-white">{inv.leverage}</td>
-                    <td className="px-4 py-2 text-white">${formatNumber(inv.totalProfit)}</td>
-                    <td className="px-4 py-2 text-white">
-                      {inv.enabled ? "Enabled" : "Disabled"}
-                    </td>
-                    <td className="px-4 py-2 flex gap-3 justify-center">
-                      <button
-                        onClick={() => setShowViewPopup(inv)}
-                        className="bg-yellow-500 text-black px-3 py-1 rounded-md font-semibold hover:bg-yellow-400 transition"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedDepositAccount(inv.id || inv.account_id);
-                          setDepositActiveTab("cheesepay");
-                          setCheeseAmount("");
-                          setUsdtAmount("");
-                          setShowDepositModal(true);
-                        }}
-                        className="bg-yellow-500 text-black px-3 py-1 rounded-md font-semibold hover:bg-yellow-400 transition"
-                      >
-                        Deposit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-yellow-200 text-center">
-              No active investments yet.
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+      {managers.length > 0 ? (
+        managers.map((manager) => (
+          <div
+            key={manager.id}
+            className="w-72 bg-[#1c1c1c] text-white border-2 border-yellow-500 rounded-xl p-4 hover:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all duration-300 hover:-translate-y-1"
+          >
+            <h3 className="font-bold text-[20px] mb-1 text-yellow-400 uppercase text-center">
+              {manager.accountName}
+            </h3>
+            <p className="text-sm text-gray-300 mb-3 text-center">
+              ID: {manager.id}
             </p>
-          )}
+
+            {/* Stats */}
+            <div className="space-y-2 text-[16px]">
+              <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
+                <span className="font-semibold">Balance : ${formatNumber(manager.balance)}</span>
+              </p>
+              <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
+                <span className="font-semibold">Equity : ${formatNumber(manager.equity)}</span>
+              </p>
+              <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
+                <span className="font-semibold">Profit Share : {manager.profitPercentage}%</span>
+              </p>
+              <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
+                <span className="font-semibold">Account Age : {manager.accountAge} days</span>
+              </p>
+              <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
+                <span className="font-semibold">Risk Level : {manager.riskLevel || "Medium"}</span>
+              </p>
+              <p className="bg-[#2a2a2a] p-2 rounded-md flex justify-between">
+                <span className="font-semibold">Growth : {manager.growth}%</span>
+              </p>
+            </div>
+
+            <button
+              onClick={() => handleInvestClick(manager)}
+              className="mt-4 mx-auto block w-40 text-center bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-2 text-sm rounded-md transition-all duration-300"
+            >
+              👥 Invest
+            </button>
+          </div>
+        ))
+      ) : (
+        <div className="text-yellow-300 text-center col-span-full">
+          No MAM Managers available. Create one first.
         </div>
       )}
+    </div>
+  </div>
+)}
+
+{/* My Investments */}
+{activeTab === "myInvestments" && (
+  <div className="rounded-2xl p-6 w-full overflow-auto shadow-[0_0_15px_rgba(255,215,0,0.4)] bg-black">
+    <div className="text-xl font-bold mb-4 text-yellow-400">
+      My Investments
+    </div>
+
+    {investments.length > 0 ? (
+      <table className="w-full text-left rounded-md overflow-hidden border border-yellow-800">
+        <thead className="bg-gray-800 text-yellow-400">
+          <tr>
+            <th className="px-4 py-2">ID</th>
+            <th className="px-4 py-2">Account Name</th>
+            <th className="px-4 py-2">Profit %</th>
+            <th className="px-4 py-2">Leverage</th>
+            <th className="px-4 py-2">Total Profit</th>
+            <th className="px-4 py-2">Status</th>
+            <th className="px-4 py-2 text-center">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody className="bg-black">
+          {investments.map((inv, index) => (
+            <tr key={index} className="border-t border-yellow-700">
+              <td className="px-4 py-2 text-gray-300">{inv.id}</td>
+              <td className="px-4 py-2 text-gray-300">{inv.accountName}</td>
+              <td className="px-4 py-2 text-gray-300">{inv.profitPercentage}</td>
+              <td className="px-4 py-2 text-gray-300">{inv.leverage}</td>
+              <td className="px-4 py-2 text-gray-300">
+                ${formatNumber(inv.totalProfit)}
+              </td>
+              <td className="px-4 py-2 text-gray-300">
+                {inv.enabled ? "Enabled" : "Disabled"}
+              </td>
+
+              <td className="px-4 py-2 flex gap-3 justify-center">
+                <button
+                  onClick={() => setShowViewPopup(inv)}
+                  className="bg-yellow-500 text-black px-3 py-1 rounded-md font-semibold hover:bg-yellow-400 transition"
+                >
+                  View
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedDepositAccount(inv.id || inv.account_id);
+                    setDepositActiveTab("cheesepay");
+                    setCheeseAmount("");
+                    setUsdtAmount("");
+                    setShowDepositModal(true);
+                  }}
+                  className="bg-yellow-500 text-black px-3 py-1 rounded-md font-semibold hover:bg-yellow-400 transition"
+                >
+                  Deposit
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p className="text-yellow-200 text-center">No active investments yet.</p>
+    )}
+  </div>
+)}
+
 
       {/* Investment Popup */}
       {showPopup && (
@@ -564,7 +533,7 @@ const Maminvestments = () => {
           onClick={() => setShowPopup(null)}
         >
           <div
-            className="bg-[#111] p-6 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.6)] max-w-md w-full text-center border border-yellow-500"
+            className="p-6 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.6)] max-w-md w-full text-center border border-yellow-500"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-2xl font-bold mb-4 text-yellow-400">
@@ -631,7 +600,7 @@ const Maminvestments = () => {
 
       {/* Selected Account View */}
       {selectedAccount && (
-        <div className="mt-6 w-full max-w-6xl bg-[#111] rounded-2xl p-6 border border-gold">
+        <div className="mt-6 w-full  rounded-2xl p-6 border border-gold">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gold">
               Account Details
@@ -646,15 +615,14 @@ const Maminvestments = () => {
 
           {/* Account Details Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          <Info label="Account ID" value={selectedAccount.id || selectedAccount.account_id} isDarkMode={true} />
-          <Info label="Master Account ID" value={selectedAccount.master_account_id || ""} isDarkMode={true} />
-            <Info label="Account Name" value={selectedAccount.accountName} isDarkMode={true} />
-            <Info label="Account Name" value={selectedAccount.accountName} isDarkMode={true} />
-            <Info label="Profit Percentage" value={`${selectedAccount.profitPercentage}%`} isDarkMode={true} />
-            <Info label="Leverage" value={selectedAccount.leverage} isDarkMode={true} />
-            <Info label="Total Profit" value={`$${formatNumber(selectedAccount.totalProfit)}`} isDarkMode={true} />
-            <Info label="Status" value={selectedAccount.enabled ? "Enabled" : "Disabled"} isDarkMode={true} />
-            <Info label="Risk Level" value={selectedAccount.riskLevel || "Medium"} isDarkMode={true} />
+          <Info label="Account ID" value={selectedAccount.id || selectedAccount.account_id} isDarkMode={isDarkMode} />
+          <Info label="Master Account ID" value={selectedAccount.master_account_id || ""} isDarkMode={isDarkMode} />
+            <Info label="Account Name" value={selectedAccount.accountName} isDarkMode={isDarkMode} />
+            <Info label="Profit Percentage" value={`${selectedAccount.profitPercentage}%`} isDarkMode={isDarkMode} />
+            <Info label="Leverage" value={selectedAccount.leverage} isDarkMode={isDarkMode} />
+            <Info label="Total Profit" value={`$${formatNumber(selectedAccount.totalProfit)}`} isDarkMode={isDarkMode} />
+            <Info label="Status" value={selectedAccount.enabled ? "Enabled" : "Disabled"} isDarkMode={isDarkMode} />
+            <Info label="Risk Level" value={selectedAccount.riskLevel || "Medium"} isDarkMode={isDarkMode} />
           </div>
 
           {/* Open Positions (if loaded) */}
@@ -688,91 +656,87 @@ const Maminvestments = () => {
             </div>
           )}
           {/* Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 pt-2">
-            <button
-              onClick={() => handleToggleCopy(selectedAccount.id || selectedAccount.account_id, selectedAccount.enabled)}
-              disabled={toggleLoading}
-              className={`bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition ${toggleLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-            >
-              {toggleLoading ? 'Processing...' : (selectedAccount.enabled ? '⏸️ Pause' : '▶️ Resume')}
-            </button>
-            {toggleError && <div className="text-red-400 mt-2">{toggleError}</div>}
-            <button
-              onClick={() => {
-                // Open deposit modal for this selected account
-                setSelectedDepositAccount(selectedAccount.id || selectedAccount.account_id);
-                setDepositActiveTab("cheesepay");
-                setCheeseAmount("");
-                setUsdtAmount("");
-                setShowDepositModal(true);
-              }}
-              className="bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition"
-            >
-              💰 Deposit
-            </button>
-            <button
-              onClick={() => {
-                setShowWithdrawModal(true);
-              }}
-              className="bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition"
-            >
-              💳 Withdraw
-            </button>
-            <button
-              onClick={() => {
-                const acct = {
-                  ...(selectedAccount || {}),
-                  // Prefer the canonical `id` for investor account to avoid using a previously-set `account_id` (which may have been set to master id)
-                  account_id:
-                    (selectedAccount &&
-                      (selectedAccount.id ?? selectedAccount.account_id ?? selectedAccount.accountId)) ||
-                    undefined,
-                };
-                setSelectedAccount(acct);
-                setTradesRole("investor");
-                const acctId = acct.id || acct.account_id || acct.accountId || null;
-                // set an atomic snapshot used by TradesModal to fetch correct data
-                setTradesFetchConfig({ role: 'investor', accountId: acctId });
-                setTradesAccountId(acctId);
-                console.debug('Opening TradesModal (investor)', { acct, tradesRole: 'investor', tradesAccountId: acctId });
-                // open modal after setting snapshot
-                setShowTradesModal(true);
-              }}
-              disabled={positionsLoading}
-              className={`bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition ${positionsLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-            >
-              {positionsLoading ? 'Loading...' : '💼 Investor'}
-            </button>
-            <button
-              onClick={() => {
-                const acct = {
-                  ...(selectedAccount || {}),
-                  // Manager account lives on master_account_id in some responses
-                  account_id:
-                    (selectedAccount &&
-                      (selectedAccount.master_account_id ?? selectedAccount.masterAccountId ?? selectedAccount.masterAccount)) ||
-                    undefined,
-                };
-                setSelectedAccount(acct);
-                setTradesRole("manager");
-                const acctIdMgr = acct.account_id || acct.master_account_id || acct.masterAccountId || null;
-                setTradesFetchConfig({ role: 'manager', accountId: acctIdMgr });
-                setTradesAccountId(acctIdMgr);
-                console.debug('Opening TradesModal (manager)', { acct, tradesRole: 'manager', tradesAccountId: acctIdMgr });
-                setShowTradesModal(true);
-              }}
-              disabled={positionsLoading}
-              className={`bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition ${positionsLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-            >
-              {positionsLoading ? 'Loading...' : '💼 Manager'}
-            </button>
-            {positionsError && <div className="text-red-400 w-full text-center">{positionsError}</div>}
-            <button
-             onClick={() => setShowCopyCoefficientModal(true)}
-             className="bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition">
-              ✏️ Edit
-            </button>
-          </div>
+<div className="grid grid-cols-2 md:flex justify-center gap-4 pt-2">
+  <button
+    onClick={() => handleToggleCopy(selectedAccount.id || selectedAccount.account_id, selectedAccount.enabled)}
+    disabled={toggleLoading}
+    className={`bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition ${toggleLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+  >
+    {toggleLoading ? 'Processing...' : (selectedAccount.enabled ? '⏸️ Pause' : '▶️ Resume')}
+  </button>
+  <button
+    onClick={() => {
+      setSelectedDepositAccount(selectedAccount.id || selectedAccount.account_id);
+      setDepositActiveTab("cheesepay");
+      setCheeseAmount("");
+      setUsdtAmount("");
+      setShowDepositModal(true);
+    }}
+    className="bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition"
+  >
+    💰 Deposit
+  </button>
+  <button
+    onClick={() => {
+      setShowWithdrawModal(true);
+    }}
+    className="bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition"
+  >
+    💳 Withdraw
+  </button>
+  <button
+    onClick={() => {
+      const acct = {
+        ...(selectedAccount || {}),
+        account_id:
+          (selectedAccount &&
+            (selectedAccount.id ?? selectedAccount.account_id ?? selectedAccount.accountId)) ||
+          undefined,
+      };
+      setSelectedAccount(acct);
+      setTradesRole("investor");
+      const acctId = acct.id || acct.account_id || acct.accountId || null;
+      setTradesFetchConfig({ role: 'investor', accountId: acctId });
+      setTradesAccountId(acctId);
+      setShowTradesModal(true);
+    }}
+    disabled={positionsLoading}
+    className={`bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition ${positionsLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+  >
+    {positionsLoading ? 'Loading...' : '💼 Investor'}
+  </button>
+  <button
+    onClick={() => {
+      const acct = {
+        ...(selectedAccount || {}),
+        account_id:
+          (selectedAccount &&
+            (selectedAccount.master_account_id ?? selectedAccount.masterAccountId ?? selectedAccount.masterAccount)) ||
+          undefined,
+      };
+      setSelectedAccount(acct);
+      setTradesRole("manager");
+      const acctIdMgr = acct.account_id || acct.master_account_id || acct.masterAccountId || null;
+      setTradesFetchConfig({ role: 'manager', accountId: acctIdMgr });
+      setTradesAccountId(acctIdMgr);
+      setShowTradesModal(true);
+    }}
+    disabled={positionsLoading}
+    className={`bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition ${positionsLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+  >
+    {positionsLoading ? 'Loading...' : '💼 Manager'}
+  </button>
+  <button
+    onClick={() => setShowCopyCoefficientModal(true)}
+    className="bg-gold text-black px-6 py-2 rounded-lg font-semibold hover:bg-white transition"
+  >
+    ✏️ Edit
+  </button>
+
+  {toggleError && <div className="text-red-400 mt-2 col-span-2 text-center">{toggleError}</div>}
+  {positionsError && <div className="text-red-400 w-full text-center col-span-2">{positionsError}</div>}
+</div>
+
         </div>
       )}
 
@@ -948,7 +912,9 @@ const Maminvestments = () => {
                     try {
                       const j = await res.json();
                       errText = j.error || JSON.stringify(j);
-                    } catch (e) {}
+                    } catch {
+                      // ignore
+                    }
                     throw new Error(errText);
                   }
   
