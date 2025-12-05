@@ -337,14 +337,14 @@ const Transactions = () => {
                   }}
                   className={`px-2 py-1 border rounded-md ${
                     isDarkMode
-                      ? "bg-gray-800 border-gray-600 text-white"
+                      ? "bg-black-800 border-gray-600 text-white"
                       : "bg-white border-gray-300 text-black"
                   }`}
                 >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
+                <option className={`${isDarkMode? "bg-gray-800 border-gray-600 text-white": "bg-white border-gray-300 text-black"}`} value={5}>5</option>
+                <option className={`${isDarkMode? "bg-gray-800 border-gray-600 text-white": "bg-white border-gray-300 text-black"}`} value={10}>10</option>
+                <option className={`${isDarkMode? "bg-gray-800 border-gray-600 text-white": "bg-white border-gray-300 text-black"}`} value={20}>20</option>
+                <option className={`${isDarkMode? "bg-gray-800 border-gray-600 text-white": "bg-white border-gray-300 text-black"}`} value={50}>50</option>
                 </select>
               </div>
 
