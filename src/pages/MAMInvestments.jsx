@@ -462,14 +462,14 @@ const Maminvestments = () => {
 
 {/* My Investments */}
 {activeTab === "myInvestments" && (
-  <div className="rounded-2xl p-6 w-full overflow-auto shadow-[0_0_15px_rgba(255,215,0,0.4)] bg-black">
+  <div className={`rounded-2xl p-6 w-full overflow-auto shadow-[0_0_15px_rgba(255,215,0,0.4)] ${isDarkMode ? 'bg-black' : ''}`}>
     <div className="text-xl font-bold mb-4 text-yellow-400">
       My Investments
     </div>
 
     {investments.length > 0 ? (
-      <table className="w-full text-left rounded-md overflow-hidden border border-yellow-800">
-        <thead className="bg-gray-800 text-yellow-400">
+      <table className={`w-full text-left rounded-md overflow-hidden border border-yellow-800 ${isDarkMode ? 'bg-black' : ''}`}>
+        <thead className=" text-yellow-400">
           <tr>
             <th className="px-4 py-2">ID</th>
             <th className="px-4 py-2">Account Name</th>
@@ -481,17 +481,17 @@ const Maminvestments = () => {
           </tr>
         </thead>
 
-        <tbody className="bg-black">
+        <tbody className={`${isDarkMode ? 'bg-black' : ''}`}>
           {investments.map((inv, index) => (
             <tr key={index} className="border-t border-yellow-700">
-              <td className="px-4 py-2 text-gray-300">{inv.id}</td>
-              <td className="px-4 py-2 text-gray-300">{inv.accountName}</td>
-              <td className="px-4 py-2 text-gray-300">{inv.profitPercentage}</td>
-              <td className="px-4 py-2 text-gray-300">{inv.leverage}</td>
-              <td className="px-4 py-2 text-gray-300">
+              <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>{inv.id}</td>
+              <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>{inv.accountName}</td>
+              <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>{inv.profitPercentage}</td>
+              <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>{inv.leverage}</td>
+              <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>
                 ${formatNumber(inv.totalProfit)}
               </td>
-              <td className="px-4 py-2 text-gray-300">
+              <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>
                 {inv.enabled ? "Enabled" : "Disabled"}
               </td>
 
@@ -540,7 +540,7 @@ const Maminvestments = () => {
               Invest in Manager
             </h3>
 
-            <div className="text-left space-y-2 mb-4 text-yellow-200">
+            <div className="text-left space-y-2 mb-4 text-white-100">
               <p>
                 <strong>ID:</strong> {showPopup.id}
               </p>

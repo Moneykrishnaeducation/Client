@@ -384,14 +384,11 @@ export default function MamDashboard() {
             <tbody>
               {mamAccounts.map((acc) => (
                 <tr key={acc.account_id} className={`${isDarkMode ? 'bg-[#1a1a1a] text-yellow-600 hover:bg-gray-700' : 'bg-white text-black hover:bg-gray-100'} transition`}>
-                  <td className="px-4 py-2">{acc.account_id}</td>
-                  <td className="px-4 py-2">{acc.accountName}</td>
-                  <td className="px-4 py-2">{acc.profitPercentage}%</td>
-                  <td className="px-4 py-2">{acc.leverage}%</td>
-                  <td
-                    className={`px-4 py-2 font-semibold ${acc.enabled ? "text-green-400" : "text-red-400"
-                      }`}
-                  >
+                  <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>{acc.account_id}</td>
+                  <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>{acc.accountName}</td>
+                  <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>{acc.profitPercentage}%</td>
+                  <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>{acc.leverage}%</td>
+                  <td className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 bg-black' : 'text-black'}`}>
                     {acc.enabled ? "Enabled" : "Disabled"}
                   </td>
                   <td className="px-2 py-2 flex gap-2">
@@ -427,8 +424,6 @@ export default function MamDashboard() {
                       convertedAmount={convertedAmount}
                       selectedDepositAccount={selectedDepositAccount}
                     />
-
-
 
 
 
