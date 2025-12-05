@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Copy } from "lucide-react";
+import { Copy, CheckCircle, X, AlertTriangle, Info } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
 import { sharedUtils } from "../utils/shared-utils";
@@ -26,13 +26,24 @@ export default function DepositModal({
   const [usdtProof, setUsdtProof] = useState(null);
   const [isSubmittingUsdt, setIsSubmittingUsdt] = useState(false);
   const [isSubmittingCheesePay, setIsSubmittingCheesePay] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+
+  // Toast notification
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 3200);
+  };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText("TBkQunj4UD4Mej7pKyRVAUg5Jgm9aJRCHs");
-      sharedUtils.showToast("Address copied to clipboard!", "success");
+      showToast("Address copied to clipboard!", "success");
     } catch (err) {
       console.error("Failed to copy: ", err);
+      showToast("Failed to copy address to clipboard!", "error");
     }
   };
 
@@ -133,17 +144,16 @@ export default function DepositModal({
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`pb-3 px-5 font-semibold text-sm uppercase tracking-wide transition-all duration-300 ${
-                    activeTab === tab
+                  className={`pb-3 px-5 font-semibold text-sm uppercase tracking-wide transition-all duration-300 ${activeTab === tab
                       ? "text-[#FFD700] border-b-2 border-[#FFD700]"
                       : isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-black"
-                  }`}
+                    }`}
                 >
                   {tab === "cheesepay"
                     ? "CheesePay"
                     : tab === "manual"
-                    ? "Manual Deposit"
-                    : "USDT (TRC20)"}
+                      ? "Manual Deposit"
+                      : "USDT (TRC20)"}
                 </button>
               ))}
             </div>
@@ -224,9 +234,8 @@ export default function DepositModal({
                     {["USD", "INR"].map((curr) => (
                       <label
                         key={curr}
-                        className={`flex items-center gap-2 cursor-pointer select-none ${
-                          currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
-                        }`}
+                        className={`flex items-center gap-2 cursor-pointer select-none ${currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
+                          }`}
                       >
                         <input
                           type="radio"
@@ -306,9 +315,8 @@ export default function DepositModal({
                     {["USD", "INR"].map((curr) => (
                       <label
                         key={curr}
-                        className={`flex items-center gap-2 cursor-pointer select-none ${
-                          currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
-                        }`}
+                        className={`flex items-center gap-2 cursor-pointer select-none ${currency === curr ? "text-[#FFD700]" : isDarkMode ? "text-gray-400" : "text-gray-600"
+                          }`}
                       >
                         <input
                           type="radio"
@@ -479,6 +487,34 @@ export default function DepositModal({
                 </form>
               )}
             </div>
+          </div>
+          {/* Toast Notifications */}
+          <div className="fixed top-20 right-4 z-50 space-y-2">
+            {notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`flex items-center gap-3 p-4 rounded-lg shadow-lg ${isDarkMode ? 'text-white' : 'text-black'} transition-all duration-300 ${notification.type === 'success'
+                  ? 'bg-green-600'
+                  : notification.type === 'error'
+                    ? 'bg-red-600'
+                    : notification.type === 'warning'
+                      ? 'bg-yellow-600'
+                      : 'bg-blue-600'
+                  }`}
+              >
+                {notification.type === 'success' && <CheckCircle className="w-5 h-5" />}
+                {notification.type === 'error' && <X className="w-5 h-5" />}
+                {notification.type === 'warning' && <AlertTriangle className="w-5 h-5" />}
+                {notification.type === 'info' && <Info className="w-5 h-5" />}
+                <span className="text-sm font-medium">{notification.message}</span>
+                <button
+                  onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                  className={`ml-auto ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-700'} transition-colors`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
