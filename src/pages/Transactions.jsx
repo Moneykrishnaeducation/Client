@@ -104,7 +104,7 @@ const Transactions = () => {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-md border border-yellow-600 transition-all duration-200 ${
+                className={`px-4 py-2 w-full md:w-40 rounded-md border border-yellow-600 transition-all duration-200 ${
                   selectedCategory === category
                     ? "bg-yellow-500 text-black"
                     : isDarkMode

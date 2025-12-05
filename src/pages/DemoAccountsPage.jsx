@@ -12,6 +12,9 @@ import {
   RefreshCw,
   AlertCircle,
   Check,
+  Eye,
+  EyeOff,
+  Shuffle,
 } from "lucide-react";
 
 export default function DemoAccountsPage() {
@@ -31,8 +34,8 @@ export default function DemoAccountsPage() {
   const [notification, setNotification] = useState(null);
 
   const [formData, setFormData] = useState({
-    balance: "",
-    leverage: "500x",
+    balance: "1000",
+    leverage: "500",
     masterPassword: "",
     investorPassword: "",
   });
@@ -40,6 +43,26 @@ export default function DemoAccountsPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 🔹 Password visibility state
+  const [showPasswords, setShowPasswords] = useState({
+    master: false,
+    investor: false,
+  });
+
+  // 🔹 Generate random password
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+  // 🔹 Toggle password visibility
+  const togglePasswordVisibility = (type) => {
+    setShowPasswords(prev => ({ ...prev, [type]: !prev[type] }));
   };
 
   // 🔹 Show notification
@@ -56,13 +79,12 @@ export default function DemoAccountsPage() {
         setDemoAccounts(data.map(acc => ({
           id: acc.account_id,
           balance: acc.balance,
-          leverage: acc.leverage + 'x', // Add 'x' suffix for display
+          leverage: acc.leverage , // Add 'x' suffix for display
           holder_name: acc.holder_name,
           email: acc.email,
           phone: acc.phone,
           created_at: acc.created_at,
           is_enabled: acc.is_enabled,
-          is_algo_enabled: acc.is_algo_enabled,
         })));
       } catch (error) {
         console.error('Error fetching demo accounts:', error);
@@ -75,6 +97,17 @@ export default function DemoAccountsPage() {
     fetchDemoAccounts();
   }, []);
 
+  // 🔹 Auto-assign passwords when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(prev => ({
+        ...prev,
+        masterPassword: generatePassword(),
+        investorPassword: generatePassword(),
+      }));
+    }
+  }, [isOpen]);
+
   // 🔹 Create new demo account
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,8 +116,8 @@ export default function DemoAccountsPage() {
       const data = await apiCall('api/create-demo-account/', {
         method: 'POST',
         body: JSON.stringify({
-          balance: formData.balance || '10000',
-          leverage: formData.leverage.replace('x', ''), // Remove 'x' suffix
+          balance: formData.balance || '1000',
+          leverage: formData.leverage, // Remove 'x' suffix
           masterPassword: formData.masterPassword,
           investorPassword: formData.investorPassword,
         }),
@@ -96,20 +129,19 @@ export default function DemoAccountsPage() {
       const newAccount = {
         id: data.account_id,
         balance: Number(data.balance),
-        leverage: data.leverage + 'x', // Add 'x' suffix for display
+        leverage: data.leverage, // Add 'x' suffix for display
         holder_name: data.holder_name || '',
         email: data.email || '',
         phone: data.phone || '',
         created_at: new Date().toISOString(),
         is_enabled: true,
-        is_algo_enabled: false,
       };
       setDemoAccounts((prev) => [...prev, newAccount]);
 
       setIsOpen(false);
       setFormData({
         balance: "",
-        leverage: "500x",
+        leverage: "500",
         masterPassword: "",
         investorPassword: "",
       });
@@ -154,7 +186,7 @@ export default function DemoAccountsPage() {
     );
 
     // Call API to update
-    await updateAccount(accountId, { leverage: newLeverage.replace('x', '') });
+    await updateAccount(accountId, { leverage: newLeverage });
   };
 
   // 🔹 Reset balance to default
@@ -162,10 +194,10 @@ export default function DemoAccountsPage() {
     setUpdating(prev => ({ ...prev, [accountId]: true }));
 
     try {
-      const data = await apiCall(`api/reset-demo-balance/${accountId}/`, {
+      const data = await apiCall(`reset-demo-balance/${accountId}/`, {
         method: 'POST',
         body: JSON.stringify({
-          balance: '10000' // Reset to $10,000
+          balance: '1000' // Reset to $10,000
         }),
       });
 
@@ -194,7 +226,7 @@ export default function DemoAccountsPage() {
       const data = await apiCall(`api/change-demo-leverage/${accountId}/`, {
         method: 'POST',
         body: JSON.stringify({
-          leverage: newLeverage.replace('x', '')
+          leverage: newLeverage
         }),
       });
 
@@ -246,13 +278,12 @@ export default function DemoAccountsPage() {
       setDemoAccounts(data.map(acc => ({
         id: acc.account_id,
         balance: acc.balance,
-        leverage: acc.leverage + 'x',
+        leverage: acc.leverage,
         holder_name: acc.holder_name,
         email: acc.email,
         phone: acc.phone,
         created_at: acc.created_at,
         is_enabled: acc.is_enabled,
-        is_algo_enabled: acc.is_algo_enabled,
       })));
     } catch (error) {
       console.error('Error refetching demo accounts:', error);
@@ -280,7 +311,7 @@ export default function DemoAccountsPage() {
       )}
 
       {/* Top Buttons */}
-      <div className="w-full max-w-5xl flex justify-between items-center px-6 mb-8">
+      <div className="w-full md:max-w-5xl flex gap-3 justify-between items-center px-6 mb-8">
         <button
           onClick={() => setIsOpen(true)}
           className="bg-gradient-to-b from-yellow-400 to-yellow-600 text-black font-semibold px-5 py-2 rounded-md shadow-md hover:opacity-90 transition"
@@ -310,7 +341,7 @@ export default function DemoAccountsPage() {
             <p>Loading demo accounts...</p>
           </div>
         ) : demoAccounts.length > 0 ? (
-          <div className="overflow-x-auto px-10">
+          <div className="overflow-x-auto md:px-10">
             <table className={`min-w-full ${isDarkMode ? 'bg-[#1a1a1a]' : 'bg-white'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm`}>
               <thead className={`${isDarkMode ? 'bg-neutral-800' : 'bg-gray-100'} text-yellow-400`}>
                 <tr>
@@ -335,7 +366,7 @@ export default function DemoAccountsPage() {
                     <td className="py-3 px-4 text-yellow-400">{acc.id}</td>
 
                     {/* Editable Balance */}
-                    <td className="py-3 px-4 flex items-center gap-2">
+                    <td className="py-4 px-4 flex mt-4 md:mt-2 items-center gap-2">
                       <button
                         onClick={() => updateBalance(acc.id, "subtract")}
                         disabled={updating[acc.id]}
@@ -374,26 +405,26 @@ export default function DemoAccountsPage() {
                         disabled={updating[acc.id]}
                         className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} px-2 py-1 rounded text-sm focus:outline-none ${isDarkMode ? '' : 'text-black'} disabled:opacity-50`}
                       >
-                        {["1x", "2x", "5x", "10x", "20x", "50x", "100x", "200x", "500x", "1000x"].map(
+                        {["1", "2", "5", "10", "20", "50", "100", "200", "500"].map(
                           (lev) => (
-                            <option key={lev}>{lev}</option>
+                            <option key={lev}>1:{lev}</option>
                           )
                         )}
                       </select>
                     </td>
 
                     {/* View / Update Buttons */}
-                    <td className="py-3 px-4 text-center space-x-2">
+                    <td className="py-4 px-4 flex gap-3 ">
                       <button
                         onClick={() => setSelectedAccountId(acc.id)}
-                        className={`${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400 text-black'} px-3 py-1 rounded text-sm`}
+                        className={`${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400 text-black'} px-3 py-2 rounded w-full text-sm`}
                       >
                         View
                       </button>
                       <button
                         onClick={() => updateAccount(acc.id, {})}
                         disabled={updating[acc.id]}
-                        className="bg-yellow-400 text-black hover:bg-yellow-300 px-3 py-1 rounded text-sm font-semibold disabled:opacity-50"
+                        className="bg-yellow-400 text-black hover:bg-yellow-300 w-full px-3 py-2 rounded text-sm font-semibold disabled:opacity-50"
                       >
                         {updating[acc.id] ? <RefreshCw size={14} className="animate-spin inline" /> : 'Update'}
                       </button>
@@ -457,9 +488,6 @@ export default function DemoAccountsPage() {
                     <p className="mb-1">
                       <span className="text-gray-400">Enabled:</span> {acc.is_enabled ? 'Yes' : 'No'}
                     </p>
-                    <p className="mb-1">
-                      <span className="text-gray-400">Algo Enabled:</span> {acc.is_algo_enabled ? 'Yes' : 'No'}
-                    </p>
 
                     <div className="flex justify-end mt-4">
                       <button
@@ -509,11 +537,11 @@ export default function DemoAccountsPage() {
                   name="balance"
                   value={formData.balance}
                   onChange={handleChange}
-                  placeholder="Enter balance (default: $10,000)"
+                  placeholder="Enter balance (default: $1000)"
                   className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
                 />
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
-                  Leave empty for default $10,000
+                  Leave empty for default $1000
                 </p>
               </div>
 
@@ -528,8 +556,8 @@ export default function DemoAccountsPage() {
                   onChange={handleChange}
                   className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
                 >
-                  {["1x", "2x", "5x", "10x", "20x", "50x", "100x", "200x", "500x", "1000x"].map((lev) => (
-                    <option key={lev}>{lev}</option>
+                  {["1", "2", "5", "10", "20", "50", "100", "200", "500"].map((lev) => (
+                    <option key={lev}>1:{lev}</option>
                   ))}
                 </select>
               </div>
@@ -539,31 +567,53 @@ export default function DemoAccountsPage() {
                 <label className="block text-sm font-medium mb-1">
                   Master Password *
                 </label>
-                <input
-                  type="password"
-                  name="masterPassword"
-                  value={formData.masterPassword}
-                  onChange={handleChange}
-                  placeholder="Enter master password"
-                  required
-                  className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
-                />
+                <div className="relative">
+                  <input
+                    type={showPasswords.master ? "text" : "password"}
+                    name="masterPassword"
+                    value={formData.masterPassword}
+                    onChange={handleChange}
+                    placeholder="Enter master password"
+                    required
+                    className={`w-full px-3 py-2 pr-20 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
+                  />
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('master')}
+                      className="text-gray-500 hover:text-gray-700 p-1"
+                    >
+                      {showPasswords.master ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Investor Password */}
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium mb-1 ">
                   Investor Password *
                 </label>
-                <input
-                  type="password"
+                <div className="relative">
+                  <input
+                  type={showPasswords.investor ? "text" : "password"}
                   name="investorPassword"
                   value={formData.investorPassword}
                   onChange={handleChange}
                   placeholder="Enter investor password"
                   required
-                  className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
+                  className={`w-full px-3 py-2 pr-20 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded focus:outline-none ${isDarkMode ? '' : 'text-black'}`}
                 />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('investor')}
+                      className="text-gray-500 hover:text-gray-700 p-1"
+                    >
+                      {showPasswords.master ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-between mt-4">

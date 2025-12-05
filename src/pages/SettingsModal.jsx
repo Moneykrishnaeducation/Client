@@ -188,11 +188,15 @@ export default function SettingsModal({
                     className={`w-full ${isDarkMode ? 'bg-[#1a1a1a] text-white' : 'bg-gray-100 text-black'} border border-[#FFD700] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FFD700]`}
                   >
                     <option value="">Select new leverage</option>
+                    <option value="1:50">1:1</option>
+                    <option value="1:50">1:2</option>
+                    <option value="1:50">1:5</option>
+                    <option value="1:50">1:10</option>
+                    <option value="1:50">1:20</option>
                     <option value="1:50">1:50</option>
                     <option value="1:100">1:100</option>
                     <option value="1:200">1:200</option>
                     <option value="1:500">1:500</option>
-                    <option value="1:1000">1:1000</option>
                   </select>
                   <button
                     onClick={handleUpdateLeverage}

@@ -25,6 +25,28 @@ const Withdraw = ({ onClose, currentAccount }) => {
       setAccounts([currentAccount]);
       setLoading(false);
     }
+    const fetchBankDetails = async () => {
+      try {
+        const data = await apiCall('client/api/profile/bank-details/');
+        setBankDetails(data || null);
+      } catch (err) {
+        console.error('Error fetching bank details:', err);
+        setBankDetails(null);
+      }
+    }; fetchBankDetails();
+
+
+    // Updated: fetchCryptoDetails using apiCall()
+    const fetchCryptoDetails = async () => {
+      try {
+        const data = await apiCall('client/api/profile/crypto-details/');
+        setCryptoDetails(data || null);
+      } catch (err) {
+        console.error('Error fetching crypto details:', err);
+        setCryptoDetails(null);
+      }
+    };
+    fetchCryptoDetails();
   }, [currentAccount]);
 
   // Fetch user accounts, bank details, and crypto details on component mount or selectedAccount change

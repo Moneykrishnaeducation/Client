@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import OpenAccount from "./OpenAccount";
 import DemoAccountList from "./DemoAccountsPage";
 import Withdraw from "./Withdraw";
@@ -36,6 +36,14 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate()
+
+  const selectedFromAccount = useMemo(() => {
+    return accounts.find(acc => acc.account_id === fromAccount);
+  }, [accounts, fromAccount]);
+
+  const selectedToAccount = useMemo(() => {
+    return accounts.find(acc => acc.account_id === toAccount);
+  }, [accounts, toAccount]);
 
   const closeComponent = () => {
     setActiveComponent(null);
@@ -136,7 +144,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   };
 
   useEffect(() => {
-    const fromAcc = accounts.find((acc) => acc.id === fromAccount);
+    const fromAcc = accounts.find((acc) => acc.account_id === fromAccount);
     if (fromAcc && amount && Number(amount) > fromAcc.balance) {
       setInsufficientBalance(true);
     } else {
@@ -213,118 +221,138 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
           {/* Internal Transaction Modal */}
           {activeComponent === "internalTransaction" && (
             <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? 'bg-black/70' : 'bg-white/70'} z-50`}>
-              <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} p-6 rounded-lg w-full max-w-md relative shadow-xl border-2 border-gold`}>
-                {/* Close Button */}
-                <button
-                  onClick={closeComponent}
-                  className={`absolute top-3 right-3 ${isDarkMode ? 'text-white hover:text-gold' : 'text-black hover:text-gold'} text-2xl transition`}
-                >
-                  &times;
-                </button>
+  <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} p-0 rounded-xl w-full max-w-lg relative shadow-2xl border border-gold overflow-hidden`}>
 
-                {/* Modal Title */}
-                <h2 className="text-2xl font-semibold mb-6 text-center text-gold">
-                  Internal Transfer
-                </h2>
+    {/* Close Button */}
+    <button
+      onClick={closeComponent}
+      className={`absolute top-4 right-4 ${isDarkMode ? 'text-white hover:text-gold' : 'text-black hover:text-gold'} text-3xl font-bold z-20`}
+    >
+      &times;
+    </button>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* From Account */}
-                  <div>
-                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
-                      <span className="text-red-500">*</span> From Account:
-                    </label>
-                    <select
-                      value={fromAccount}
-                      onChange={(e) => setFromAccount(e.target.value)}
-                      required
-                      className={`w-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold`}
-                    >
-                      <option value="" disabled key="disabled-from">
-                        Select Account
-                      </option>
-                      {accounts.map((acc) => (
-                        <option key={acc.id} value={acc.account_id}>
-                          {acc.group_alias} (${acc.balance})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+    {/* Title */}
+    <div className="py-6 px-8 border-b border-gold">
+      <h2 className="text-3xl font-semibold text-center text-gold tracking-wide">
+        Internal Transfer
+      </h2>
+      <p className="text-center mt-2 text-sm opacity-80">
+        Send funds between your accounts quickly and securely.
+      </p>
+    </div>
 
-                  {/* To Account */}
-                  <div>
-                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
-                      <span className="text-red-500">*</span> To Account:
-                    </label>
-                    <select
-                      value={toAccount}
-                      onChange={(e) => setToAccount(e.target.value)}
-                      required
-                      className={`w-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} border border-gold rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold`}
-                    >
-                      <option value="" disabled key="disabled-to">
-                        Select Account
-                      </option>
-                      {accounts.map((acc) => (
-                        <option key={acc.id} value={acc.account_id}>
-                          {acc.group_alias} (${acc.balance})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+    {/* Form Body */}
+    <form onSubmit={handleSubmit} className="px-8 py-6 space-y-6">
 
-                  {/* Amount */}
-                  <div>
-                    <label className={`block mb-1 font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
-                      <span className="text-red-500">*</span> Amount:
-                    </label>
-                    <div className={`flex items-center ${isDarkMode ? 'bg-black' : 'bg-white'} border border-gold rounded px-3 py-2 focus-within:ring-2 focus-within:ring-gold`}>
-                      <span className="mr-2 text-gold">$</span>
-                      <input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        required
-                        placeholder="Enter amount"
-                        className={`flex-1 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} outline-none`}
-                      />
-                    </div>
-                    {insufficientBalance && (
-                      <p className="text-red-500 text-sm mt-1">
-                        Insufficient balance in the selected account.
-                      </p>
-                    )}
-                  </div>
+      {/* From Account */}
+      <div className="bg-black/10 p-4 rounded-lg border border-gold shadow-md">
+        <label className="block mb-2 font-semibold text-gold text-lg">
+          From Account <span className="text-red-500">*</span>
+        </label>
 
-                  {/* Transfer Message */}
-                  {transferMessage && (
-                    <div className="text-center text-sm font-medium text-gold">
-                      {transferMessage}
-                    </div>
-                  )}
+        <select
+          value={fromAccount}
+          onChange={(e) => setFromAccount(e.target.value)}
+          required
+          className={`w-full rounded-md px-3 py-2 border border-gold focus:ring-2 focus:ring-gold ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+        >
+          <option value="" disabled>Select Account</option>
+          {accounts.map((acc) => (
+            <option key={acc.id} value={acc.account_id}>
+              {acc.group_alias} (${acc.balance})
+            </option>
+          ))}
+        </select>
 
-                  {/* Buttons */}
-                  <div className="flex justify-end gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={closeComponent}
-                      className={`px-4 py-2 rounded ${isDarkMode ? 'bg-yellow-600 text-white hover:bg-yellow-700' : 'bg-gray-300 text-black hover:bg-gray-400'} transition`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!fromAccount || !toAccount || !amount || isSubmitting}
-                      className={`px-4 py-2 rounded text-black transition ${isSubmitting || !fromAccount || !toAccount || !amount
-                        ? "bg-gray-600 cursor-not-allowed"
-                        : "bg-gold hover:bg-white hover:text-gold"
-                        }`}
-                    >
-                      {isSubmitting ? "Processing..." : "Transfer"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+        {/* Balance text */}
+        <p className="mt-2 text-sm opacity-80">
+          Balance: <span className=" font-semibold">${selectedFromAccount?.balance || 0}</span>
+        </p>
+      </div>
+
+      {/* To Account */}
+      <div className="bg-black/10 p-4 rounded-lg border border-gold shadow-md">
+        <label className="block mb-2 font-semibold text-gold text-lg">
+          To Account <span className="text-red-500">*</span>
+        </label>
+
+        <select
+          value={toAccount}
+          onChange={(e) => setToAccount(e.target.value)}
+          required
+          className={`w-full rounded-md px-3 py-2 border border-gold focus:ring-2 focus:ring-gold ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+        >
+          <option value="" disabled>Select Account</option>
+          {accounts.map((acc) => (
+            <option key={acc.id} value={acc.account_id}>
+              {acc.group_alias} (${acc.balance})
+            </option>
+          ))}
+        </select>
+
+        {/* Balance text */}
+        <p className="mt-2 text-sm opacity-80">
+          Balance: <span className=" font-semibold">${selectedToAccount?.balance || 0}</span>
+        </p>
+      </div>
+
+      {/* Amount */}
+      <div className="bg-black/10 p-4 rounded-lg border border-gold shadow-md">
+        <label className="block mb-2 font-semibold text-gold text-lg">
+          Amount (INR) <span className="text-red-500">*</span>
+        </label>
+
+        <div className="flex items-center border border-gold rounded-md px-3 py-2 bg-black/20">
+          <span className="text-gold mr-2 font-bold text-lg">₹</span>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+            placeholder="0.00"
+            className={`flex-1 bg-transparent outline-none ${isDarkMode ? 'text-white' : 'text-black'}`}
+          />
+        </div>
+
+        {insufficientBalance && (
+          <p className="text-red-500 text-sm mt-1">
+            Insufficient balance in the selected account.
+          </p>
+        )}
+      </div>
+
+      {/* Transfer Status */}
+      {transferMessage && (
+        <div className="text-center font-medium text-gold text-sm bg-black/20 p-3 rounded-md border border-gold">
+          {transferMessage}
+        </div>
+      )}
+
+      {/* Buttons */}
+      <div className="flex justify-end gap-4 pt-4">
+        <button
+          type="button"
+          onClick={closeComponent}
+          className={`px-5 py-2 rounded-md ${isDarkMode ? 'bg-yellow-600 text-white hover:bg-yellow-700' : 'bg-gray-300 text-black hover:bg-gray-400'} font-semibold`}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          disabled={!fromAccount || !toAccount || !amount || isSubmitting}
+          className={`px-5 py-2 rounded-md font-semibold transition ${
+            isSubmitting || !fromAccount || !toAccount || !amount
+              ? "bg-gray-600 text-black cursor-not-allowed"
+              : "bg-gold text-black hover:bg-white hover:text-gold"
+          }`}
+        >
+          {isSubmitting ? "Processing..." : "Transfer"}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 
           )}
 
