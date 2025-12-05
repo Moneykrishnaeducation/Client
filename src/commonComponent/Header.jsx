@@ -472,10 +472,10 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       )}
 
        {showLogoutPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fadeIn">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-150 animate-fadeIn">
           <div
             className={`w-[90%] sm:w-[350px] p-6 rounded-xl shadow-xl ${
-              isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"
+              isDarkMode ? "bg-gray-900 text-white border border-yellow-500" : "bg-white text-black"
             }`}
           >
             <h2 className="text-lg font-semibold mb-3">Confirm Logout</h2>
@@ -484,7 +484,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowLogoutPopup(false)}
-                className="px-4 py-2 rounded-md border border-gray-400 hover:bg-gray-200 text-sm"
+                className="px-4 py-2 rounded-md border border-gray-400 hover:bg-gray-500 text-sm"
               >
                 Cancel
               </button>
