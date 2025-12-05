@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import {
   LayoutDashboard,
@@ -138,7 +139,7 @@ const ClientItem = ({ client, level }) => {
       {/* Modal for Accounts */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-          <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-4xl overflow-auto max-h-[80vh] relative`}>
+          <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-lg p-6 w-full max-w-7xl overflow-auto max-h-[80vh] relative`}>
             <button
               className="absolute top-3 right-3 text-yellow-500 font-bold"
               onClick={closeModal}
@@ -148,46 +149,48 @@ const ClientItem = ({ client, level }) => {
             <h2 className="text-yellow-300 text-lg font-semibold mb-4">
               Accounts for {client.name}
             </h2>
-            <table className="w-full text-yellow-200 border border-yellow-500">
-              <thead>
-                <tr className="border-b border-yellow-500">
-                  <th className="px-2 py-1 text-left">Account ID</th>
-                  <th className="px-2 py-1 text-left">Type</th>
-                  <th className="px-2 py-1 text-left">Group</th>
-                  <th className="px-2 py-1 text-left">Total Lots</th>
-                  <th className="px-2 py-1 text-left">Total Deposits</th>
-                  <th className="px-2 py-1 text-left">Total Withdrawals</th>
-                  <th className="px-2 py-1 text-left">Commission Earned</th>
-                  <th className="px-2 py-1 text-left">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accounts.map((acc) => (
-                  <tr key={acc.account_id} className={`border-b border-yellow-500 hover:bg-yellow-500/10 ${isDarkMode ? 'text-white' : 'text-black'}`}>
-                    <td className="px-2 py-1">{acc.account_id}</td>
-                    <td className="px-2 py-1">{acc.account_type}</td>
-                    <td className="px-2 py-1">{acc.group_alias}</td>
-                    <td className="px-2 py-1">{acc.total_lots}</td>
-                    <td className="px-2 py-1">{acc.total_deposits}</td>
-                    <td className="px-2 py-1">{acc.total_withdrawals}</td>
-                    <td className="px-2 py-1">{acc.total_commission}</td>
-                    <td>
-                      <button
-                        className="text-yellow-400 cursor-pointer font-semibold"
-                        onClick={() => {
-                          setSelectedAccount(acc);
-                          setIsDetailModalOpen(true);
-                          fetchPositions(acc.account_id);
-                          fetchAccountDetails(acc.account_id);
-                        }}
-                      >
-                        View
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+            <table className="w-full text-yellow-300 border border-yellow-500">
+                <thead>
+                  <tr className="border-b p-3 border-yellow-500">
+                    <th className="px-2 py-1 text-left">Account ID</th>
+                    <th className="px-2 py-1 text-left">Type</th>
+                    <th className="px-2 py-1 text-left">Group</th>
+                    <th className="px-2 py-1 text-left">Total Lots</th>
+                    <th className="px-2 py-1 text-left">Total Deposits</th>
+                    <th className="px-2 py-1 text-left">Total Withdrawals</th>
+                    <th className="px-2 py-1 text-left">Commission Earned</th>
+                    <th className="px-2 py-1 text-left">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {accounts.map((acc) => (
+                    <tr key={acc.account_id} className={`border-b border-yellow-500 hover:bg-yellow-500/10 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                      <td className="px-2 py-1">{acc.account_id}</td>
+                      <td className="px-2 py-1">{acc.account_type}</td>
+                      <td className="px-2 py-1">{acc.group_alias}</td>
+                      <td className="px-2 py-1">{acc.total_lots}</td>
+                      <td className="px-2 py-1">{acc.total_deposits}</td>
+                      <td className="px-2 py-1">{acc.total_withdrawals}</td>
+                      <td className="px-2 py-1">{acc.total_commission}</td>
+                      <td>
+                        <button
+                          className="bg-yellow-500 text-black px-1 py-0.5 rounded text-xs font-semibold hover:bg-yellow-400"
+                          onClick={() => {
+                            setSelectedAccount(acc);
+                            setIsDetailModalOpen(true);
+                            fetchPositions(acc.account_id);
+                            fetchAccountDetails(acc.account_id);
+                          }}
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -235,10 +238,10 @@ const ClientItem = ({ client, level }) => {
                   key={key}
                   className="flex justify-between bg-white/5 hover:bg-yellow-500/10 p-3 rounded-md transition-colors"
                 >
-                  <span className="text-yellow-200 font-medium">
+                  <span className="text-yellow-300 font-medium">
                     {formatKey(key)}:
                   </span>
-                  <span className="text-yellow-300">{value}</span>
+                  <span >{value}</span>
                 </div>
               ))}
           </div>
@@ -251,7 +254,7 @@ const ClientItem = ({ client, level }) => {
       </h3>
 
       {positionsLoading && (
-        <p className="text-center text-yellow-200">Loading positions...</p>
+        <p className="text-center">Loading positions...</p>
       )}
       {positionsError && (
         <p className="text-center text-red-500">{positionsError}</p>
@@ -259,7 +262,7 @@ const ClientItem = ({ client, level }) => {
       {!positionsLoading &&
         !positionsError &&
         positionsData.length === 0 && (
-          <p className="text-center text-yellow-200">
+          <p className="text-center text-yellow-300">
             No open positions available
           </p>
         )}
@@ -271,7 +274,7 @@ const ClientItem = ({ client, level }) => {
             {/* ↑ glowing shadow instead of border */}
 
             <table className="min-w-[1200px] w-full text-yellow-200">
-              <thead className="bg-black/40">
+              <thead>
                 <tr className="border-b border-yellow-200">
                   {[
                     'Ticket',
@@ -377,6 +380,7 @@ const App = () => {
   const [commissionTotalPages, setCommissionTotalPages] = useState(1);
   const [commissionTotalItems, setCommissionTotalItems] = useState(0);
   const [commissionSearchQuery, setCommissionSearchQuery] = useState("");
+  const [copyMessage, setCopyMessage] = useState("");
 
 
   // Add User Form State
@@ -683,6 +687,7 @@ const App = () => {
     {error && <p className="text-red-500">{error}</p>}
     {!loading && !error && (
       <>
+        {copyMessage && <p className="fixed top-4 right-4 text-green-500 text-sm bg-black/50 px-2 py-1 rounded z-50">{copyMessage}</p>}
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {[
@@ -741,13 +746,17 @@ const App = () => {
         </div>
 
         {/* Referral Link */}
-        <div className="mt-6 flex flex-col items-center gap-2 text-center border-2 border-yellow-500 rounded-lg p-3">
+        <div className="mt-6 relative flex flex-col items-center gap-2 text-center border-2 border-yellow-500 rounded-lg p-3">
           <span className="text-yellow-400 font-semibold text-sm">Referral Link:</span>
           <div className="flex items-center gap-2">
             <span className="text-cyan-400 text-sm break-all">{referralLink || dashboardData.referralLink}</span>
             <div className="flex gap-1">
               <button
-                onClick={() => navigator.clipboard.writeText(referralLink || dashboardData.referralLink)}
+                onClick={() => {
+                  navigator.clipboard.writeText(referralLink || dashboardData.referralLink);
+                  setCopyMessage("Link copied to clipboard!");
+                  setTimeout(() => setCopyMessage(""), 3000);
+                }}
                 className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-semibold hover:bg-yellow-400"
               >
                 📋 Copy
@@ -760,6 +769,7 @@ const App = () => {
               </button>
             </div>
           </div>
+          {copyMessage && <p className="absolute top-2 right-2 text-green-500 text-sm">{copyMessage}</p>}
         </div>
       </>
     )}
@@ -785,15 +795,15 @@ const App = () => {
       </div>
 
       {/* Right: Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+      <div className="flex flex-row gap-3 w-full justify-center sm:justify-end">
         <CSVLink data={handleDownloadClients()} filename={"clients.csv"}>
-          <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
+          <button className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-auto">
             <DownloadCloud size={16} /> Download
           </button>
         </CSVLink>
 
         <button
-          className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-3 py-2 rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-auto"
           onClick={() => setShowAddUserForm(true)}
         >
           <UserPlus size={16} /> Add User
@@ -898,10 +908,231 @@ const App = () => {
               className={`px-3 py-2 rounded-md border border-yellow-500 focus:outline-none ${isDarkMode ? 'bg-black text-yellow-200' : 'bg-white text-black'}`}
             >
               <option value="">Select Country</option>
-              <option value="US">United States</option>
-              <option value="UK">United Kingdom</option>
-              <option value="IN">India</option>
-              {/* Add more countries as needed */}
+              <option value="Afghanistan">Afghanistan</option>
+              <option value="Albania">Albania</option>
+              <option value="Algeria">Algeria</option>
+              <option value="American Samoa">American Samoa</option>
+              <option value="Andorra">Andorra</option>
+              <option value="Angola">Angola</option>
+              <option value="Anguilla">Anguilla</option>
+              <option value="Antarctica">Antarctica</option>
+              <option value="Antigua and Barbuda">Antigua and Barbuda</option>
+              <option value="Argentina">Argentina</option>
+              <option value="Armenia">Armenia</option>
+              <option value="Aruba">Aruba</option>
+              <option value="Australia">Australia</option>
+              <option value="Austria">Austria</option>
+              <option value="Azerbaijan">Azerbaijan</option>
+              <option value="Bahamas">Bahamas</option>
+              <option value="Bahrain">Bahrain</option>
+              <option value="Bangladesh">Bangladesh</option>
+              <option value="Barbados">Barbados</option>
+              <option value="Belarus">Belarus</option>
+              <option value="Belgium">Belgium</option>
+              <option value="Belize">Belize</option>
+              <option value="Benin">Benin</option>
+              <option value="Bermuda">Bermuda</option>
+              <option value="Bhutan">Bhutan</option>
+              <option value="Bolivia">Bolivia</option>
+              <option value="Bosnia and Herzegovina">Bosnia and Herzegovina</option>
+              <option value="Botswana">Botswana</option>
+              <option value="Brazil">Brazil</option>
+              <option value="Brunei">Brunei</option>
+              <option value="Bulgaria">Bulgaria</option>
+              <option value="Burkina Faso">Burkina Faso</option>
+              <option value="Burundi">Burundi</option>
+              <option value="Cambodia">Cambodia</option>
+              <option value="Cameroon">Cameroon</option>
+              <option value="Canada">Canada</option>
+              <option value="Cape Verde">Cape Verde</option>
+              <option value="Cayman Islands">Cayman Islands</option>
+              <option value="Central African Republic">Central African Republic</option>
+              <option value="Chad">Chad</option>
+              <option value="Chile">Chile</option>
+              <option value="China">China</option>
+              <option value="Colombia">Colombia</option>
+              <option value="Comoros">Comoros</option>
+              <option value="Congo">Congo</option>
+              <option value="Congo, Democratic Republic">Congo, Democratic Republic</option>
+              <option value="Cook Islands">Cook Islands</option>
+              <option value="Costa Rica">Costa Rica</option>
+              <option value="Côte d'Ivoire">Côte d'Ivoire</option>
+              <option value="Croatia">Croatia</option>
+              <option value="Cuba">Cuba</option>
+              <option value="Curaçao">Curaçao</option>
+              <option value="Cyprus">Cyprus</option>
+              <option value="Czech Republic">Czech Republic</option>
+              <option value="Denmark">Denmark</option>
+              <option value="Djibouti">Djibouti</option>
+              <option value="Dominica">Dominica</option>
+              <option value="Dominican Republic">Dominican Republic</option>
+              <option value="Ecuador">Ecuador</option>
+              <option value="Egypt">Egypt</option>
+              <option value="El Salvador">El Salvador</option>
+              <option value="Equatorial Guinea">Equatorial Guinea</option>
+              <option value="Eritrea">Eritrea</option>
+              <option value="Estonia">Estonia</option>
+              <option value="Ethiopia">Ethiopia</option>
+              <option value="Falkland Islands">Falkland Islands</option>
+              <option value="Faroe Islands">Faroe Islands</option>
+              <option value="Fiji">Fiji</option>
+              <option value="Finland">Finland</option>
+              <option value="France">France</option>
+              <option value="Gabon">Gabon</option>
+              <option value="Gambia">Gambia</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Germany">Germany</option>
+              <option value="Ghana">Ghana</option>
+              <option value="Gibraltar">Gibraltar</option>
+              <option value="Greece">Greece</option>
+              <option value="Greenland">Greenland</option>
+              <option value="Grenada">Grenada</option>
+              <option value="Guam">Guam</option>
+              <option value="Guatemala">Guatemala</option>
+              <option value="Guernsey">Guernsey</option>
+              <option value="Guinea">Guinea</option>
+              <option value="Guinea-Bissau">Guinea-Bissau</option>
+              <option value="Guyana">Guyana</option>
+              <option value="Haiti">Haiti</option>
+              <option value="Honduras">Honduras</option>
+              <option value="Hong Kong">Hong Kong</option>
+              <option value="Hungary">Hungary</option>
+              <option value="Iceland">Iceland</option>
+              <option value="India">India</option>
+              <option value="Indonesia">Indonesia</option>
+              <option value="Iran">Iran</option>
+              <option value="Iraq">Iraq</option>
+              <option value="Ireland">Ireland</option>
+              <option value="Isle of Man">Isle of Man</option>
+              <option value="Israel">Israel</option>
+              <option value="Italy">Italy</option>
+              <option value="Jamaica">Jamaica</option>
+              <option value="Japan">Japan</option>
+              <option value="Jersey">Jersey</option>
+              <option value="Jordan">Jordan</option>
+              <option value="Kazakhstan">Kazakhstan</option>
+              <option value="Kenya">Kenya</option>
+              <option value="Kiribati">Kiribati</option>
+              <option value="Korea, North">Korea, North</option>
+              <option value="Korea, South">Korea, South</option>
+              <option value="Kuwait">Kuwait</option>
+              <option value="Kyrgyzstan">Kyrgyzstan</option>
+              <option value="Laos">Laos</option>
+              <option value="Latvia">Latvia</option>
+              <option value="Lebanon">Lebanon</option>
+              <option value="Lesotho">Lesotho</option>
+              <option value="Liberia">Liberia</option>
+              <option value="Libya">Libya</option>
+              <option value="Liechtenstein">Liechtenstein</option>
+              <option value="Lithuania">Lithuania</option>
+              <option value="Luxembourg">Luxembourg</option>
+              <option value="Macao">Macao</option>
+              <option value="Macedonia">Macedonia</option>
+              <option value="Madagascar">Madagascar</option>
+              <option value="Malawi">Malawi</option>
+              <option value="Malaysia">Malaysia</option>
+              <option value="Maldives">Maldives</option>
+              <option value="Mali">Mali</option>
+              <option value="Malta">Malta</option>
+              <option value="Marshall Islands">Marshall Islands</option>
+              <option value="Mauritania">Mauritania</option>
+              <option value="Mauritius">Mauritius</option>
+              <option value="Mexico">Mexico</option>
+              <option value="Micronesia">Micronesia</option>
+              <option value="Moldova">Moldova</option>
+              <option value="Monaco">Monaco</option>
+              <option value="Mongolia">Mongolia</option>
+              <option value="Montenegro">Montenegro</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Morocco">Morocco</option>
+              <option value="Mozambique">Mozambique</option>
+              <option value="Myanmar">Myanmar</option>
+              <option value="Namibia">Namibia</option>
+              <option value="Nauru">Nauru</option>
+              <option value="Nepal">Nepal</option>
+              <option value="Netherlands">Netherlands</option>
+              <option value="New Caledonia">New Caledonia</option>
+              <option value="New Zealand">New Zealand</option>
+              <option value="Nicaragua">Nicaragua</option>
+              <option value="Niger">Niger</option>
+              <option value="Nigeria">Nigeria</option>
+              <option value="Niue">Niue</option>
+              <option value="Norfolk Island">Norfolk Island</option>
+              <option value="Northern Mariana Islands">Northern Mariana Islands</option>
+              <option value="Norway">Norway</option>
+              <option value="Oman">Oman</option>
+              <option value="Pakistan">Pakistan</option>
+              <option value="Palau">Palau</option>
+              <option value="Palestine">Palestine</option>
+              <option value="Panama">Panama</option>
+              <option value="Papua New Guinea">Papua New Guinea</option>
+              <option value="Paraguay">Paraguay</option>
+              <option value="Peru">Peru</option>
+              <option value="Philippines">Philippines</option>
+              <option value="Pitcairn">Pitcairn</option>
+              <option value="Poland">Poland</option>
+              <option value="Portugal">Portugal</option>
+              <option value="Puerto Rico">Puerto Rico</option>
+              <option value="Qatar">Qatar</option>
+              <option value="Romania">Romania</option>
+              <option value="Russia">Russia</option>
+              <option value="Rwanda">Rwanda</option>
+              <option value="Samoa">Samoa</option>
+              <option value="San Marino">San Marino</option>
+              <option value="São Tomé and Príncipe">São Tomé and Príncipe</option>
+              <option value="Saudi Arabia">Saudi Arabia</option>
+              <option value="Senegal">Senegal</option>
+              <option value="Serbia">Serbia</option>
+              <option value="Seychelles">Seychelles</option>
+              <option value="Sierra Leone">Sierra Leone</option>
+              <option value="Singapore">Singapore</option>
+              <option value="Sint Maarten">Sint Maarten</option>
+              <option value="Slovakia">Slovakia</option>
+              <option value="Slovenia">Slovenia</option>
+              <option value="Solomon Islands">Solomon Islands</option>
+              <option value="Somalia">Somalia</option>
+              <option value="South Africa">South Africa</option>
+              <option value="South Sudan">South Sudan</option>
+              <option value="Spain">Spain</option>
+              <option value="Sri Lanka">Sri Lanka</option>
+              <option value="Sudan">Sudan</option>
+              <option value="Suriname">Suriname</option>
+              <option value="Swaziland">Swaziland</option>
+              <option value="Sweden">Sweden</option>
+              <option value="Switzerland">Switzerland</option>
+              <option value="Syria">Syria</option>
+              <option value="Taiwan">Taiwan</option>
+              <option value="Tajikistan">Tajikistan</option>
+              <option value="Tanzania">Tanzania</option>
+              <option value="Thailand">Thailand</option>
+              <option value="Timor-Leste">Timor-Leste</option>
+              <option value="Togo">Togo</option>
+              <option value="Tokelau">Tokelau</option>
+              <option value="Tonga">Tonga</option>
+              <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+              <option value="Tunisia">Tunisia</option>
+              <option value="Turkey">Turkey</option>
+              <option value="Turkmenistan">Turkmenistan</option>
+              <option value="Turks and Caicos Islands">Turks and Caicos Islands</option>
+              <option value="Tuvalu">Tuvalu</option>
+              <option value="Uganda">Uganda</option>
+              <option value="Ukraine">Ukraine</option>
+              <option value="United Arab Emirates">United Arab Emirates</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="United States">United States</option>
+              <option value="Uruguay">Uruguay</option>
+              <option value="Uzbekistan">Uzbekistan</option>
+              <option value="Vanuatu">Vanuatu</option>
+              <option value="Vatican City">Vatican City</option>
+              <option value="Venezuela">Venezuela</option>
+              <option value="Vietnam">Vietnam</option>
+              <option value="Virgin Islands, British">Virgin Islands, British</option>
+              <option value="Virgin Islands, U.S.">Virgin Islands, U.S.</option>
+              <option value="Wallis and Futuna">Wallis and Futuna</option>
+              <option value="Western Sahara">Western Sahara</option>
+              <option value="Yemen">Yemen</option>
+              <option value="Zambia">Zambia</option>
+              <option value="Zimbabwe">Zimbabwe</option>
             </select>
             <button
               type="submit"
@@ -948,7 +1179,7 @@ const App = () => {
   <div className="inline-block min-w-full border-yellow-500 rounded-md transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.6)]">
     <table className={`min-w-full border-collapse border-yellow-500 text-center ${isDarkMode ? 'text-yellow-300' : 'text-black'}`}>
               <thead>
-                <tr className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} border-b-2 border-yellow-500`}>
+                <tr className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-yellow-500 text-black'} border-b-2 border-yellow-500`}>
                   <th className="px-4 py-2">S.No</th>
                   <th className="px-4 py-2">Position ID</th>
                   <th className="px-4 py-2">Deal Ticket</th>
@@ -965,7 +1196,7 @@ const App = () => {
               <tbody>
   {commissionLoading && (
     <tr>
-      <td colSpan="11" className="px-4 py-2 text-center">Loading...</td>
+      <td colSpan="11" className="px-4 py-2 text-center text-white-300">Loading...</td>
     </tr>
   )}
 
@@ -986,18 +1217,18 @@ const App = () => {
   )}
 
   {!commissionLoading && !commissionError && commissionData.map((row, index) => (
-    <tr key={index} className="border-b border-gray-700">
-      <td className="px-4 py-2">{index + 1}</td>
-      <td className="px-4 py-2">{row.position_id}</td>
-      <td className="px-4 py-2">{row.deal_ticket}</td>
-      <td className="px-4 py-2">{row.client_user}</td>
-      <td className="px-4 py-2">{row.client_trading_account}</td>
-      <td className="px-4 py-2">{row.position_symbol}</td>
-      <td className="px-4 py-2">{row.volume}</td>
-      <td className="px-4 py-2">{row.profit}</td>
-      <td className="px-4 py-2">{row.amount}</td>
-      <td className="px-4 py-2">{row.mt5_close_time}</td>
-      <td className="px-4 py-2">{row.created_at}</td>
+    <tr key={index} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{index + 1}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.position_id}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.deal_ticket}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.client_user}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.client_trading_account}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.position_symbol}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.volume}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.profit}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.amount}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.mt5_close_time}</td>
+      <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.created_at}</td>
     </tr>
   ))}
 </tbody>
@@ -1047,79 +1278,102 @@ const App = () => {
 
       {/* Withdraw Tab */}
 {activeTab === 'Withdraw' && (
-  <div className={`${isDarkMode ? 'bg-black' : 'bg-white'} rounded-xl shadow-2xl border-yellow-500 p-6 space-y-6 transition-shadow`}>
-     {/* Balance Display */}
-    <div className="text-center flex flex-col items-center">
-      <h2 className="text-xl font-bold text-yellow-400 mb-2 flex items-center gap-2">
-        Balance
-        <DollarSign
-          className="text-yellow-400"
-          style={{
-            display: 'inline-block',
-            transformStyle: 'preserve-3d',
-            animation: 'rollDollar 3s linear infinite',
-          }}
-        />
-      </h2>
-      <p className="text-3xl font-extrabold text-white">${dashboardData.commissionBalance.toFixed(2)}</p>
+  <div className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} rounded-xl shadow-2xl p-6 space-y-6 transition-shadow`}>
 
-      <style>
-        {`
-          @keyframes rollDollar {
-            from { transform: rotateY(0deg); }
-            to { transform: rotateY(360deg); }
-          }
-        `}
-      </style>
-    </div>
+    {/* Balance + Select Trading Account */}
+    <div className="flex flex-col md:flex-row ">
 
+      {/* Balance */}
+      <div className="flex text-center w-full flex items-center justify-center md:gap-20 gap-5">
+        
+        
+        <div className="flex justify-center items-center">
+        <select
+          value={selectedAccount}
+          onChange={(e) => setSelectedAccount(e.target.value)}
+          className={`w-full max-w-xs ${
+            isDarkMode
+              ? 'bg-black text-yellow-300 hover:bg-gray-900'
+              : 'bg-white text-black hover:bg-gray-100'
+          } p-3 rounded-md border border-yellow-500 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-colors`}
+        >
+          <option value="">Select Trading Account</option>
+
+          {Array.isArray(tradingAccounts) && tradingAccounts.length > 0 ? (
+            tradingAccounts.map((acc) => {
+              const displayText = `${acc.account_name} (${acc.account_id}) - ${acc.account_type}`;
+              const truncatedText =
+                displayText.length > 40
+                  ? displayText.substring(0, 35) + '...'
+                  : displayText;
+              return (
+                <option className="overflow-hidden w-full"
+                  key={acc.account_id}
+                  value={acc.account_id}
+                  title={displayText}
+                >
+                  {truncatedText}
+                </option>
+              );
+            })
+          ) : (
+            <option disabled>No accounts found</option>
+          )}
+        </select>
+      </div>
+      <div className=" flex flex-col items-center justify-center">
+          <h2 className="text-xl font-bold text-yellow-400 mb-2 flex items-center">
+          Balance
+          <DollarSign
+            className="text-yellow-400"
+            style={{
+              display: 'inline-block',
+              transformStyle: 'preserve-3d',
+              animation: 'rollDollar 3s linear infinite',
+            }}
+          />
+        </h2>
+
+        <p className="text-3xl font-extrabold text-yellow-300">
+          ${dashboardData.commissionBalance.toFixed(2)}
+        </p>
+
+        </div>
+        <style>
+          {`
+            @keyframes rollDollar {
+              from { transform: rotateY(0deg); }
+              to { transform: rotateY(360deg); }
+            }
+          `}
+        </style>
+      </div>
+
+      {/* Select Trading Account */}
       
-
- {/* Trading Account Select + Amount + Comment */}
-<div className="flex flex-col gap-4">
-  {/* Select */}
-<div className="w-full flex flex-col md:flex-row justify-between items-center md:items-start gap-4">
-  {/* Left Side: Select Dropdown */}
-  <div className="w-full md:w-1/3 flex justify-center">
-      <select
-        value={selectedAccount}
-        onChange={(e) => setSelectedAccount(e.target.value)}
-        className={`w-full ${isDarkMode ? 'bg-black text-yellow-300 hover:bg-gray-900' : 'bg-white text-black hover:bg-gray-100'} p-3 rounded-md border border-yellow-500 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-colors`}
-        style={{ maxWidth: '200px' }}
-      >
-        <option value="">Select Trading Account</option>
-        {Array.isArray(tradingAccounts) && tradingAccounts.length > 0 ? (
-          tradingAccounts.map((acc) => (
-            <option key={acc.account_id} value={acc.account_id} title={acc.account_id}>
-              {acc.account_id.length > 15 ? acc.account_id.substring(0, 15) + '...' : acc.account_id}
-            </option>
-          ))
-        ) : (
-          <option disabled>No accounts found</option>
-        )}
-      </select>
     </div>
 
-  {/* Right Side: Input + Submit Button */}
-  <div className="w-full md:w-2/3 flex gap-4 flex-row items-center justify-start">
-   <input
+    {/* Amount + Submit Button (Side by Side) */}
+    <div className="flex sm:flex-row gap-4 w-full justify-center md:gap-20 gap-5 items-center">
+
+      <input
         type="number"
         placeholder="Amount"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className={`w-full md:w-3/5 ${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} p-3 text-sm rounded-md border border-yellow-500 h-12 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
+        className={`w-full md:w-80 ${
+          isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'
+        } text-sm rounded-md border border-yellow-500 h-12 px-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition`}
       />
+
       <button
         onClick={handleWithdrawalSubmit}
-        className="bg-yellow-500 text-black px-4 py-3 text-sm rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all w-full md:w-2/5 h-12"
+        className="w-full sm:w-auto bg-yellow-500 text-black  md:px-6 py-3 text-sm rounded-md font-semibold hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all h-12"
       >
         Submit
       </button>
-  </div>
-</div>
-
-</div>
-
+    </div>
+  
 
     {/* Pending / History Buttons */}
     <div className="flex flex-wrap justify-center gap-4">
@@ -1138,11 +1392,11 @@ const App = () => {
     </div>
 
     {/* Withdrawals Table */}
-    <div className="overflow-x-auto  border-yellow-500 rounded-md transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.6)]">
+    <div className="w-full overflow-x-auto  border-yellow-500 rounded-md transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.6)]">
       <table className={`min-w-full border-collapse  border-yellow-500 ${isDarkMode ? 'text-yellow-300' : 'text-black'}`}>
         <thead>
-          <tr className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-black'} border-b-2 border-yellow-500 `}>
-            {['#', 'Date','Account Id', 'User', 'Type', 'Amount', 'Status'].map((header, i) => (
+          <tr className={`${isDarkMode ? 'bg-black text-yellow-300' : 'bg-white text-yellow-300'} border-b-2 border-yellow-500 `}>
+            {['#', 'Date','Account Id', 'User', 'Type', 'Amount', 'Status', 'Comment'].map((header, i) => (
               <th key={i} className="px-4 py-2 text-center whitespace-nowrap">{header}</th>
             ))}
           </tr>
@@ -1150,30 +1404,31 @@ const App = () => {
         <tbody>
           {withdrawalLoading && (
             <tr>
-              <td colSpan="6" className="px-4 py-2 text-center">Loading...</td>
+              <td colSpan="8" className="px-4 py-2 text-center">Loading...</td>
             </tr>
           )}
           {withdrawalError && (
             <tr>
-              <td colSpan="6" className="px-4 py-2 text-center text-red-500">{withdrawalError}</td>
+              <td colSpan="8" className="px-4 py-2 text-center text-red-500">{withdrawalError}</td>
             </tr>
           )}
           {!withdrawalLoading && !withdrawalError && (() => {
             const filteredData = filter === "pending" ? withdrawalData.filter(row => row.status === "pending") : withdrawalData;
             return filteredData.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-4 py-2 text-center">No data found</td>
+                <td colSpan="8" className="px-4 py-2 text-center">No data found</td>
               </tr>
             ) : (
               filteredData.map((row, index) => (
-                <tr key={index} className="border-b border-gray-700">
-                  <td className="px-4 py-2 text-center">{index + 1}</td>
-                  <td className="px-4 py-2 text-center">{new Date(row.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-2 text-center">{row.trading_account}</td>
-                  <td className="px-4 py-2 text-center">{row.account_name}</td>
-                  <td className="px-4 py-2 text-center">{row.account_type}</td>
-                  <td className="px-4 py-2 text-center">{row.amount}</td>
-                  <td className="px-4 py-2 text-center">{row.status}</td>
+                <tr key={index} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                  <td className={`px-4 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{index + 1}</td>
+                  <td className={`px-4 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{new Date(row.created_at).toLocaleDateString()}</td>
+                  <td className={`px-4 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.trading_account}</td>
+                  <td className={`px-4 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.account_name}</td>
+                  <td className={`px-4 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.account_type}</td>
+                  <td className={`px-4 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.amount}</td>
+                  <td className={`px-4 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.status}</td>
+                  <td className={`px-4 py-2 text-center ${isDarkMode ? 'text-white' : 'text-black'} font-bold`}>{row.comment}</td>
                 </tr>
               ))
             );
