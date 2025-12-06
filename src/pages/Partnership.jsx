@@ -696,7 +696,7 @@ const App = () => {
 
       {activeTab === "Dashboard" && (
         <>
-          {loading && <p>Loading...</p>}
+         
           {error && <p className="text-red-500">{error}</p>}
           {!loading && !error && (
             <>
@@ -836,8 +836,6 @@ const App = () => {
             </div>
           </div>
 
-
-          {clientLoading && <p>Loading...</p>}
           {clientError && <p className="text-red-500">{clientError}</p>}
           {!clientLoading && !clientError && (
             <>

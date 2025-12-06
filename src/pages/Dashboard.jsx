@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { apiCall, getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
@@ -42,7 +42,7 @@ export const ModalWrapper = ({ title, children, onClose, isDarkMode }) => (
 );
 
 /* --------------------- Deposit Modal --------------------- */
-const DepositModal = ({ onClose, showToast }) => {
+const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
   const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState("cheesepay");
   const [currency, setCurrency] = useState("INR");
@@ -51,8 +51,6 @@ const DepositModal = ({ onClose, showToast }) => {
   const [selectedDepositAccount, setSelectedDepositAccount] = useState("");
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
-  const [rate, setRate] = useState(83.25);
-  const [loadingRate, setLoadingRate] = useState(true);
   const [proof, setProof] = useState(null);
   const [usdtAmount, setUsdtAmount] = useState("");
   const [usdtProof, setUsdtProof] = useState(null);
@@ -95,22 +93,7 @@ const DepositModal = ({ onClose, showToast }) => {
     fetchAccounts();
   }, []);
 
-  // Fetch USD-INR rate
-  useEffect(() => {
-    const fetchRate = async () => {
-      try {
-        const data = await apiCall('get-usd-inr-rate/');
-        setRate(data.rate || 83.25);
-        setLoadingRate(false);
-      } catch (error) {
-        console.error('Failed to fetch USD-INR rate:', error);
-        setRate(83.25); // fallback
-        setLoadingRate(false);
-      }
-    };
 
-    fetchRate();
-  }, []);
 
   // Currency conversion logic
   useEffect(() => {
@@ -547,6 +530,8 @@ const Dashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [rate, setRate] = useState(83.25);
+  const [loadingRate, setLoadingRate] = useState(false);
+  const rateFetchedRef = useRef(false);
   const [stats, setStats] = useState({
     live: 0,
     demo: 0,
@@ -609,20 +594,29 @@ const Dashboard = () => {
       }
     };
 
-    const fetchRate = async () => {
-      try {
-        const data = await apiCall('get-usd-inr-rate/');
-        setRate(data.rate || 83.25);
-      } catch (error) {
-        console.error('Failed to fetch USD-INR rate:', error);
-        setRate(83.25); // fallback
-      }
-    };
-
     fetchStats();
     fetchRecentTransactions();
-    fetchRate();
   }, []);
+
+  // Fetch rate only when deposit modal opens and not already fetched
+  useEffect(() => {
+    if (activeModal === "deposit" && !rateFetchedRef.current) {
+      const fetchRate = async () => {
+        setLoadingRate(true);
+        try {
+          const data = await apiCall('get-usd-inr-rate/');
+          setRate(data.rate || 83.25);
+        } catch (error) {
+          console.error('Failed to fetch USD-INR rate:', error);
+          setRate(83.25); // fallback
+        } finally {
+          setLoadingRate(false);
+        }
+      };
+      fetchRate();
+      rateFetchedRef.current = true;
+    }
+  }, [activeModal]);
 
   const openModal = (type) => setActiveModal(type);
   const closeModal = () => setActiveModal(null);
@@ -723,7 +717,7 @@ const Dashboard = () => {
       </main>
 
       {/* Modals */}
-      {activeModal === "deposit" && <DepositModal onClose={closeModal} showToast={showToast} isDarkMode={isDarkMode} />}
+      {activeModal === "deposit" && <DepositModal onClose={closeModal} showToast={showToast} isDarkMode={isDarkMode} rate={rate} loadingRate={loadingRate} />}
       {activeModal === "withdraw" && <WithdrawModal onClose={closeModal} />}
       {activeModal === "open" && <OpenAccountModal onClose={closeModal} />}
 

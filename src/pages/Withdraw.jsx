@@ -25,28 +25,6 @@ const Withdraw = ({ onClose, currentAccount }) => {
       setAccounts([currentAccount]);
       setLoading(false);
     }
-    const fetchBankDetails = async () => {
-      try {
-        const data = await apiCall('client/api/profile/bank-details/');
-        setBankDetails(data || null);
-      } catch (err) {
-        console.error('Error fetching bank details:', err);
-        setBankDetails(null);
-      }
-    }; fetchBankDetails();
-
-
-    // Updated: fetchCryptoDetails using apiCall()
-    const fetchCryptoDetails = async () => {
-      try {
-        const data = await apiCall('client/api/profile/crypto-details/');
-        setCryptoDetails(data || null);
-      } catch (err) {
-        console.error('Error fetching crypto details:', err);
-        setCryptoDetails(null);
-      }
-    };
-    fetchCryptoDetails();
   }, [currentAccount]);
 
   // Fetch user accounts, bank details, and crypto details on component mount or selectedAccount change
@@ -78,8 +56,7 @@ const Withdraw = ({ onClose, currentAccount }) => {
         console.error('Error fetching bank details:', err);
         setBankDetails(null);
       }
-    }; fetchBankDetails();
-
+    };
 
     // Updated: fetchCryptoDetails using apiCall()
     const fetchCryptoDetails = async () => {
@@ -91,8 +68,13 @@ const Withdraw = ({ onClose, currentAccount }) => {
         setCryptoDetails(null);
       }
     };
-    fetchCryptoDetails();
-  }, [selectedAccount]);
+
+    if (activeTab === "bank") {
+      fetchBankDetails();
+    } else {
+      fetchCryptoDetails();
+    }
+  }, [selectedAccount, activeTab]);
 
   // Helper: Build full URL safely
   const buildUrl = (path) => {
@@ -309,16 +291,16 @@ const Withdraw = ({ onClose, currentAccount }) => {
             {activeTab === "bank" ? (
               <div className="space-y-1">
                 <strong className="text-yellow-400 block">Bank Transfer</strong>
-                <div>Bank Name: <span className={isDarkMode ? 'text-white' : 'text-black'}>{bankDetails?.bank_name || 'Loading...'}</span></div>
-                <div>Account Number: <span className={isDarkMode ? 'text-white' : 'text-black'}>{bankDetails?.account_number || 'Loading...'}</span></div>
-                <div>Branch: <span className={isDarkMode ? 'text-white' : 'text-black'}>{bankDetails?.branch_name || 'Loading...'}</span></div>
-                <div>IFSC Code: <span className={isDarkMode ? 'text-white' : 'text-black'}>{bankDetails?.ifsc_code || 'Loading...'}</span></div>
+                <div>Bank Name: <span className={isDarkMode ? 'text-white' : 'text-black'}>{bankDetails?.bank_name || 'Not Found'}</span></div>
+                <div>Account Number: <span className={isDarkMode ? 'text-white' : 'text-black'}>{bankDetails?.account_number || 'Not Found'}</span></div>
+                <div>Branch: <span className={isDarkMode ? 'text-white' : 'text-black'}>{bankDetails?.branch_name || 'Not Found'}</span></div>
+                <div>IFSC Code: <span className={isDarkMode ? 'text-white' : 'text-black'}>{bankDetails?.ifsc_code || 'Not Found'}</span></div>
               </div>
             ) : (
               <div className="space-y-1">
                 <strong className="text-yellow-400 block">Crypto Wallet</strong>
-                <div>Wallet Address: <span className={isDarkMode ? 'text-white' : 'text-black'}>{cryptoDetails?.wallet_address || 'Loading...'}</span></div>
-                <div>Currency: <span className={isDarkMode ? 'text-white' : 'text-black'}>{cryptoDetails?.currency || 'Loading...'}</span></div>
+                <div>Wallet Address: <span className={isDarkMode ? 'text-white' : 'text-black'}>{cryptoDetails?.wallet_address || 'Not Found'}</span></div>
+                <div>Currency: <span className={isDarkMode ? 'text-white' : 'text-black'}>{cryptoDetails?.currency || 'Not Found'}</span></div>
               </div>
             )}
           </div>
