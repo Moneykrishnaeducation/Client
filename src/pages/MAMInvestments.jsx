@@ -370,7 +370,7 @@ const Maminvestments = () => {
   onClick={() => navigate("/socialtrading")}
   className="md:hidden p-2 ml-auto"
 >
-  <ArrowLeftCircle className="w-8 h-8 text-yellow sm:text-black" />
+  <ArrowLeftCircle className="w-8 h-8 " />
 </button>
 
 </div>
@@ -382,7 +382,7 @@ const Maminvestments = () => {
           className={`px-5 py-2 rounded-md font-semibold border border-yellow-500 transition-all ${
             activeTab === "availableManagers"
               ? "bg-yellow-500 text-black"
-              : "bg-black text-yellow-300 hover:bg-yellow-500 hover:text-black"
+              : "text-yellow-300 hover:bg-yellow-500 hover:text-black"
           }`}
         >
           Available Managers
@@ -393,7 +393,7 @@ const Maminvestments = () => {
           className={`px-5 py-2 rounded-md font-semibold border border-yellow-500 transition-all ${
             activeTab === "myInvestments"
               ? "bg-yellow-500 text-black"
-              : "bg-black text-yellow-300 hover:bg-yellow-500 hover:text-black"
+              : " text-yellow-300 hover:bg-yellow-500 hover:text-black"
           }`}
         >
           My Investments
@@ -459,7 +459,6 @@ const Maminvestments = () => {
     </div>
   </div>
 )}
-
 {/* My Investments */}
 {activeTab === "myInvestments" && (
   <div className="w-full">
@@ -467,139 +466,145 @@ const Maminvestments = () => {
       My Investments
     </h2>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-      {investments.length > 0 ? (
-        investments.map((inv, index) => (
-          <div
-            key={index}
-            className={`w-72 ${isDarkMode ? 'bg-[#1c1c1c] text-white' : 'bg-white text-black'} border-2 border-yellow-500 rounded-xl p-4 hover:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all duration-300 hover:-translate-y-1`}
-          >
-            <h3 className="font-bold text-[20px] mb-1 text-yellow-400 uppercase text-center">
-              {inv.accountName}
-            </h3>
-            <p className={`text-sm mb-3 text-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              ID: {inv.id}
-            </p>
+    {investments.length > 0 ? (
+      <div className="overflow-x-auto shadow-[0_0_15px_rgba(255,215,0,0.4)] rounded-xl">
+        <table
+          className={`w-full border border-yellow-500 overflow-hidden text-sm 
+          ${isDarkMode ? "bg-black text-gray-200" : "bg-white text-black"}
+          `}
+        >
+          <thead>
+            <tr className="text-yellow-400 border-b border-yellow-500">
+              <th className="py-3 px-4 text-left">Account Name</th>
+              <th className="py-3 px-4 text-left">ID</th>
+              <th className="py-3 px-4 text-left">Profit %</th>
+              <th className="py-3 px-4 text-left">Leverage</th>
+              <th className="py-3 px-4 text-left">Total Profit</th>
+              <th className="py-3 px-4 text-left">Status</th>
+              <th className="py-3 px-4 text-center">Actions</th>
+            </tr>
+          </thead>
 
-            {/* Stats */}
-            <div className="space-y-2 text-[16px]">
-              <p className={`${isDarkMode ? 'bg-[#2a2a2a]' : 'bg-gray-100'} p-2 rounded-md flex justify-between`}>
-                <span className="font-semibold">Profit % : {inv.profitPercentage}%</span>
-              </p>
-              <p className={`${isDarkMode ? 'bg-[#2a2a2a]' : 'bg-gray-100'} p-2 rounded-md flex justify-between`}>
-                <span className="font-semibold">Leverage : {inv.leverage}</span>
-              </p>
-              <p className={`${isDarkMode ? 'bg-[#2a2a2a]' : 'bg-gray-100'} p-2 rounded-md flex justify-between`}>
-                <span className="font-semibold">Total Profit : ${formatNumber(inv.totalProfit)}</span>
-              </p>
-              <p className={`${isDarkMode ? 'bg-[#2a2a2a]' : 'bg-gray-100'} p-2 rounded-md flex justify-between`}>
-                <span className="font-semibold">Status : {inv.enabled ? "Enabled" : "Disabled"}</span>
-              </p>
-            </div>
+          <tbody>
+            {investments.map((inv, index) => (
+              <tr
+                key={index}
+                className={`border-b border-yellow-500 transition-all
+                ${isDarkMode ? "hover:bg-[#222]" : "hover:bg-yellow-50"}
+                `}
+              >
+                <td className="py-2 px-4 font-semibold uppercase">{inv.accountName}</td>
+                <td className="py-2 px-4 font-semibold">{inv.id}</td>
+                <td className="py-2 px-4 font-semibold">{inv.profitPercentage}%</td>
+                <td className="py-2 px-4 font-semibold">{inv.leverage}</td>
+                <td className="py-2 px-4 font-semibold">${formatNumber(inv.totalProfit)}</td>
+                <td
+                  className={`py-2 px-4 font-bold
+                  ${inv.enabled ? "text-green-400" : "text-red-400"}
+                  `}
+                >
+                  {inv.enabled ? "Enabled" : "Disabled"}
+                </td>
 
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => setShowViewPopup(inv)}
-                className="flex-1 text-center bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-2 text-sm rounded-md transition-all duration-300"
-              >
-                View
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedDepositAccount(inv.id || inv.account_id);
-                  setDepositActiveTab("cheesepay");
-                  setCheeseAmount("");
-                  setUsdtAmount("");
-                  setShowDepositModal(true);
-                }}
-                className="flex-1 text-center bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-2 text-sm rounded-md transition-all duration-300"
-              >
-                Deposit
-              </button>
-            </div>
-          </div>
-        ))
-      ) : (
-        <div className="text-yellow-300 text-center col-span-full">
-          No active investments yet.
-        </div>
-      )}
-    </div>
+                <td className="py-2 px-4 flex gap-2 justify-center">
+                  <button
+                    onClick={() => setShowViewPopup(inv)}
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-1 px-3 rounded-md transition"
+                  >
+                    View
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedDepositAccount(inv.id || inv.account_id);
+                      setDepositActiveTab("cheesepay");
+                      setCheeseAmount("");
+                      setUsdtAmount("");
+                      setShowDepositModal(true);
+                    }}
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-1 px-3 rounded-md transition"
+                  >
+                    Deposit
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p className="text-yellow-300 text-center">No active investments yet.</p>
+    )}
   </div>
 )}
 
+     {/* Investment Popup */}
+  {showPopup && (
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+      onClick={() => setShowPopup(null)}
+    >
+      <div
+        className={`rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.6)] 
+        w-[90%] sm:max-w-md mx-auto p-6 text-center border border-yellow-500
+        ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-xl sm:text-2xl font-bold mb-4 text-yellow-400">
+          Invest in Manager
+        </h3>
 
-      {/* Investment Popup */}
-      {showPopup && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={() => setShowPopup(null)}
+          className={`text-left space-y-2 mb-4 text-sm sm:text-base 
+          ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
         >
-          <div
-            className={`p-6 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.6)] max-w-md w-full text-center border border-yellow-500 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-2xl font-bold mb-4 text-yellow-400">
-              Invest in Manager
-            </h3>
-
-            <div className={`text-left space-y-2 mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              <p>
-                <strong>ID:</strong> {showPopup.id}
-              </p>
-              <p>
-                <strong>Account Name:</strong> {showPopup.accountName}
-              </p>
-              <p>
-                <strong>Profit Sharing:</strong> {showPopup.profitPercentage}%
-              </p>
-              <p>
-                <strong>Leverage:</strong> {showPopup.leverage}
-              </p>
-              <p>
-                <strong>Total Profit:</strong> ${formatNumber(showPopup.totalProfit)}
-              </p>
-              <p>
-                <strong>Status:</strong> {showPopup.enabled ? "Enabled" : "Disabled"}
-              </p>
-            </div>
-
-            <div className="space-y-3 mb-4">
-              <input
-                type="password"
-                placeholder="Enter investor password"
-                value={investorPassword}
-                onChange={(e) => setInvestorPassword(e.target.value)}
-                className={`w-full p-2 rounded-md ${isDarkMode ? 'bg-gray-800 text-yellow-200 focus:outline-yellow-400' : 'bg-white text-black border border-gray-300 focus:outline-yellow-400'}`}
-              />
-              <input
-                type="password"
-                placeholder="Confirm password"
-                value={confirmInvestorPassword}
-                onChange={(e) => setConfirmInvestorPassword(e.target.value)}
-                className={`w-full p-2 rounded-md ${isDarkMode ? 'bg-gray-800 text-yellow-200 focus:outline-yellow-400' : 'bg-white text-black border border-gray-300 focus:outline-yellow-400'}`}
-              />
-              {investError && <div className="text-red-400 text-sm">{investError}</div>}
-            </div>
-
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={handleSubmitInvestment}
-                disabled={investLoading}
-                className={`bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition ${investLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-              >
-                {investLoading ? 'Submitting...' : 'Submit Request'}
-              </button>
-              <button
-                onClick={() => { setShowPopup(null); setInvestorPassword(''); setConfirmInvestorPassword(''); setInvestError(null); }}
-                className={`px-4 py-2 rounded-md transition ${isDarkMode ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' : 'bg-gray-300 text-black hover:bg-gray-400'}`}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+          <p><strong>ID:</strong> {showPopup.id}</p>
+          <p><strong>Account Name:</strong> {showPopup.accountName}</p>
+          <p><strong>Profit Sharing:</strong> {showPopup.profitPercentage}%</p>
+          <p><strong>Leverage:</strong> {showPopup.leverage}</p>
+          <p><strong>Total Profit:</strong> ${formatNumber(showPopup.totalProfit)}</p>
+          <p><strong>Status:</strong> {showPopup.enabled ? "Enabled" : "Disabled"}</p>
         </div>
-      )}
+
+        <div className="space-y-3 mb-4">
+          <input
+            type="password"
+            placeholder="Enter investor password"
+            value={investorPassword}
+            onChange={(e) => setInvestorPassword(e.target.value)}
+            className={`w-full p-2 rounded-md text-sm sm:text-base
+            ${isDarkMode ? 'bg-gray-800 text-yellow-200 focus:outline-yellow-400' : 'bg-white text-black border border-gray-300 focus:outline-yellow-400'}`}
+          />
+          <input
+            type="password"
+            placeholder="Confirm password"
+            value={confirmInvestorPassword}
+            onChange={(e) => setConfirmInvestorPassword(e.target.value)}
+            className={`w-full p-2 rounded-md text-sm sm:text-base
+            ${isDarkMode ? 'bg-gray-800 text-yellow-200 focus:outline-yellow-400' : 'bg-white text-black border border-gray-300 focus:outline-yellow-400'}`}
+          />
+          {investError && <div className="text-red-400 text-xs sm:text-sm">{investError}</div>}
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-center gap-3 w-full">
+          <button
+            onClick={handleSubmitInvestment}
+            disabled={investLoading}
+            className={`w-full sm:w-auto bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition ${investLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            {investLoading ? 'Submitting...' : 'Submit Request'}
+          </button>
+
+          <button
+            onClick={() => { setShowPopup(null); setInvestorPassword(''); setConfirmInvestorPassword(''); setInvestError(null); }}
+            className={`w-full sm:w-auto px-4 py-2 rounded-md transition ${isDarkMode ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' : 'bg-gray-300 text-black hover:bg-gray-400'}`}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
 
       {/* Selected Account View */}
       {selectedAccount && (
