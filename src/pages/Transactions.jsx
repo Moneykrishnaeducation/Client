@@ -11,7 +11,7 @@ const Transactions = () => {
 
   const [transactions, setTransactions] = useState([]);
   const [pendingTransactions, setPendingTransactions] = useState([]);
-  const [tradingAccounts, setTradingAccounts] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -76,7 +76,7 @@ const Transactions = () => {
         isDarkMode ? "bg-black text-white" : "bg-white text-black"
       } p-4 sm:p-8`}
     >
-      <div className="max-w-6xl mx-auto w-full">
+      <div className="px-3 mx-auto w-full">
         {/* Search + Filters */}
         <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6 flex-wrap w-full">
           {/* 🔍 Search Bar */}
@@ -108,7 +108,7 @@ const Transactions = () => {
                   selectedCategory === category
                     ? "bg-yellow-500 text-black"
                     : isDarkMode
-                    ? "bg-black-900 text-yellow-400 hover:bg-gray-800"
+                    ? "bg-gray-900 text-yellow-400 hover:bg-gray-800"
                     : "bg-white text-black hover:bg-gray-100"
                 }`}
               >
@@ -121,7 +121,7 @@ const Transactions = () => {
         {/* 📊 Transactions Table */}
         <div
           className={`overflow-x-auto shadow-lg ${
-            isDarkMode ? "border-black-900" : "border-gray-300 bg-white"
+            isDarkMode ? "border-gray-900" : "border-gray-300 bg-white"
           }`}
         >
           <table className="w-full border-collapse text-left text-sm sm:text-base border border-yellow-600">
@@ -326,7 +326,7 @@ const Transactions = () => {
             <div className="flex justify-between items-center mt-4">
               {/* Left: Items per page selector */}
               <div className="flex items-center gap-2">
-                <label className={`text-sm ${isDarkMode ? "text-gray-300 bg-gray-800" : "text-gray-700 bg-gray-100"} p-2 rounded-md`}>
+                <label className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700 bg-gray-100"} p-2 rounded-md`}>
                   Items per page:
                 </label>
                 <select
@@ -341,10 +341,10 @@ const Transactions = () => {
                       : "bg-white border-gray-300 text-black"
                   }`}
                 >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
+                <option className={`${isDarkMode? "bg-gray-800 border-gray-600 text-white": "bg-white border-gray-300 text-black"}`} value={5}>5</option>
+                <option className={`${isDarkMode? "bg-gray-800 border-gray-600 text-white": "bg-white border-gray-300 text-black"}`} value={10}>10</option>
+                <option className={`${isDarkMode? "bg-gray-800 border-gray-600 text-white": "bg-white border-gray-300 text-black"}`} value={20}>20</option>
+                <option className={`${isDarkMode? "bg-gray-800 border-gray-600 text-white": "bg-white border-gray-300 text-black"}`} value={50}>50</option>
                 </select>
               </div>
 

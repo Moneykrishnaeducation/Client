@@ -199,10 +199,16 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const handleLogout = async () => {
     setLogoutLoading(true);
     try {
+      // Get refresh token for logout
+      const refreshToken = localStorage.getItem('refresh_token') || localStorage.getItem('refreshToken');
+
       // Call logout API to log the activity on the server
-      const response = await apiCall("logout/", "POST");
-      if (response && response.message) {
-        console.log("Logout successful:", response.message);
+      const response = await apiCall("logout/", {
+        method: "POST",
+        body: JSON.stringify({ refresh: refreshToken })
+      });
+      if (response && (response.message || response.detail)) {
+        console.log("Logout successful:", response.message || response.detail);
       }
 
       // Clear stored tokens and user data
