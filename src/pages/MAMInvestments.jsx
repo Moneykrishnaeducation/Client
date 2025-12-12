@@ -433,7 +433,7 @@ const Maminvestments = () => {
                 <span className="font-semibold">Profit Share : {manager.profitPercentage}%</span>
               </p>
               <p className={`${isDarkMode ? 'bg-[#2a2a2a]' : 'bg-gray-100'} p-2 rounded-md flex justify-between`}>
-                <span className="font-semibold">Account Age : {manager.accountAge} days</span>
+                <span className="font-semibold">Account Age : {manager.accountAge}</span>
               </p>
               <p className={`${isDarkMode ? 'bg-[#2a2a2a]' : 'bg-gray-100'} p-2 rounded-md flex justify-between`}>
                 <span className="font-semibold">Risk Level : {manager.riskLevel || "Medium"}</span>
@@ -569,7 +569,7 @@ const Maminvestments = () => {
         <div className="space-y-3 mb-4">
           <input
             type="password"
-            placeholder="Enter investor password"
+            placeholder="Enter investment password"
             value={investorPassword}
             onChange={(e) => setInvestorPassword(e.target.value)}
             className={`w-full p-2 rounded-md text-sm sm:text-base
@@ -577,7 +577,7 @@ const Maminvestments = () => {
           />
           <input
             type="password"
-            placeholder="Confirm password"
+            placeholder="Confirm investment password"
             value={confirmInvestorPassword}
             onChange={(e) => setConfirmInvestorPassword(e.target.value)}
             className={`w-full p-2 rounded-md text-sm sm:text-base
@@ -592,7 +592,7 @@ const Maminvestments = () => {
             disabled={investLoading}
             className={`w-full sm:w-auto bg-yellow-500 text-black px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition ${investLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
-            {investLoading ? 'Submitting...' : 'Submit Request'}
+            {investLoading ? 'Submitting...' : 'Create Investor Account'}
           </button>
 
           <button

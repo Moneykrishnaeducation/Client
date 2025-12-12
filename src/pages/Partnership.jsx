@@ -665,7 +665,7 @@ const App = () => {
 
 
   return (
-    <div className={`p-6 lg:max-w-[80vw] max-h-full ${isDarkMode ? 'bg-black text-gray-100' : 'bg-white text-gray-900'}`}>
+    <div className={`p-6 lg:w-full max-h-full ${isDarkMode ? 'bg-black text-gray-100' : 'bg-white text-gray-900'}`}>
       {/* Global Scrollbar Styles */}
       <style>{`
         ::-webkit-scrollbar { width: 10px; }
@@ -732,7 +732,6 @@ const App = () => {
                   <h3 className="text-yellow-400 font-bold mb-4 text-center">Monthly Commission Earnings</h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={dashboardData.earningsPerMonth}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#FFD700" />
                       <XAxis dataKey="month" stroke="#FFD700" />
                       <YAxis stroke="#FFD700" tickFormatter={(value) => `$${value.toFixed(2)}`} />
                       <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#000' : '#fff', border: '1px solid #FFD700' }} formatter={(value) => [`$${value.toFixed(2)}`, 'Total']} />
@@ -746,7 +745,6 @@ const App = () => {
                   <p className="text-yellow-300 text-xs mb-2 text-center">Top 10 clients by commission earnings</p>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={dashboardData.earningsPerClient.map(item => ({ name: item.name, total: item.total_commission }))}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#FFD700" />
                       <XAxis dataKey="name" stroke="#FFD700" tick={false} />
                       <YAxis stroke="#FFD700" tickFormatter={(value) => `$${value.toFixed(2)}`} />
                       <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#000' : '#fff', border: '1px solid #FFD700' }} />

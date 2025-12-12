@@ -21,7 +21,7 @@ const Main = ({ isSidebarOpen, setIsSidebarOpen, children }) => {
       <ChatBot/>
       {loading ? (
         <div className={`flex items-center justify-center overflow-auto h-[90vh] ${isDarkMode ? 'bg-black' : 'bg-white'} transition-all duration-300 ease-in-out`}>
-          <div class="w-10 h-10 border-4 border-gray-600 border-t-yellow-500 border-s-yellow-500 rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-gray-600 border-t-yellow-500 border-s-yellow-500 rounded-full animate-spin"></div>
         </div>
       ) : (
         <div onClick={() => setIsSidebarOpen(false)} className={`overflow-auto h-[90vh] ${isDarkMode ? 'bg-black' : 'bg-white'} transition-all duration-300 ease-in-out `}>{children}</div>
