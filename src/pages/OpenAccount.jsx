@@ -56,7 +56,7 @@ function OpenAccount({ onClose }) {
           accountName: userData?.name || "",
         }));
         // Fetch groups
-        const groupData = await apiCall('api/trading-groups/?type=real');
+        const groupData = await apiCall('/api/trading-groups/?type=real');
         const fetchedGroups = groupData.groups || [];
         setGroups(fetchedGroups);
         // Set default group

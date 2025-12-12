@@ -35,7 +35,7 @@ const Tickets = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await apiCall('api/tickets/');
+      const data = await apiCall('/api/tickets/');
       setTickets(data);
     } catch (err) {
       setError("Failed to fetch tickets. Please try again.");

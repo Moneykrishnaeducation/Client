@@ -160,6 +160,27 @@ export default function Login() {
 
       const response = await login({ email: signInEmail, password: signInPassword });
 
+      if (response && response.verification_required) {
+        // Send OTP since verification is required
+        try {
+          await resendLoginOtp(signInEmail);
+        } catch (e) {
+          console.error('Failed to send initial OTP:', e);
+        }
+        // Get OTP status for cooldown and expiry
+        try {
+          const status = await getLoginOtpStatus(signInEmail);
+          if (status.retry_after) setResendCooldown(status.retry_after);
+          if (status.otp_expires_in) setOtpExpiry(status.otp_expires_in);
+        } catch (e) {
+          console.error('Failed to get OTP status:', e);
+        }
+        setShowVerificationModal(true);
+        setNotification({ show: true, type: "success", message: response.message || "Verification code sent to your email." });
+        setLoading(false);
+        return;
+      }
+
       if (response && response.success) {
         // Check if OTP verification is required
         if (response.otp_required) {
@@ -755,7 +776,7 @@ export default function Login() {
               className={`overlay-panel overlay-right absolute top-0 right-0 h-full w-1/2 flex flex-col items-center justify-center px-10 text-center ${rightPanelActive ? "-translate-x-0" : "translate-x-0 hidden"}`}
               style={{ color: "var(--gold)" }}
             >
-              <h2 className="overlay-title text-3xl font-bold text-[#D4AF37]">Welcome Back!<br />to VTIndex</h2>
+              <h2 className="overlay-title text-3xl font-bold text-[#D4AF37]">Welcome Back!<br />to vtindex</h2>
               <p className="text-sm text-[#bfb38a] max-w-[70%] mt-2">Join us and explore your financial possibilities.</p>
               <button
                 className="mt-4 rounded-full border border-[#D4AF37] text-[#D4AF37] px-6 py-2"
@@ -773,7 +794,7 @@ export default function Login() {
               style={{ color: "var(--gold)" }}
             >
               <h2 className="overlay-title text-3xl font-bold text-[#D4AF37]">Welcome to Financial Freedom!</h2>
-              <p className="text-sm text-[#bfb38a] max-w-[70%] mt-2">Join VTIndex and embark on a journey toward financial growth and stability.</p>
+              <p className="text-sm text-[#bfb38a] max-w-[70%] mt-2">Join vtindex and embark on a journey toward financial growth and stability.</p>
               <button
                 className="mt-4 rounded-full bg-gradient-to-b from-[#ffd66b] to-[#d4af37] text-black font-bold px-6 py-2"
                 onClick={() => setRightPanelActive(true)}

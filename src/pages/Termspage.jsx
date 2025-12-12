@@ -88,7 +88,7 @@ const TermsPage = () => {
     {
       title: "Introduction",
       content:
-        "Welcome to VTIndex! By accessing or using our services, you agree to comply with and be bound by the following terms and conditions.",
+        "Welcome to vtindex! By accessing or using our services, you agree to comply with and be bound by the following terms and conditions.",
     },
     {
       title: "User Responsibilities",
@@ -123,12 +123,12 @@ const TermsPage = () => {
     {
       title: "Restricted Regions",
       content:
-        "VTIndex does not provide services for citizens/residents of certain regions. The services are not intended for distribution where it would be contrary to local law.",
+        "vtindex does not provide services for citizens/residents of certain regions. The services are not intended for distribution where it would be contrary to local law.",
     },
     {
       title: "AML Policy",
       content:
-        "VTIndex follows strict Anti-Money Laundering (AML) regulations. All customers must verify their identity and comply with legal requirements to prevent financial crimes.",
+        "vtindex follows strict Anti-Money Laundering (AML) regulations. All customers must verify their identity and comply with legal requirements to prevent financial crimes.",
     },
     {
       title: "Contact Us",
@@ -215,7 +215,7 @@ const TermsPage = () => {
                  bg-clip-text text-transparent animate-pulse
                  drop-shadow-[0_0_15px_#FFD700] mb-12"
       >
-        VTIndex — Empower Your Trading
+        vtindex — Empower Your Trading
       </h1>
 
       {/* Toggle Buttons */}
