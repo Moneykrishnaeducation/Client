@@ -6,7 +6,7 @@ export const login = async (userData) => {
     // Add performance timing for debugging
     const loginStart = performance.now();
 
-    const result = await apiCall('/api/login/', { method: 'POST', body: JSON.stringify(userData) });
+    const result = await apiCall('api/login/', { method: 'POST', body: JSON.stringify(userData) });
 
     // If server asks for verification (new IP) return verification required flag
     if (result && result.verification_required) {
@@ -26,7 +26,7 @@ export const login = async (userData) => {
 // Signup function
 export const signup = async (userData) => {
   try {
-    const data = await apiCall('/api/signup/', {
+    const data = await apiCall('api/signup/', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
@@ -40,7 +40,7 @@ export const signup = async (userData) => {
 // Send reset OTP function
 export const sendResetOtp = async (email) => {
   try {
-    const data = await apiCall('/api/send-reset-otp/', {
+    const data = await apiCall('api/send-reset-otp/', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
@@ -54,7 +54,7 @@ export const sendResetOtp = async (email) => {
 // Verify OTP function
 export const verifyOtp = async (email, otp) => {
   try {
-    const data = await apiCall('/api/verify-otp/', {
+    const data = await apiCall('api/verify-otp/', {
       method: 'POST',
       body: JSON.stringify({ email, otp }),
     });
@@ -68,7 +68,7 @@ export const verifyOtp = async (email, otp) => {
 // Reset password function
 export const resetPassword = async (email, newPassword) => {
   try {
-    const data = await apiCall('/api/reset-password/confirm/', {
+    const data = await apiCall('api/reset-password/confirm/', {
       method: 'POST',
       body: JSON.stringify({ email, new_password: newPassword }),
     });
@@ -82,7 +82,7 @@ export const resetPassword = async (email, newPassword) => {
 // Resend login OTP function
 export const resendLoginOtp = async (email) => {
   try {
-    const data = await apiCall('/api/resend-login-otp/', {
+    const data = await apiCall('api/resend-login-otp/', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
@@ -96,7 +96,7 @@ export const resendLoginOtp = async (email) => {
 // Get login OTP status function
 export const getLoginOtpStatus = async (email) => {
   try {
-    const data = await apiCall(`/api/login-otp-status/?email=${encodeURIComponent(email)}`, {
+    const data = await apiCall(`api/login-otp-status/?email=${encodeURIComponent(email)}`, {
       method: 'GET',
     });
     return data;
