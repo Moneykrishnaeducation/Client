@@ -56,9 +56,11 @@ const ProfilePage = () => {
 
   const fetchBanner = async () => {
     try {
-      const data = await apiCall('profile/banner/');
-      if (data) {
-        setBannerImage(data);
+      const data = await apiCall('api/profile/banner/', {
+        method: 'GET'
+      });
+      if (data && data.banner_url) {
+        setBannerImage(data.banner_url);
       } else {
         setBannerImage(null);
       }
@@ -73,7 +75,7 @@ const ProfilePage = () => {
     const fetchUserProfile = async () => {
       try {
         setLoading(true);
-        const data = await apiCall('api/profile/');
+        const data = await apiCall('/api/profile/');
         setUser({
           name: data.name || '',
           email: data.email || '',
@@ -93,7 +95,7 @@ const ProfilePage = () => {
 
     const fetchBankDetails = async () => {
       try {
-        const data = await apiCall('api/profile/bank-details/');
+        const data = await apiCall('/api/profile/bank-details/');
         if (data && Object.keys(data).length > 0) {
           setBankDetails({
             bankName: data.bank_name || '',
@@ -113,7 +115,7 @@ const ProfilePage = () => {
 
     const fetchCryptoDetails = async () => {
       try {
-        const data = await apiCall('api/profile/crypto-details/');
+        const data = await apiCall('/api/profile/crypto-details/');
         if (data && Object.keys(data).length > 0) {
           setCryptoDetails({
             walletId: data.wallet_id || '',
@@ -131,7 +133,7 @@ const ProfilePage = () => {
 
     const fetchDocuments = async () => {
       try {
-        const data = await apiCall('api/profile/documents/');
+        const data = await apiCall('/api/profile/documents/');
         if (data && data.length > 0) {
           const identityDoc = data.find(doc => doc.document_type === 'identity');
           const residentialDoc = data.find(doc => doc.document_type === 'residence');
@@ -233,6 +235,9 @@ const ProfilePage = () => {
         } catch (err) {
           console.error('Error uploading banner image:', err);
           // Optionally show error to user
+        }
+        finally {
+          e.target.value = ''; // Reset file input 
         }
       }
     }}
