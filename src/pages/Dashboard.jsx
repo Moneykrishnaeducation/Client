@@ -64,7 +64,7 @@ const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
     const fetchAccounts = async () => {
       setLoadingAccounts(true);
       try {
-        const data = await apiCall('user-trading-accounts/');
+        const data = await apiCall('/user-trading-accounts/');
         // Filter out demo accounts, only show standard/mam accounts for deposits
         const filteredAccounts = (data.accounts || []).filter(account =>
           account.account_type !== 'demo'
@@ -174,7 +174,7 @@ const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
               const amount_usd = currency === "INR" ? (parseFloat(cheeseAmount) / rate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
               const amount_inr = currency === "USD" ? (parseFloat(cheeseAmount) * rate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
 
-              const url = `cheesepay-initiate/`.startsWith('http') ? `cheesepay-initiate/` : `${API_BASE_URL}cheesepay-initiate/`;
+              const url = `/cheesepay-initiate/`.startsWith('http') ? `/cheesepay-initiate/` : `${API_BASE_URL}/cheesepay-initiate/`;
               const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
               const csrfToken = getCookie('csrftoken');
               if (csrfToken) {
@@ -547,7 +547,8 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await apiCall('stats-overview/');
+        const data = await apiCall('/stats-overview/');
+        console.log('stats overview data:', data);
         setStats({
           live: data.live_accounts || 0,
           demo: data.demo_accounts || 0,
@@ -578,7 +579,7 @@ const Dashboard = () => {
 
     const fetchRecentTransactions = async () => {
       try {
-        const data = await apiCall('recent-transactions/');
+        const data = await apiCall('/recent-transactions/');
         console.log('Recent transactions data:', data);
         const transactions = data || [];
         // Process transactions to ensure required fields
@@ -604,7 +605,7 @@ const Dashboard = () => {
       const fetchRate = async () => {
         setLoadingRate(true);
         try {
-          const data = await apiCall('get-usd-inr-rate/');
+          const data = await apiCall('/get-usd-inr-rate/');
           setRate(data.rate || 83.25);
         } catch (error) {
           console.error('Failed to fetch USD-INR rate:', error);

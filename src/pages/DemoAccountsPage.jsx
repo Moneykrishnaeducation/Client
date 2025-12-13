@@ -178,23 +178,13 @@ export default function DemoAccountsPage() {
     await updateAccount(accountId, { balance: newBalance });
   };
 
-  // 🔹 Update leverage
-  const updateLeverage = async (accountId, newLeverage) => {
-    // Optimistically update UI
-    setDemoAccounts(prev =>
-      prev.map(acc => (acc.id === accountId ? { ...acc, leverage: newLeverage } : acc))
-    );
-
-    // Call API to update
-    await updateAccount(accountId, { leverage: newLeverage });
-  };
 
   // 🔹 Reset balance to default
   const resetBalance = async (accountId) => {
     setUpdating(prev => ({ ...prev, [accountId]: true }));
 
     try {
-      const data = await apiCall(`reset-demo-balance/${accountId}/`, {
+      const data = await apiCall(`/reset-demo-balance/${accountId}/`, {
         method: 'POST',
         body: JSON.stringify({
           balance: '1000' // Reset to $10,000
@@ -223,7 +213,7 @@ export default function DemoAccountsPage() {
     setUpdating(prev => ({ ...prev, [accountId]: true }));
 
     try {
-      const data = await apiCall(`api/change-demo-leverage/${accountId}/`, {
+      const data = await apiCall(`/api/change-demo-leverage/${accountId}/`, {
         method: 'POST',
         body: JSON.stringify({
           leverage: newLeverage
@@ -401,7 +391,7 @@ export default function DemoAccountsPage() {
                     <td className="py-3 px-4">
                       <select
                         value={acc.leverage}
-                        onChange={(e) => updateLeverage(acc.id, e.target.value)}
+                        onChange={(e) => changeLeverage(acc.id, e.target.value)}
                         disabled={updating[acc.id]}
                         className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} px-2 py-1 rounded text-sm focus:outline-none ${isDarkMode ? '' : 'text-black'} disabled:opacity-50`}
                       >

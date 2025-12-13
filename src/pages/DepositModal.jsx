@@ -50,7 +50,7 @@ export default function DepositModal({
   const fetchUsdInrRate = async () => {
     setLoadingRate(true);
     try {
-      const response = await fetch("http://client.localhost:8000/get-usd-inr-rate/");
+      const response = await fetch("/get-usd-inr-rate/");
       const data = await response.json();
       setUsdInrRate(data.rate);
       console.log(data.rate)
