@@ -242,7 +242,7 @@ export default function DemoAccountsPage() {
     setUpdating(prev => ({ ...prev, [accountId]: true }));
 
     try {
-      const data = await apiCall('/api/update-demo-account/', {
+      const data = await apiCall('api/update-demo-account/', {
         method: 'POST',
         body: JSON.stringify({
           account_id: accountId,
@@ -264,7 +264,7 @@ export default function DemoAccountsPage() {
   // 🔹 Helper function to refetch accounts
   const fetchDemoAccounts = async () => {
     try {
-      const data = await apiCall('/api/user-demo-accounts/', { method: 'GET' });
+      const data = await apiCall('api/user-demo-accounts/', { method: 'GET' });
       setDemoAccounts(data.map(acc => ({
         id: acc.account_id,
         balance: acc.balance,

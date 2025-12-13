@@ -547,7 +547,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await apiCall('/stats-overview/');
+        const data = await apiCall('/api/stats-overview/');
         console.log('stats overview data:', data);
         setStats({
           live: data.live_accounts || 0,
@@ -579,7 +579,7 @@ const Dashboard = () => {
 
     const fetchRecentTransactions = async () => {
       try {
-        const data = await apiCall('/recent-transactions/');
+        const data = await apiCall('/api/recent-transactions/');
         console.log('Recent transactions data:', data);
         const transactions = data || [];
         // Process transactions to ensure required fields

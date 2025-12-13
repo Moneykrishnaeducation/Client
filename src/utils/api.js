@@ -3,7 +3,7 @@ import {useLocation } from 'react-router-dom';
 // API utility functions for consistent token handling
 
 // Dynamic API base URL based on current domain
-export const API_BASE_URL = `${window.location.protocol}//${window.location.host}`;
+export const API_BASE_URL = `${window.location.protocol}//${window.location.host}/`;
 
 // Get CSRF token from cookies
 export function getCookie(name) {

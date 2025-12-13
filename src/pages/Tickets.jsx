@@ -16,6 +16,7 @@ const Tickets = () => {
     priority: "",
     dateRange: "",
   });
+  const [searchTerm, setSearchTerm] = useState("");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -35,7 +36,7 @@ const Tickets = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await apiCall('/api/tickets/');
+      const data = await apiCall('api/tickets/');
       setTickets(data);
     } catch (err) {
       setError("Failed to fetch tickets. Please try again.");
@@ -148,7 +149,9 @@ const Tickets = () => {
                 <Search size={18} className="text-yellow-400" />
                 <input
                   type="text"
-                  placeholder="Search tickets..."
+                  placeholder="Search by Ticket ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className={`bg-transparent ${isDarkMode ? 'text-yellow-300 placeholder-yellow-400' : 'text-black placeholder-gray-500'} focus:outline-none w-full text-sm sm:text-base`}
                 />
               </div>
@@ -211,85 +214,122 @@ const Tickets = () => {
                   </tr>
                 ) : (
                   <>
-                    {tickets.open.map((ticket) => (
-                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
-                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
-                        <td className="p-2 border border-yellow-600">
-                          <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">Open</span>
-                        </td>
-                        <td className="p-2 border border-yellow-600">
-                          <button
-                            onClick={() => {
-                              setSelectedTicket(ticket);
-                              setShowViewModal(true);
-                            }}
-                            className="text-yellow-400 hover:text-yellow-500"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {tickets.pending.map((ticket) => (
-                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
-                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
-                        <td className="p-2 border border-yellow-600">
-                          <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Pending</span>
-                        </td>
-                        <td className="p-2 border border-yellow-600">
-                          <button
-                            onClick={() => {
-                              setSelectedTicket(ticket);
-                              setShowViewModal(true);
-                            }}
-                            className="text-yellow-400 hover:text-yellow-500"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {tickets.closed.map((ticket) => (
-                      <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
-                        <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.id}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.username}</td>
-                        <td className="p-2 border border-yellow-600">{ticket.subject}</td>
-                        <td className="p-2 border border-yellow-600">
-                          <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">Closed</span>
-                        </td>
-                        <td className="p-2 border border-yellow-600">
-                          <button
-                            onClick={() => {
-                              setSelectedTicket(ticket);
-                              setShowViewModal(true);
-                            }}
-                            className="text-yellow-400 hover:text-yellow-500"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {tickets.open.length === 0 && tickets.pending.length === 0 && tickets.closed.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan="7"
-                          className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
-                        >
-                          No tickets found.
-                        </td>
-                      </tr>
-                    )}
+                    {(() => {
+                      const now = new Date();
+                      let startDate = null;
+                      if (filters.dateRange === 'This Week') {
+                        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                      } else if (filters.dateRange === 'This Month') {
+                        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                      } else if (filters.dateRange === 'Last 3 Months') {
+                        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+                      }
+
+                      const filteredOpen = tickets.open.filter(ticket => {
+                        if (filters.status && filters.status.toLowerCase() !== 'open') return false;
+                        if (startDate && new Date(ticket.created_at) < startDate) return false;
+                        if (searchTerm && !ticket.id.toString().toLowerCase().includes(searchTerm.toLowerCase())) return false;
+                        return true;
+                      });
+
+                      const filteredPending = tickets.pending.filter(ticket => {
+                        if (filters.status && filters.status.toLowerCase() !== 'pending') return false;
+                        if (startDate && new Date(ticket.created_at) < startDate) return false;
+                        if (searchTerm && !ticket.id.toString().toLowerCase().includes(searchTerm.toLowerCase())) return false;
+                        return true;
+                      });
+
+                      const filteredClosed = tickets.closed.filter(ticket => {
+                        if (filters.status && filters.status.toLowerCase() !== 'closed') return false;
+                        if (startDate && new Date(ticket.created_at) < startDate) return false;
+                        if (searchTerm && !ticket.id.toString().toLowerCase().includes(searchTerm.toLowerCase())) return false;
+                        return true;
+                      });
+
+                      return (
+                        <>
+                          {filteredOpen.map((ticket) => (
+                            <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                              <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                              <td className="p-2 border border-yellow-600">
+                                <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">Open</span>
+                              </td>
+                              <td className="p-2 border border-yellow-600">
+                                <button
+                                  onClick={() => {
+                                    setSelectedTicket(ticket);
+                                    setShowViewModal(true);
+                                  }}
+                                  className="text-yellow-400 hover:text-yellow-500"
+                                >
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {filteredPending.map((ticket) => (
+                            <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                              <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                              <td className="p-2 border border-yellow-600">
+                                <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Pending</span>
+                              </td>
+                              <td className="p-2 border border-yellow-600">
+                                <button
+                                  onClick={() => {
+                                    setSelectedTicket(ticket);
+                                    setShowViewModal(true);
+                                  }}
+                                  className="text-yellow-400 hover:text-yellow-500"
+                                >
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {filteredClosed.map((ticket) => (
+                            <tr key={ticket.id} className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b border-yellow-600`}>
+                              <td className="p-2 border border-yellow-600">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.id}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.user_id}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.username}</td>
+                              <td className="p-2 border border-yellow-600">{ticket.subject}</td>
+                              <td className="p-2 border border-yellow-600">
+                                <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">Closed</span>
+                              </td>
+                              <td className="p-2 border border-yellow-600">
+                                <button
+                                  onClick={() => {
+                                    setSelectedTicket(ticket);
+                                    setShowViewModal(true);
+                                  }}
+                                  className="text-yellow-400 hover:text-yellow-500"
+                                >
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {filteredOpen.length === 0 && filteredPending.length === 0 && filteredClosed.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan="7"
+                                className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}
+                              >
+                                No tickets found.
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    })()}
                   </>
                 )}
               </tbody>
