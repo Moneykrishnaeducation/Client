@@ -99,7 +99,7 @@ const PammAccount = () => {
   // Load data functions
   const loadManagerList = async (query = '') => {
     try {
-      const data = await apiCall(`/api/pamm/managed/?q=${query}`);
+      const data = await apiCall(`api/pamm/managed/?q=${query}`);
       setManagerList(data.filter(item => item.name.toLowerCase().includes(query.toLowerCase())));
     } catch (error) {
       console.error('Error loading manager list:', error);
@@ -109,7 +109,7 @@ const PammAccount = () => {
 
   const loadAvailableList = async (query = '') => {
     try {
-      const data = await apiCall(`/api/pamm/available/?q=${query}`);
+      const data = await apiCall(`api/pamm/available/?q=${query}`);
       setAvailableList(data.filter(item => item.name.toLowerCase().includes(query.toLowerCase())));
     } catch (error) {
       console.error('Error loading available list:', error);
@@ -119,7 +119,7 @@ const PammAccount = () => {
 
   const loadInvestmentList = async (query = '') => {
     try {
-      const data = await apiCall(`/api/pamm/investments/?q=${query}`);
+      const data = await apiCall(`api/pamm/investments/?q=${query}`);
       setInvestmentList(data.filter(item => item.name.toLowerCase().includes(query.toLowerCase())));
     } catch (error) {
       console.error('Error loading investment list:', error);
@@ -147,7 +147,7 @@ const PammAccount = () => {
     }
 
     try {
-      await apiCall('/api/pamm/create/', {
+      await apiCall('api/pamm/create/', {
         method: 'POST',
         body: JSON.stringify({
           name,
@@ -176,7 +176,7 @@ const PammAccount = () => {
     }
 
     try {
-      await apiCall('/api/pamm/invest/', {
+      await apiCall('api/pamm/invest/', {
         method: 'POST',
         body: JSON.stringify({
           pamm_id: parseInt(pammInternalId),

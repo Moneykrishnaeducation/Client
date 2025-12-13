@@ -34,7 +34,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await apiCall("/client/notifications/", "GET");
+        const response = await apiCall("client/notifications/", "GET");
 
         // expected response example:
         // [{ id: 1, message: "New message", type: "info" }]
@@ -66,7 +66,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await apiCall("/api/profile/", "GET");
+        const response = await apiCall("api/profile/", "GET");
         if (response?.name) {
           setUserName(response.name);
         }
@@ -81,7 +81,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   // 🔹 Mark single notification as read
   const markAsRead = async (id) => {
   try {
-    const url = `${API_BASE_URL}/client/notifications/${id}/mark-read/`;
+    const url = `${API_BASE_URL}client/notifications/${id}/mark-read/`;
 
     const headers = {
       ...getAuthHeaders(),
@@ -131,37 +131,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   // 🔹 Mark all as read
   const markAllAsRead = async () => {
   try {
-    const url = `${API_BASE_URL}/client/notifications/mark-all-read/`;
-
-    const headers = {
-      ...getAuthHeaders(),
-      "Content-Type": "application/json"
-    };
-
-    // Add CSRF token if present
-    const csrfToken = getCookie('csrftoken');
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken;
-    }
-
-    const config = {
-      method: 'POST',
-      headers,
-      credentials: 'include'
-    };
-
-    const response = await fetch(url, config);
-
-    if (response.status === 401 || response.status === 403) {
-      handleUnauthorized();
-      throw new Error("Unauthorized access");
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    const data = await apiCall('client/notifications/mark-all-read/', 'POST');
 
     // Success notification
     sharedUtils.showToast("All notifications marked as read!", "success");
@@ -203,7 +173,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
       const refreshToken = localStorage.getItem('refresh_token') || localStorage.getItem('refreshToken');
 
       // Call logout API to log the activity on the server
-      const response = await apiCall("/logout/", {
+      const response = await apiCall("logout/", {
         method: "POST",
         body: JSON.stringify({ refresh: refreshToken })
       });

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Copy, CheckCircle, X, AlertTriangle, Info } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
+import { getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL, apiCall } from "../utils/api";
 import { sharedUtils } from "../utils/shared-utils";
 
 export default function DepositModal({
@@ -50,7 +50,7 @@ export default function DepositModal({
   const fetchUsdInrRate = async () => {
     setLoadingRate(true);
     try {
-      const response = await fetch("/get-usd-inr-rate/");
+      const response = await apiCall("get-usd-inr-rate/");
       const data = await response.json();
       setUsdInrRate(data.rate);
       console.log(data.rate)
@@ -403,29 +403,7 @@ export default function DepositModal({
                       formData.append('amount', usdtAmount);
                       formData.append('proof', usdtProof);
 
-                      const url = `usdt-deposit/`.startsWith('http') ? `usdt-deposit/` : `${API_BASE_URL}usdt-deposit/`;
-                      const headers = { ...getAuthHeaders() };
-                      delete headers['Content-Type']; // Remove for multipart
-                      const csrfToken = getCookie('csrftoken');
-                      if (csrfToken) {
-                        headers['X-CSRFToken'] = csrfToken;
-                      }
-                      const config = {
-                        method: 'POST',
-                        headers,
-                        body: formData,
-                        credentials: 'include'
-                      };
-
-                      const response = await fetch(url, config);
-                      if (response.status === 401 || response.status === 403) {
-                        handleUnauthorized();
-                        throw new Error('Unauthorized access');
-                      }
-                      if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                      }
-                      await response.json(); // Assuming it returns JSON, but not used here
+                      await apiCall('usdt-deposit/', 'POST', formData);
 
                       sharedUtils.showToast("USDT deposit request submitted successfully!", "success");
                       setShowDepositModal(false);

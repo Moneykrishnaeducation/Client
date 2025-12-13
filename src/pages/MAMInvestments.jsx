@@ -5,6 +5,7 @@ import DepositModal from "./DepositModal";
 import Withdraw from "./Withdraw";
 import TradesModal from "./TradesModal";
 import { ArrowLeftCircle, ArrowRight } from "lucide-react";
+import { API_BASE_URL } from "../utils/api";
 // Simple Error Boundary to catch render errors and show a helpful message
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -99,7 +100,7 @@ const Maminvestments = () => {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
 
-        const res = await fetch("http://client.localhost:8000/available-mam-managers/", {
+        const res = await fetch(`${API_BASE_URL}available-mam-managers/`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -149,7 +150,7 @@ const Maminvestments = () => {
         const token = localStorage.getItem("accessToken");
         if (!token) throw new Error("Missing auth token");
 
-        const res = await fetch("http://client.localhost:8000/user-investments/", {
+        const res = await fetch(`${API_BASE_URL}user-investments/`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -232,7 +233,7 @@ const Maminvestments = () => {
         password: investorPassword,
       };
 
-      const res = await fetch("http://client.localhost:8000/mam/investments/", {
+      const res = await fetch(`${API_BASE_URL}mam/investments/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -293,7 +294,7 @@ const Maminvestments = () => {
       if (!token) throw new Error("Missing auth token. Please log in again.");
 
       const endpoint = currentEnabled ? 'pause-copying/' : 'start-copying/';
-      const url = `http://client.localhost:8000/${endpoint}`;
+      const url = `${API_BASE_URL}${endpoint}`;
       const body = { mam_id: accountId };
 
       const res = await fetch(url, {
@@ -905,7 +906,7 @@ const Maminvestments = () => {
                     multi_trade_count: multiTradeCount,
                   };
   
-                  const res = await fetch("http://client.localhost:8000/api/save-coefficient/", {
+                  const res = await fetch(`${API_BASE_URL}api/save-coefficient/`, {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",

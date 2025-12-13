@@ -38,7 +38,7 @@ const Withdraw = ({ onClose, currentAccount }) => {
     }
     const fetchAccounts = async () => {
       try {
-        const data = await apiCall('/api/user-trading-accounts/');
+        const data = await apiCall('api/user-trading-accounts/');
         setAccounts((data.accounts || []).filter(acc => acc.account_type === "standard"));
       } catch (error) {
         console.error('Failed to fetch accounts:', error);
@@ -135,13 +135,7 @@ const Withdraw = ({ onClose, currentAccount }) => {
 
     setLoading(true);
     try {
-      const url = buildUrl(`/api/withdrawal/info/${accId}`);
-      const config = await getFetchConfig('GET');
-
-      const response = await fetch(url, config);
-      await handleApiError(response);
-
-      const result = await response.json();
+      const result = await apiCall(`api/withdrawal/info/${accId}/`);
 
       if (result.success && result.data) {
         setWithdrawalInfo(result.data);
@@ -186,7 +180,6 @@ const Withdraw = ({ onClose, currentAccount }) => {
     setError("");
 
     try {
-      const url = buildUrl('/api/withdrawal/request');
       const payload = {
         account_id: selectedAccount,
         amount: parseFloat(amount),
@@ -194,12 +187,7 @@ const Withdraw = ({ onClose, currentAccount }) => {
         description: `Withdrawal via ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`,
       };
 
-      const config = await getFetchConfig('POST', payload);
-
-      const response = await fetch(url, config);
-      await handleApiError(response);
-
-      const result = await response.json();
+      const result = await apiCall('api/withdrawal/request/', 'POST', payload);
 
       if (result.success) {
         sharedUtils.showToast(`Withdrawal request submitted! ID: ${result.data?.transaction_id || 'N/A'}`);

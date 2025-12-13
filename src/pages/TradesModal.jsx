@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { apiCall } from "../utils/api";
+import { API_BASE_URL, apiCall } from "../utils/api";
 
 export default function TradesModal({ showTradesModal, setShowTradesModal, selectedAccount, tradeRole, tradesAccountId, tradesFetchConfig }) {
   const { isDarkMode } = useTheme();
@@ -44,7 +44,7 @@ export default function TradesModal({ showTradesModal, setShowTradesModal, selec
         // Fetch from external URL for manager
         const token = localStorage.getItem('accessToken');
         if (!token) throw new Error('Missing auth token.');
-        const url = `http://client.localhost:8000/open-positions/${acctIdToUse}/`;
+        const url = `${API_BASE_URL}/open-positions/${acctIdToUse}/`;
         const res = await fetch(url, {
           method: 'GET',
           headers: {

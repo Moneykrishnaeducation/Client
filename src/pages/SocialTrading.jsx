@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Info as InfoIcon, Plus, Users, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { apiCall } from "../utils/api";
 
 import Withdraw from "./Withdraw";
 import DepositModal from "./DepositModal";
@@ -86,27 +87,7 @@ export default function MamDashboard() {
 
   const fetchMAMAccounts = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-
-      const response = await fetch(
-        "http://client.localhost:8000/user-mam-accounts/",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Failed to fetch MAM accounts");
-        return;
-      }
-
-      const data = await response.json();
+      const data = await apiCall("user-mam-accounts/");
 
       const formatted = data.map((acc) => ({
         account_id: acc.account_id,
@@ -133,44 +114,18 @@ export default function MamDashboard() {
       setToggleError(null);
       setToggleLoadingIds((prev) => Array.from(new Set([...prev, id])));
       try {
-        const token = localStorage.getItem('accessToken');
-        if (!token) throw new Error('Missing auth token');
-
         // determine current enabled state from local list or selectedAccount
         const current = mamAccounts.find((acc) => acc.account_id === id);
         const currentEnabled = typeof current !== 'undefined' ? current.enabled : (selectedAccount && selectedAccount.account_id === id ? selectedAccount.enabled : true);
         const enableTrading = !currentEnabled; // send desired state
 
-        const url = 'http://client.localhost:8000/toggle-mam-account/';
-        const body = { mam_id: id, enable_trading: enableTrading };
+        const payload = { mam_id: id, enable_trading: enableTrading };
 
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: 'include',
-          body: JSON.stringify(body),
-        });
+        const result = await apiCall('toggle-mam-account/', 'POST', payload);
 
-        if (!res.ok) {
-          let errTxt = `${res.status} ${res.statusText}`;
-          try {
-            const j = await res.json();
-            errTxt = j.error || JSON.stringify(j);
-          } catch {
-            // Ignore JSON parsing errors
-          }
-          throw new Error(errTxt);
-        }
-
-        let payload = {};
-        try { payload = await res.json(); } catch { payload = {}; }
-
-        // server may return new state in payload.is_enabled or payload.enabled
-        const newEnabled = (typeof payload.is_enabled !== 'undefined') ? Boolean(payload.is_enabled) :
-          (typeof payload.enabled !== 'undefined') ? Boolean(payload.enabled) :
+        // server may return new state in result.is_enabled or result.enabled
+        const newEnabled = (typeof result.is_enabled !== 'undefined') ? Boolean(result.is_enabled) :
+          (typeof result.enabled !== 'undefined') ? Boolean(result.enabled) :
             enableTrading;
 
         setMamAccounts((prev) => {
@@ -268,30 +223,7 @@ export default function MamDashboard() {
 
   const fetchMamProfitDetails = async (mamId) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        console.error("Token missing");
-        return;
-      }
-
-      const response = await fetch(
-        `http://client.localhost:8000/mam/${mamId}/profits/`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Failed to fetch profit details");
-        return;
-      }
-
-      const data = await response.json();
+      const data = await apiCall(`mam/${mamId}/profits/`);
 
       // Calculate TOTAL PROFIT = mam + investors
       const investorTotal = data.investor_profits.reduce(

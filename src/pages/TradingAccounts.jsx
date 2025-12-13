@@ -52,7 +52,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
 
   const refreshAccounts = async () => {
     try {
-      const data = await apiCall('/api/user-trading-accounts/');
+      const data = await apiCall('api/user-trading-accounts/');
       setAccounts((data.accounts || []).filter(acc => acc.account_type === "standard"));
     } catch (error) {
       console.error('Failed to refresh accounts:', error);
@@ -70,7 +70,7 @@ export default function TradingAccounts({ showDepositModal, setShowDepositModal 
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const data = await apiCall('/api/user-trading-accounts/');
+        const data = await apiCall('api/user-trading-accounts/');
         setAccounts((data.accounts || []).filter(acc => acc.account_type === "standard"));
       } catch (error) {
         console.error('Failed to fetch accounts:', error);

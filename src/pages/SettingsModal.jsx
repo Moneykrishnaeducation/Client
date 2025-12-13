@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
+import { getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL, apiCall } from "../utils/api";
 import { sharedUtils } from "../utils/shared-utils";
 
 export default function SettingsModal({
@@ -36,22 +36,7 @@ export default function SettingsModal({
     setLoadingDetails(true);
     setError("");
     try {
-      const url = `api/account-details/${selectedAccount.account_id}/`.startsWith('http') ? `api/account-details/${selectedAccount.account_id}/` : `${API_BASE_URL}api/account-details/${selectedAccount.account_id}/`;
-      const headers = { ...getAuthHeaders() };
-      const config = {
-        method: 'GET',
-        headers,
-        credentials: 'include'
-      };
-      const response = await fetch(url, config);
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        throw new Error('Unauthorized access');
-      }
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const data = await response.json();
+      const data = await apiCall(`api/account-details/${selectedAccount.account_id}/`);
       setAccountDetails(data);
     } catch (err) {
       console.error('Error fetching account details:', err);
@@ -66,32 +51,12 @@ export default function SettingsModal({
     setUpdatingLeverage(true);
     setError("");
     try {
-      const url = `api/update-leverage/${selectedAccount.account_id}/`.startsWith('http') ? `api/update-leverage/${selectedAccount.account_id}/` : `${API_BASE_URL}api/update-leverage/${selectedAccount.account_id}/`;
-      const headers = { ...getAuthHeaders() };
-      const csrfToken = getCookie('csrftoken');
-      if (csrfToken) {
-        headers['X-CSRFToken'] = csrfToken;
-      }
       const leverageValue = parseInt(newLeverage.split(':')[1]);
       if (isNaN(leverageValue)) {
         setError('Invalid leverage value selected');
         return;
       }
-      const config = {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ leverage: leverageValue }),
-        credentials: 'include'
-      };
-      const response = await fetch(url, config);
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        throw new Error('Unauthorized access');
-      }
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      await response.json(); // Assuming it returns JSON, but not used here
+      await apiCall(`api/update-leverage/${selectedAccount.account_id}/`, 'POST', { leverage: leverageValue });
       sharedUtils.showToast('Leverage updated successfully');
       setNewLeverage("");
       fetchAccountDetails(); // Refresh details

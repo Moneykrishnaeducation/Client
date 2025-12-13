@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { apiCall } from "../utils/api";
+import { API_BASE_URL, apiCall } from "../utils/api";
 import {
   Camera,
   User,
@@ -27,7 +27,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [profileImage, setProfileImage] = useState('/static/client/images/default-profile.jpg');
+  const [profileImage, setProfileImage] = useState('');
   const [bannerImage, setBannerImage] = useState(null);
 
   const [bankDetails, setBankDetails] = useState(null);
@@ -75,7 +75,7 @@ const ProfilePage = () => {
     const fetchUserProfile = async () => {
       try {
         setLoading(true);
-        const data = await apiCall('/api/profile/');
+        const data = await apiCall('api/profile/');
         setUser({
           name: data.name || '',
           email: data.email || '',
@@ -83,7 +83,7 @@ const ProfilePage = () => {
           dob: data.dob || '',
           address: data.address || '',
         });
-        setProfileImage(data.profile_pic || '/static/client/images/default-profile.jpg');
+        setProfileImage(data.profile_pic || `${API_BASE_URL}static/client/images/default-profile.jpg`);
         setError(null);
       } catch (err) {
         console.error('Error fetching user profile:', err);
@@ -95,7 +95,7 @@ const ProfilePage = () => {
 
     const fetchBankDetails = async () => {
       try {
-        const data = await apiCall('/api/profile/bank-details/');
+        const data = await apiCall('api/profile/bank-details/');
         if (data && Object.keys(data).length > 0) {
           setBankDetails({
             bankName: data.bank_name || '',
@@ -115,7 +115,7 @@ const ProfilePage = () => {
 
     const fetchCryptoDetails = async () => {
       try {
-        const data = await apiCall('/api/profile/crypto-details/');
+        const data = await apiCall('api/profile/crypto-details/');
         if (data && Object.keys(data).length > 0) {
           setCryptoDetails({
             walletId: data.wallet_id || '',
@@ -133,7 +133,7 @@ const ProfilePage = () => {
 
     const fetchDocuments = async () => {
       try {
-        const data = await apiCall('/api/profile/documents/');
+        const data = await apiCall('api/profile/documents/');
         if (data && data.length > 0) {
           const identityDoc = data.find(doc => doc.document_type === 'identity');
           const residentialDoc = data.find(doc => doc.document_type === 'residence');
@@ -365,7 +365,7 @@ const ProfilePage = () => {
               const formData = new FormData();
               formData.append('document', file);
               try {
-                await apiCall('/documents/identity/', {
+                await apiCall('documents/identity/', {
                   method: 'POST',
                   body: formData,
                 });
@@ -448,7 +448,7 @@ const ProfilePage = () => {
               const formData = new FormData();
               formData.append('document', file);
               try {
-                await apiCall('/documents/residence/', {
+                await apiCall('documents/residence/', {
                   method: 'POST',
                   body: formData,
                 });
@@ -687,7 +687,7 @@ const ProfilePage = () => {
               await apiCall('api/profile/crypto-details/', {
                 method: 'POST',
                 body: JSON.stringify({
-                  wallet_id: walletId,
+                  wallet_address: walletId,
                   currency: currency,
                 })
               });

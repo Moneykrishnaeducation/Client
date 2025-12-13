@@ -75,7 +75,7 @@ export default function DemoAccountsPage() {
   useEffect(() => {
     const fetchDemoAccounts = async () => {
       try {
-        const data = await apiCall('/api/user-demo-accounts/', { method: 'GET' });
+        const data = await apiCall('api/user-demo-accounts/', { method: 'GET' });
         setDemoAccounts(data.map(acc => ({
           id: acc.account_id,
           balance: acc.balance,
@@ -113,7 +113,7 @@ export default function DemoAccountsPage() {
     e.preventDefault();
 
     try {
-      const data = await apiCall('/api/create-demo-account/', {
+      const data = await apiCall('api/create-demo-account/', {
         method: 'POST',
         body: JSON.stringify({
           balance: formData.balance || '1000',
@@ -184,7 +184,7 @@ export default function DemoAccountsPage() {
     setUpdating(prev => ({ ...prev, [accountId]: true }));
 
     try {
-      const data = await apiCall(`/reset-demo-balance/${accountId}/`, {
+      const data = await apiCall(`reset-demo-balance/${accountId}/`, {
         method: 'POST',
         body: JSON.stringify({
           balance: '1000' // Reset to $10,000
@@ -213,7 +213,7 @@ export default function DemoAccountsPage() {
     setUpdating(prev => ({ ...prev, [accountId]: true }));
 
     try {
-      const data = await apiCall(`/api/change-demo-leverage/${accountId}/`, {
+      const data = await apiCall(`api/change-demo-leverage/${accountId}/`, {
         method: 'POST',
         body: JSON.stringify({
           leverage: newLeverage

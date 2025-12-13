@@ -28,7 +28,7 @@ const Transactions = () => {
       try {
         console.log('Making API call to user-transactions/');
         setLoading(true);
-        const data = await apiCall('/user-transactions/');
+        const data = await apiCall('user-transactions/');
         console.log('API response:', data);
         // API may return either an array of transactions or an object with a `transactions` key
         const txns = Array.isArray(data) ? data : (data && data.transactions) ? data.transactions : [];
@@ -49,7 +49,7 @@ const Transactions = () => {
   useEffect(() => {
     const fetchPendingTransactions = async () => {
       try {
-        const data = await apiCall('/pending-transactions/');
+        const data = await apiCall('pending-transactions/');
         setPendingTransactions(data);
         console.log('Pending transactions:', data);
       } catch (err) {
@@ -59,7 +59,7 @@ const Transactions = () => {
 
     const fetchUserTradingAccounts = async () => {
       try {
-        const data = await apiCall('/user-trading-accounts/');
+        const data = await apiCall('user-trading-accounts/');
         setTradingAccounts(data.accounts || []);
         console.log('User trading accounts:', data);
       } catch (err) {

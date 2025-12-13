@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { apiCall } from "../utils/api";
+import { API_BASE_URL, apiCall } from "../utils/api";
 
 export default function InvestorManagement({ showTradesModal, setShowTradesModal, selectedAccount }) {
   const { isDarkMode } = useTheme();
@@ -20,7 +20,7 @@ export default function InvestorManagement({ showTradesModal, setShowTradesModal
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("Missing auth token. Please log in again.");
 
-      const url = `http://client.localhost:8000/mam/${selectedAccount.account_id}/investors`;
+      const url = `${API_BASE_URL}mam/${selectedAccount.account_id}/investors`;
 
       const res = await fetch(url, {
         headers: {
@@ -45,23 +45,7 @@ export default function InvestorManagement({ showTradesModal, setShowTradesModal
     setToggleLoading(true);
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("Missing auth token.");
-
-      const url = `http://client.localhost:8000/mam/investors/${accountId}/toggle-copy`;
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Toggle failed");
-
-      const payload = await res.json();
+      const payload = await apiCall(`mam/investors/${accountId}/toggle-copy`, 'POST');
       console.log("Toggle payload:", payload);
 
       const newEnabled = Boolean(payload.investor_allow_copy);
@@ -78,7 +62,7 @@ export default function InvestorManagement({ showTradesModal, setShowTradesModal
     } catch (e) {
       console.error("Toggle API error:", e);
       setToggleError(String(e));
-      
+
     } finally {
       setToggleLoading(false);
     }

@@ -21,7 +21,7 @@ const Ibrequest = () => {
   useEffect(() => {
     const fetchIBStatus = async () => {
       try {
-        const data = await apiCall('/api/ib-request/');
+        const data = await apiCall('api/ib-request/');
         if (data.status === 'pending') {
           setIsPending(true);
         }
@@ -39,7 +39,7 @@ const Ibrequest = () => {
 
 
     try {
-      const response = await apiCall('/api/ib-request/', {
+      const response = await apiCall('api/ib-request/', {
         method: 'POST'
       });
 
