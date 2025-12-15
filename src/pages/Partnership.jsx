@@ -507,7 +507,7 @@ const App = () => {
         setWithdrawalLoading(true);
         setWithdrawalError("");
         try {
-          const data = await apiCall("client/ib/transactions/");
+          const data = await apiCall("client/ib/transactions/" , { method: 'GET' });
           console.log("Withdrawal data:", data);
           setWithdrawalData(data);
         } catch (err) {
@@ -520,7 +520,7 @@ const App = () => {
 
       const fetchTradingAccounts = async () => {
         try {
-          const data = await apiCall("client/api/user-trading-accounts/");
+          const data = await apiCall("client/api/user-trading-accounts/" , { method: 'GET' });
           console.log("Trading accounts:", data);
           setTradingAccounts(data.accounts || []);
         } catch (err) {
