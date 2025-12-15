@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { API_BASE_URL, apiCall } from "../utils/api";
+import { API_BASE_URL, apiCall, getAuthHeaders  } from "../utils/api";
 import {
   Camera,
   User,
@@ -54,21 +54,24 @@ const ProfilePage = () => {
 
   const inputClass = `w-full p-2 ${isDarkMode ? 'bg-[#1a1a1a] border-gray-700 text-white' : 'bg-gray-100 border-gray-300 text-black'} border rounded-md focus:outline-none focus:border-[#FFD700] placeholder-gray-500`;
 
-  const fetchBanner = async () => {
-    try {
-      const data = await apiCall('api/profile/banner/', {
-        method: 'GET'
-      });
-      if (data && data.banner_url) {
-        setBannerImage(data.banner_url);
-      } else {
-        setBannerImage(null);
-      }
-    } catch (err) {
-      console.error('Error fetching banner:', err);
+const fetchBanner = async () => {
+  try {
+    const data = await apiCall('api/profile/banner/', {
+      method: 'GET',
+      headers: getAuthHeaders(), // attach JWT token
+    });
+
+    if (data && data.banner_url) {
+      setBannerImage(data.banner_url);
+    } else {
       setBannerImage(null);
     }
-  };
+  } catch (err) {
+    console.error('Error fetching banner:', err);
+    setBannerImage(null);
+  }
+};
+
 
   // Fetch user profile data on component mount
   useEffect(() => {
