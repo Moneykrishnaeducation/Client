@@ -30,37 +30,54 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   const iconSize = "text-lg md:text-xl";
 
-  // 🔥 Fetch Notifications from API
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const response = await apiCall("client/notifications/", "GET");
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.error('No access token found.');
+        return;
+      }
 
-        // expected response example:
-        // [{ id: 1, message: "New message", type: "info" }]
-        if (response?.notifications) {
-          setNotifications(
-            response.notifications.filter((n) => !n.is_read).map((n) => ({
+      const response = await apiCall("client/notifications/", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (response?.notifications) {
+        setNotifications(
+          response.notifications
+            .filter((n) => !n.is_read)
+            .map((n) => ({
               ...n,
               icon:
-                n.type === "success"
-                  ? <CheckCircle className="w-5 h-5 text-green-400" />
-                  : n.type === "warning"
-                  ? <AlertCircle className="w-5 h-5 text-yellow-400" />
-                  : n.type === "error"
-                  ? <AlertCircle className="w-5 h-5 text-red-400" />
-                  : <Info className="w-5 h-5 text-blue-400" />,
+                n.type === "success" ? (
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                ) : n.type === "warning" ? (
+                  <AlertCircle className="w-5 h-5 text-yellow-400" />
+                ) : n.type === "error" ? (
+                  <AlertCircle className="w-5 h-5 text-red-400" />
+                ) : (
+                  <Info className="w-5 h-5 text-blue-400" />
+                ),
             }))
-          );
-          setLoadingNotifications(false);
-        }
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error);
+        );
+      } else {
+        console.error("No notifications found:", response);
       }
-    };
 
-    fetchNotifications();
-  }, []);
+      setLoadingNotifications(false);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
+
+  fetchNotifications();
+}, []);
+
 
   // 🔥 Fetch User Profile from API
   useEffect(() => {
