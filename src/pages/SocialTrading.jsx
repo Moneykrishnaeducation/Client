@@ -121,7 +121,7 @@ export default function MamDashboard() {
 
         const payload = { mam_id: id, enable_trading: enableTrading };
 
-        const result = await apiCall('toggle-mam-account/', 'POST', payload);
+        const result = await apiCall('toggle-mam-account/', {method:'POST',body:JSON.stringify(payload)});
 
         // server may return new state in result.is_enabled or result.enabled
         const newEnabled = (typeof result.is_enabled !== 'undefined') ? Boolean(result.is_enabled) :
