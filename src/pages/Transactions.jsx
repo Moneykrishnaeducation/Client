@@ -41,7 +41,19 @@ const Transactions = () => {
     try {
       setLoading(true);
 
-      const data = await apiCall("user-transactions/");
+      const token = localStorage.getItem('accessToken'); // Get access token from localStorage
+      if (!token) {
+        setError("No access token found. Please log in again.");
+        setTransactions([]);
+        return;
+      }
+
+      const data = await apiCall("user-transactions/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
 
       console.log("Raw response:", data); // Log the full API response
 
