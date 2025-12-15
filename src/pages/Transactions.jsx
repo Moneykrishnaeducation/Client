@@ -40,30 +40,18 @@ const Transactions = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken'); // Use correct key here
-      if (!token) {
-        setError("No access token found.");
-        setTransactions([]);
-        return;
-      }
 
-      const data = await apiCall("user-transactions/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      });
+      const data = await apiCall("user-transactions/");
 
       console.log("Raw response:", data); // Log the full API response
 
-      if (!data || !Array.isArray(data.transactions)) {
+      if (!Array.isArray(data)) {
         setError("Invalid response format for transactions.");
         setTransactions([]);
         return;
       }
 
-      const txns = data.transactions || [];
-      setTransactions(txns);
+      setTransactions(data);
       setError(null);
     } catch (err) {
       setError("Failed to load transactions. Please try again.");

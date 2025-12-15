@@ -176,29 +176,11 @@ export default function MamDashboard() {
     };
 
     try {
-      const response = await fetch("http://client.localhost:8000/mam-accounts/create/", {
+      const data = await apiCall("mam-accounts/create/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrf,
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        let err;
-        try {
-          err = await response.json();
-        } catch {
-          err = { error: "Server error occurred. Please try again." };
-        }
-        alert("Error: " + JSON.stringify(err));
-        return;
-      }
-
-      const data = await response.json();
       alert("MAM Account Created Successfully!");
 
       const newAccount = {

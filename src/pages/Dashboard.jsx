@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { useLocation} from "react-router-dom";
+
 
 import { apiCall, getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
 import {
@@ -52,7 +52,6 @@ const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
   const [convertedAmount, setConvertedAmount] = useState("");
   const [selectedDepositAccount, setSelectedDepositAccount] = useState("");
   const [accounts, setAccounts] = useState([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [proof, setProof] = useState(null);
   const [usdtAmount, setUsdtAmount] = useState("");
   const [usdtProof, setUsdtProof] = useState(null);
@@ -64,11 +63,10 @@ const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
   // Fetch user trading accounts
   useEffect(() => {
     const fetchAccounts = async () => {
-      setLoadingAccounts(true);
       try {
         const data = await apiCall('user-trading-accounts/');
         // Filter out demo accounts, only show standard/mam accounts for deposits
-        const filteredAccounts = (data.accounts || []).filter(account =>
+        const filteredAccounts = (Array.isArray(data) ? data : (data.accounts || [])).filter(account =>
           account.account_type !== 'demo'
         );
         const formattedAccounts = filteredAccounts.map(account => ({
@@ -87,8 +85,6 @@ const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
         if (!selectedDepositAccount) {
           setSelectedDepositAccount(fallbackAccounts[0].id);
         }
-      } finally {
-        setLoadingAccounts(false);
       }
     };
 
@@ -167,7 +163,7 @@ const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
           onSubmit={async (e) => {
             e.preventDefault();
             if (!selectedDepositAccount || !cheeseAmount) {
-              sharedUtils.showToast("Please fill in all required fields.", "error");
+              showToast("Please fill in all required fields.", "error");
               return;
             }
 
@@ -210,7 +206,7 @@ const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
               }
             } catch (error) {
               console.error('Failed to initiate CheesePay deposit:', error);
-              sharedUtils.showToast("Failed to initiate CheesePay payment. Please try again.", "error");
+              showToast("Failed to initiate CheesePay payment. Please try again.", "error");
             } finally {
               setIsSubmittingCheesePay(false);
             }
@@ -527,7 +523,6 @@ const OpenAccountModal = ({ onClose }) => {
 /* --------------------- Dashboard --------------------- */
 const Dashboard = () => {
   const { isDarkMode } = useTheme();
-  const location = useLocation();
   const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState(null);
   const [notifications, setNotifications] = useState([]);
