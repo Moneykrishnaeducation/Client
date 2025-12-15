@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { useLocation} from "react-router-dom";
+
 import { apiCall, getAuthHeaders, getCookie, handleUnauthorized, API_BASE_URL } from "../utils/api";
 import {
   UserPlus,
@@ -525,6 +527,7 @@ const OpenAccountModal = ({ onClose }) => {
 /* --------------------- Dashboard --------------------- */
 const Dashboard = () => {
   const { isDarkMode } = useTheme();
+  const location = useLocation();
   const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState(null);
   const [notifications, setNotifications] = useState([]);
@@ -547,7 +550,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await apiCall('api/stats-overview');
+        const data = await apiCall('api/stats-overview/');
         console.log('stats overview data:', data);
         setStats({
           live: data.live_accounts || 0,
@@ -568,7 +571,7 @@ const Dashboard = () => {
 
     const fetchRecentTransactions = async () => {
       try {
-        const data = await apiCall('api/recent-transactions');
+        const data = await apiCall('api/recent-transactions/');
         console.log('Recent transactions data:', data);
         const transactions = data || [];
         // Process transactions to ensure required fields
@@ -627,16 +630,28 @@ const Dashboard = () => {
   ];
 
   const statItems = [
-    { label: "Live Accounts", value: stats.live, icon: UserPlus },
-    { label: "Demo Accounts", value: stats.demo, icon: Wallet },
-    { label: "Real Balance (USD)", value: `$${stats.realBalance}`, icon: DollarSign },
-    { label: "Total Clients (IB)", value: stats.clients, icon: Users },
-    { label: "Overall Deposits", value: `$${stats.deposits}`, icon: PiggyBank },
-    { label: "MAM Funds Invested", value: `$${stats.mamFunds}`, icon: Coins },
-    { label: "MAM Managed Funds", value: `$${stats.mamManaged}`, icon: Briefcase },
-    { label: "IB Earnings", value: `$${stats.ibEarnings}`, icon: CreditCard },
-    { label: "Withdrawable", value: `$${stats.withdrawable}`, icon: Banknote },
-  ];
+  { label: "Live Accounts", value: stats.live, icon: UserPlus, path: "/tradingaccounts" },
+  { label: "Demo Accounts", value: stats.demo, icon: Wallet, path: "/demoAccounts" },
+  { label: "Real Balance (USD)", value: `$${stats.realBalance}`, icon: DollarSign, path: "/transactions" },
+  { label: "Total Clients (IB)", value: stats.clients, icon: Users, path: "/partnership" },
+  {
+  label: "Overall Deposits",
+  value: `$${stats.deposits}`,
+  icon: PiggyBank,
+  path: "/transactions?category=Deposit",
+},
+  { label: "MAM Funds Invested", value: `$${stats.mamFunds}`, icon: Coins, path: "/MAMInvestments" },
+  { label: "MAM Managed Funds", value: `$${stats.mamManaged}`, icon: Briefcase, path: "/socialtrading" },
+  { label: "IB Earnings", value: `$${stats.ibEarnings}`, icon: CreditCard, path: "/transactions" },
+ {
+  label: "Withdrawable",
+  value: `$${stats.withdrawable}`,
+  icon: Banknote,
+  path: "/transactions?category=Withdrawal",
+},
+
+];
+
 
   return (
     <div className={`min-h-[100vh]${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} flex flex-col w-full text-[18px] overflow-hidden`}>
@@ -658,10 +673,18 @@ const Dashboard = () => {
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {statItems.map((box, i) => (
-            <div
-              key={i}
-              className={`rounded-lg p-3 text-center ${isDarkMode ? 'bg-gradient-to-b from-gray-700 to-black' : 'bg-gradient-to-b from-gray-100 to-white'} shadow-md h-[110px] w-full mx-auto hover:shadow-[0_0_12px_rgba(255,215,0,0.5)] transition-all duration-200 flex flex-col items-center justify-center`}
-            >
+           <div
+  key={i}
+  onClick={() => navigate(box.path)}
+  className={`rounded-lg p-3 text-center cursor-pointer
+    ${isDarkMode ? "bg-gradient-to-b from-gray-700 to-black" : "bg-gradient-to-b from-gray-100 to-white"}
+    shadow-md h-[110px] w-full mx-auto
+    hover:shadow-[0_0_12px_rgba(255,215,0,0.5)]
+    hover:scale-[1.02]
+    transition-all duration-200
+    flex flex-col items-center justify-center`}
+>
+
               <box.icon className="w-8 h-8 mb-2 text-yellow-400" />
               <strong className={`block text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{box.label}</strong>
               <span className="block text-[18px] font-semibold mt-1 text-yellow-400">
