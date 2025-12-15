@@ -581,23 +581,43 @@ const Dashboard = () => {
 };
 
 
-  const fetchRecentTransactions = async () => {
-      try {
-        const data = await apiCall('api/recent-transactions/');
-        console.log('Recent transactions data:', data);
-        const transactions = data || [];
-        // Process transactions to ensure required fields
-        const processedTransactions = transactions.slice(0, 2).map(item => ({
-          ...item,
-          transaction_type_display: item.transaction_type_display || (item.transaction_type === 'deposit' ? 'Deposit to Trading Account' : item.transaction_type === 'withdrawal' ? 'Withdrawal from Trading Account' : item.transaction_type || 'Transaction')
-        }));
-        setRecentTransactions(processedTransactions);
-      } catch (error) {
-        console.error('Failed to fetch recent transactions:', error);
-        // Fallback to empty array if API fails
-        setRecentTransactions([]);
-      }
-    };
+ const fetchRecentTransactions = async () => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      console.error('No access token found.');
+      setRecentTransactions([]);
+      return;
+    }
+
+    const data = await apiCall('api/recent-transactions/', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    console.log('Recent transactions data:', data);
+
+    const transactions = data || [];
+    const processedTransactions = transactions.slice(0, 2).map(item => ({
+      ...item,
+      transaction_type_display:
+        item.transaction_type_display ||
+        (item.transaction_type === 'deposit'
+          ? 'Deposit to Trading Account'
+          : item.transaction_type === 'withdrawal'
+          ? 'Withdrawal from Trading Account'
+          : item.transaction_type || 'Transaction'),
+    }));
+
+    setRecentTransactions(processedTransactions);
+  } catch (error) {
+    console.error('Failed to fetch recent transactions:', error);
+    setRecentTransactions([]);
+  }
+};
 
   useEffect(() => {
     fetchStats();
