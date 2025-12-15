@@ -37,50 +37,69 @@ const Transactions = () => {
   }, [selectedCategory, searchQuery]);
 
   /* Fetch transactions */
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true);
-        const data = await apiCall("user-transactions/");
-        const txns = Array.isArray(data)
-          ? data
-          : data?.transactions || [];
-        setTransactions(txns);
-        setError(null);
-      } catch (err) {
-        setError("Failed to load transactions. Please try again.");
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('accessToken'); // Use correct key here
+      if (!token) {
+        setError("No access token found.");
         setTransactions([]);
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
-    fetchTransactions();
-  }, []);
+      const data = await apiCall("user-transactions/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
 
-  /* Fetch pending + accounts */
+      console.log("Raw response:", data); // Log the full API response
+
+      if (!data || !Array.isArray(data.transactions)) {
+        setError("Invalid response format for transactions.");
+        setTransactions([]);
+        return;
+      }
+
+      const txns = data.transactions || [];
+      setTransactions(txns);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load transactions. Please try again.");
+      setTransactions([]);
+      console.error("Error fetching transactions:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* Fetch pending transactions */
+  const fetchPendingTransactions = async () => {
+    try {
+      const data = await apiCall("pending-transactions/");
+      setPendingTransactions(data || []);
+    } catch (err) {
+      console.error("Error fetching pending transactions:", err);
+    }
+  };
+
+  /* Fetch user trading accounts */
+  const fetchUserTradingAccounts = async () => {
+    try {
+      const data = await apiCall("user-trading-accounts/");
+      setTradingAccounts(data?.accounts || []);
+    } catch (err) {
+      console.error("Error fetching trading accounts:", err);
+    }
+  };
+
+  /* Fetch all necessary data */
   useEffect(() => {
-    const fetchPendingTransactions = async () => {
-      try {
-        const data = await apiCall("pending-transactions/");
-        setPendingTransactions(data || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    const fetchUserTradingAccounts = async () => {
-      try {
-        const data = await apiCall("user-trading-accounts/");
-        setTradingAccounts(data.accounts || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
+    fetchTransactions();
     fetchPendingTransactions();
     fetchUserTradingAccounts();
-  }, []);
+  }, []); // Runs once on component mount
 
   /* CATEGORY DATA */
   const getCategoryData = () => {

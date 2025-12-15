@@ -547,29 +547,46 @@ const Dashboard = () => {
     withdrawable: 0,
   });
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await apiCall('api/stats-overview/');
-        console.log('stats overview data:', data);
-        setStats({
-          live: data.live_accounts || 0,
-          demo: data.demo_accounts || 0,
-          realBalance: data.real_balance || 0,
-          clients: data.total_clients || 0,
-          deposits: data.total_deposits || 0,
-          mamFunds: data.mam_investments || 0,
-          mamManaged: data.mam_managed_funds || 0,
-          ibEarnings: data.total_earnings || 0,
-          withdrawable: data.commission_balance || 0,
-        });
-      } catch (error) {
-        console.error('Failed to fetch stats:', error);
+  const fetchStats = async () => {
+  try {
+    const token = localStorage.getItem('accessToken'); // Use the correct key
+    if (!token) {
+      console.error('No access token found.');
+      return;
+    }
 
-      }
-    };
+    // Make the API call with the Authorization header
+    const data = await apiCall('api/stats-overview/', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
 
-    const fetchRecentTransactions = async () => {
+    // Check if the response is in the correct format
+    if (data) {
+      console.log('stats overview data:', data);
+      setStats({
+        live: data.live_accounts || 0,
+        demo: data.demo_accounts || 0,
+        realBalance: data.real_balance || 0,
+        clients: data.total_clients || 0,
+        deposits: data.total_deposits || 0,
+        mamFunds: data.mam_investments || 0,
+        mamManaged: data.mam_managed_funds || 0,
+        ibEarnings: data.total_earnings || 0,
+        withdrawable: data.commission_balance || 0,
+      });
+    } else {
+      console.error('Invalid or empty response data:', data);
+    }
+  } catch (error) {
+    console.error('Failed to fetch stats:', error);
+  }
+};
+
+
+  const fetchRecentTransactions = async () => {
       try {
         const data = await apiCall('api/recent-transactions/');
         console.log('Recent transactions data:', data);
@@ -587,6 +604,7 @@ const Dashboard = () => {
       }
     };
 
+  useEffect(() => {
     fetchStats();
     fetchRecentTransactions();
   }, []);
