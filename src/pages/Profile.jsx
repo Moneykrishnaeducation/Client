@@ -308,10 +308,10 @@ const ProfilePage = () => {
               <Pencil size={16} />
             </button>
           </div>
-          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{user.email}</p>
-          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{user.phone}</p>
-          <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-600'} text-sm`}>DOB: {user.dob}</p>
-          <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-600'} text-sm`}>Address: {user.address}</p>
+          <p className="text-sm"><span className="font-bold text-[#FFD700]">Email:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.email}</span></p>
+          <p className="text-sm"><span className="font-bold text-[#FFD700]">Phone No:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.phone}</span></p>
+          <p className="text-sm"><span className="font-bold text-[#FFD700]">DOB:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.dob}</span></p>
+          <p className="text-sm"><span className="font-bold text-[#FFD700]">Address:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.address}</span></p>
         </div>
       </div>
 
@@ -365,7 +365,7 @@ const ProfilePage = () => {
               const formData = new FormData();
               formData.append('document', file);
               try {
-                await apiCall('documents/identity/', {
+                await apiCall('api/profile/documents/identity/', {
                   method: 'POST',
                   body: formData,
                 });
@@ -448,7 +448,7 @@ const ProfilePage = () => {
               const formData = new FormData();
               formData.append('document', file);
               try {
-                await apiCall('documents/residence/', {
+                await apiCall('api/profile/documents/residence/', {
                   method: 'POST',
                   body: formData,
                 });
@@ -780,14 +780,25 @@ const ProfilePage = () => {
                   setEditError('');
 
                   try {
-                    await apiCall('profile/edit/', {
+                    await apiCall('api/profile/edit/', {
                       method: 'POST',
                       body: JSON.stringify({
-                        phone: phone,
+                        phone_number: phone,
                         dob: dob,
                         address: address
                       })
                     });
+
+                    // Refetch user profile data to show updated information
+                    const updatedData = await apiCall('api/profile/');
+                    setUser({
+                      name: updatedData.name || '',
+                      email: updatedData.email || '',
+                      phone: updatedData.phone || '',
+                      dob: updatedData.dob || '',
+                      address: updatedData.address || '',
+                    });
+
                     setShowEditModal(false);
                   } catch (err) {
                     console.error('Error submitting change request:', err);
