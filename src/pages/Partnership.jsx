@@ -694,37 +694,53 @@ const App = () => {
 
 
 
+
       {activeTab === "Dashboard" && (
-        <>
-         
-          {error && <p className="text-red-500">{error}</p>}
-          {!loading && !error && (
-            <>
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {[
-                  { label: "Total Clients", value: dashboardData.totalClients },
-                  { label: "Direct Clients", value: dashboardData.directClients },
-                  { label: "Total Earnings", value: dashboardData.totalEarnings },
-                  { label: "Total Withdrawals", value: dashboardData.totalWithdrawals },
-                  { label: "Commission Balance", value: dashboardData.commissionBalance },
-                  { label: "Current Month Earnings", value: dashboardData.currentMonthEarnings },
-                  { label: "Current Month Volume Traded (Lots)", value: dashboardData.currentMonthVolume },
-                  { label: "Total Volume Traded (Lots)", value: dashboardData.totalVolume },
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-4 rounded-md shadow-lg border border-yellow-500 flex flex-col items-center justify-center text-center`}
-                  >
-                    <h3 className="text-yellow-400 font-semibold mb-1 text-sm">{item.label}</h3>
-                    <p className="text-xl font-bold">
-                      {["Commission Balance", "Current Month Volume Traded (Lots)", "Total Volume Traded (Lots)"].includes(item.label)
-                        ? (parseFloat(item.value) || 0).toFixed(2)
-                        : item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
+  <>
+    {error && <p className="text-red-500">{error}</p>}
+    {!loading && !error && (
+      <>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
+          {[
+            { label: "Total Clients", value: dashboardData.totalClients },
+            { label: "Direct Clients", value: dashboardData.directClients },
+            { label: "Total Earnings", value: dashboardData.totalEarnings },
+            { label: "Total Withdrawals", value: dashboardData.totalWithdrawals },
+            { label: "Commission Balance", value: dashboardData.commissionBalance },
+            { label: "Current Month Earnings", value: dashboardData.currentMonthEarnings },
+            { label: "Current Month Volume Traded (Lots)", value: dashboardData.currentMonthVolume },
+            { label: "Total Volume Traded (Lots)", value: dashboardData.totalVolume },
+          ].map((item, index) => (
+            <div
+              key={index}
+              className={`rounded-lg p-3 text-center 
+                ${isDarkMode 
+                  ? "bg-gradient-to-b from-gray-700 to-black" 
+                  : "bg-gradient-to-b from-gray-100 to-white"
+                }
+                shadow-md h-[110px] w-full mx-auto
+                hover:shadow-[0_0_12px_rgba(255,215,0,0.5)]
+                transition-all duration-200
+                flex flex-col items-center justify-center
+                `}
+            >
+              <strong
+                className={`block text-sm mb-1 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                {item.label}
+              </strong>
+
+              <span className="block text-[18px] font-semibold text-yellow-400">
+                {["Commission Balance", "Current Month Volume Traded (Lots)", "Total Volume Traded (Lots)"].includes(item.label)
+                  ? (parseFloat(item.value) || 0).toFixed(2)
+                  : item.value}
+              </span>
+            </div>
+          ))}
+        </div>
 
               {/* Commission Earnings Charts */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
@@ -798,6 +814,8 @@ const App = () => {
           )}
         </>
       )}
+
+
 
 
       {/* Client Tab */}
