@@ -97,6 +97,13 @@ export default function DemoAccountsPage() {
     fetchDemoAccounts();
   }, []);
 
+  // 🔹 Set default leverage from API
+  useEffect(() => {
+    if (demoAccounts.length > 0) {
+      setFormData(prev => ({ ...prev, leverage: demoAccounts[0].leverage }));
+    }
+  }, [demoAccounts]);
+
   // 🔹 Auto-assign passwords when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -211,12 +218,14 @@ export default function DemoAccountsPage() {
   // 🔹 Change leverage via API
   const changeLeverage = async (accountId, newLeverage) => {
     setUpdating(prev => ({ ...prev, [accountId]: true }));
-
+    let processedValue = newLeverage;
+    processedValue = newLeverage.split(':')[1] || newLeverage;
     try {
-      const data = await apiCall(`api/change-demo-leverage/${accountId}/`, {
+      const data = await apiCall(`change-demo-leverage/${accountId}/`, {
         method: 'POST',
         body: JSON.stringify({
-          leverage: newLeverage
+           
+          leverage: processedValue
         }),
       });
 
@@ -397,7 +406,7 @@ export default function DemoAccountsPage() {
                       >
                         {["1", "2", "5", "10", "20", "50", "100", "200", "500"].map(
                           (lev) => (
-                            <option key={lev}>1:{lev}</option>
+                            <option key={lev} value={`1:${lev}`}>1:{lev}</option>
                           )
                         )}
                       </select>
@@ -410,14 +419,7 @@ export default function DemoAccountsPage() {
                         className={`${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400 text-black'} px-3 py-2 rounded w-full text-sm`}
                       >
                         View
-                      </button>
-                      <button
-                        onClick={() => updateAccount(acc.id, {})}
-                        disabled={updating[acc.id]}
-                        className="bg-yellow-400 text-black hover:bg-yellow-300 w-full px-3 py-2 rounded text-sm font-semibold disabled:opacity-50"
-                      >
-                        {updating[acc.id] ? <RefreshCw size={14} className="animate-spin inline" /> : 'Update'}
-                      </button>
+                      </button> 
                     </td>
                   </tr>
                 ))}

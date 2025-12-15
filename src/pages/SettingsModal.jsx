@@ -56,7 +56,10 @@ export default function SettingsModal({
         setError('Invalid leverage value selected');
         return;
       }
-      await apiCall(`api/update-leverage/${selectedAccount.account_id}/`, 'POST', { leverage: leverageValue });
+      await apiCall(`api/update-leverage/${selectedAccount.account_id}/`, {
+        method: 'POST',
+        body: JSON.stringify({ leverage: leverageValue })
+      });
       sharedUtils.showToast('Leverage updated successfully');
       setNewLeverage("");
       fetchAccountDetails(); // Refresh details

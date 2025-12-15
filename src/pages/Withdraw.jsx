@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { ModalWrapper } from "./Dashboard"; // Make sure ModalWrapper is exported
-import { API_BASE_URL, getAuthHeaders, getCookie, handleUnauthorized, apiCall } from "../utils/api";
+import { ModalWrapper } from "./Dashboard";
+import { apiCall } from "../utils/api";
 import { sharedUtils } from "../utils/shared-utils";
 
 const Withdraw = ({ onClose, currentAccount }) => {
@@ -17,25 +17,41 @@ const Withdraw = ({ onClose, currentAccount }) => {
   const [bankDetails, setBankDetails] = useState(null);
   const [cryptoDetails, setCryptoDetails] = useState(null);
 
-  // Sync internal state when currentAccount prop changes
+  // Sync internal state when currentAccount prop changes and fetch withdrawal info
   useEffect(() => {
     if (currentAccount) {
       setSelectedAccount(currentAccount.account_id);
       setAvailableBalance(currentAccount.balance || 0);
       setAccounts([currentAccount]);
-      setLoading(false);
+      setLoading(true);
+
+      const fetchWithdrawalInfo = async () => {
+        try {
+          const result = await apiCall(`api/withdrawal/info/${currentAccount.account_id}/`);
+          if (result.success && result.data) {
+            setWithdrawalInfo(result.data);
+            if (result.data.available_methods?.length > 0) {
+              setActiveTab(result.data.available_methods[0]);
+            }
+          } else {
+            setError(result.error || "Failed to load withdrawal details");
+          }
+        } catch (err) {
+          console.error("Withdrawal info error:", err);
+          setError(err.message || "Failed to load withdrawal information");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchWithdrawalInfo();
     }
   }, [currentAccount]);
 
-  // Fetch user accounts, bank details, and crypto details on component mount or selectedAccount change
+  // Fetch accounts and details when no currentAccount is provided
   useEffect(() => {
-    if (currentAccount) {
-      setSelectedAccount(currentAccount.account_id);
-      setAvailableBalance(currentAccount.balance || 0);
-      setAccounts([currentAccount]);
-      setLoading(false);
-      return;
-    }
+    if (currentAccount) return;
+
     const fetchAccounts = async () => {
       try {
         const data = await apiCall('api/user-trading-accounts/');
@@ -43,79 +59,35 @@ const Withdraw = ({ onClose, currentAccount }) => {
       } catch (error) {
         console.error('Failed to fetch accounts:', error);
         setAccounts([]);
-      } finally {
-        setLoading(false);
       }
     };
+
     fetchAccounts();
-    const fetchBankDetails = async () => {
+  }, [currentAccount]);
+
+  // Fetch bank/crypto details based on activeTab
+  useEffect(() => {
+    const fetchDetails = async () => {
       try {
-        const data = await apiCall('client/api/profile/bank-details/');
-        setBankDetails(data || null);
+        if (activeTab === "bank") {
+          const data = await apiCall('client/api/profile/bank-details/');
+          setBankDetails(data || null);
+        } else {
+          const data = await apiCall('client/api/profile/crypto-details/');
+          setCryptoDetails(data || null);
+        }
       } catch (err) {
-        console.error('Error fetching bank details:', err);
-        setBankDetails(null);
+        console.error(`Error fetching ${activeTab} details:`, err);
+        if (activeTab === "bank") {
+          setBankDetails(null);
+        } else {
+          setCryptoDetails(null);
+        }
       }
     };
 
-    // Updated: fetchCryptoDetails using apiCall()
-    const fetchCryptoDetails = async () => {
-      try {
-        const data = await apiCall('client/api/profile/crypto-details/');
-        setCryptoDetails(data || null);
-      } catch (err) {
-        console.error('Error fetching crypto details:', err);
-        setCryptoDetails(null);
-      }
-    };
-
-    if (activeTab === "bank") {
-      fetchBankDetails();
-    } else {
-      fetchCryptoDetails();
-    }
-  }, [selectedAccount, activeTab]);
-
-  // Helper: Build full URL safely
-  const buildUrl = (path) => {
-    if (path.startsWith('http')) return path;
-    return `${API_BASE_URL}${path.replace(/^\/+/, '')}/`;
-  };
-
-  // Helper: Default fetch config with auth + CSRF
-  const getFetchConfig = async (method = 'GET', body = null, multipart = false) => {
-    const headers = { ...getAuthHeaders() };
-
-    if (!multipart) {
-      headers['Content-Type'] = 'application/json';
-    } else {
-      delete headers['Content-Type']; // Let browser set multipart boundary
-    }
-
-    const csrfToken = getCookie('csrftoken');
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken;
-    }
-
-    return {
-      method,
-      headers,
-      body: body ? (multipart ? body : JSON.stringify(body)) : undefined,
-      credentials: 'include',
-    };
-  };
-
-  // Handle Unauthorized globally
-  const handleApiError = (response) => {
-    if (response.status === 401 || response.status === 403) {
-      handleUnauthorized();
-      throw new Error('Session expired. Please log in again.');
-    }
-    if (!response.ok) {
-      throw new Error(`Request failed: ${response.status} ${response.statusText}`);
-    }
-    return response;
-  };
+    fetchDetails();
+  }, [activeTab]);
 
   // ======================
   // 1. Account Change → Load Withdrawal Info

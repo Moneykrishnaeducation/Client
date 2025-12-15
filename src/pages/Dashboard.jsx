@@ -547,7 +547,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await apiCall('api/stats-overview/');
+        const data = await apiCall('api/stats-overview');
         console.log('stats overview data:', data);
         setStats({
           live: data.live_accounts || 0,
@@ -562,24 +562,13 @@ const Dashboard = () => {
         });
       } catch (error) {
         console.error('Failed to fetch stats:', error);
-        // Fallback to mock data if API fails
-        setStats({
-          live: 2,
-          demo: 3,
-          realBalance: 1560,
-          clients: 5,
-          deposits: 7200,
-          mamFunds: 3000,
-          mamManaged: 5000,
-          ibEarnings: 150,
-          withdrawable: 120,
-        });
+
       }
     };
 
     const fetchRecentTransactions = async () => {
       try {
-        const data = await apiCall('api/recent-transactions/');
+        const data = await apiCall('api/recent-transactions');
         console.log('Recent transactions data:', data);
         const transactions = data || [];
         // Process transactions to ensure required fields

@@ -188,32 +188,14 @@ export default function DepositModal({
                       const amount_usd = currency === "INR" ? (parseFloat(cheeseAmount) / usdInrRate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
                       const amount_inr = currency === "USD" ? (parseFloat(cheeseAmount) * usdInrRate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
 
-                      const url = `cheesepay-initiate/`.startsWith('http') ? `cheesepay-initiate/` : `${API_BASE_URL}cheesepay-initiate/`;
-                      const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
-                      const csrfToken = getCookie('csrftoken');
-                      if (csrfToken) {
-                        headers['X-CSRFToken'] = csrfToken;
-                      }
-                      const config = {
+                      const data = await apiCall('cheesepay-initiate/', {
                         method: 'POST',
-                        headers,
                         body: JSON.stringify({
                           account_id: selectedDepositAccount,
                           amount_usd,
                           amount_inr
-                        }),
-                        credentials: 'include'
-                      };
-
-                      const response = await fetch(url, config);
-                      if (response.status === 401 || response.status === 403) {
-                        handleUnauthorized();
-                        throw new Error('Unauthorized access');
-                      }
-                      if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                      }
-                      const data = await response.json();
+                        })
+                      });
 
                       if (data.success && data.payment_url) {
                         window.location.href = data.payment_url;
@@ -335,7 +317,7 @@ export default function DepositModal({
 
                   <div>
                     <input
-                      type="number"
+                      type="number" 
                       placeholder="Enter amount"
                       value={cheeseAmount}
                       onChange={(e) => setCheeseAmount(e.target.value)}
@@ -403,7 +385,7 @@ export default function DepositModal({
                       formData.append('amount', usdtAmount);
                       formData.append('proof', usdtProof);
 
-                      await apiCall('usdt-deposit/', 'POST', formData);
+                      await apiCall('usdt-deposit/', { method: 'POST', body: formData });
 
                       sharedUtils.showToast("USDT deposit request submitted successfully!", "success");
                       setShowDepositModal(false);
