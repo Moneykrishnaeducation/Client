@@ -49,7 +49,7 @@ function OpenAccount({ onClose }) {
     const fetchOptions = async () => { 
       try {
         // Fetch user info
-        const userData = await apiCall('user-info/');
+        const userData = await apiCall('api/user-info/');
         //Ensure accountName gets synced safely
         setFormData((prev) => ({
           ...prev,

@@ -63,19 +63,7 @@ export default function MamDashboard() {
 
 
 
-  const getCookie = (name) => {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + "=")) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        }
-      }
-    }
-    return cookieValue;
-  };
+
 
   useEffect(() => {
     const savedAccounts = localStorage.getItem("mamAccounts");
@@ -87,7 +75,7 @@ export default function MamDashboard() {
 
   const fetchMAMAccounts = async () => {
     try {
-      const data = await apiCall("user-mam-accounts/");
+      const data = await apiCall("api/user-mam-accounts/");
 
       const formatted = data.map((acc) => ({
         account_id: acc.account_id,
@@ -121,7 +109,7 @@ export default function MamDashboard() {
 
         const payload = { mam_id: id, enable_trading: enableTrading };
 
-        const result = await apiCall('toggle-mam-account/', {method:'POST',body:JSON.stringify(payload)});
+        const result = await apiCall('api/toggle-mam-account/', {method:'POST',body:JSON.stringify(payload)});
 
         // server may return new state in result.is_enabled or result.enabled
         const newEnabled = (typeof result.is_enabled !== 'undefined') ? Boolean(result.is_enabled) :
@@ -151,7 +139,6 @@ export default function MamDashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const csrf = getCookie("csrftoken");
     const token = localStorage.getItem("accessToken");
 
     if (!token) {
@@ -176,7 +163,7 @@ export default function MamDashboard() {
     };
 
     try {
-      const data = await apiCall("mam-accounts/create/", {
+      const data = await apiCall("api/mam-accounts/create/", {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -205,7 +192,7 @@ export default function MamDashboard() {
 
   const fetchMamProfitDetails = async (mamId) => {
     try {
-      const data = await apiCall(`mam/${mamId}/profits/`);
+      const data = await apiCall(`api/mam/${mamId}/profits/`);
 
       // Calculate TOTAL PROFIT = mam + investors
       const investorTotal = data.investor_profits.reduce(

@@ -1,32 +1,10 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-/* ============================================
-   API BASE URL – hi5trader.com READY
-============================================ */
-const getApiBaseUrl = () => {
-  const { protocol, hostname } = window.location;
+// Dynamic API base URL
+export const API_BASE_URL = process.env.REACT_APP_API_URL || `${window.location.protocol}//${window.location.host}/`;
 
-  // Production domain
-  if (hostname === 'hi5trader.com' || hostname === 'www.hi5trader.com') {
-    return `${protocol}//hi5trader.com/`;
-  }
-
-  // Production server IP (replace if needed)
-  if (hostname === 'YOUR_SERVER_IP') {
-    return `${protocol}//YOUR_SERVER_IP/`;
-  }
-
-  // Local / staging
-  return `${protocol}//${hostname}:8000/`;
-};
-
-export const API_BASE_URL =
-  process.env.REACT_APP_API_URL || getApiBaseUrl();
-
-/* ============================================
-   COOKIE UTILS
-============================================ */
+// Get cookie by name
 export function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
@@ -42,60 +20,38 @@ export function getCookie(name) {
   return cookieValue;
 }
 
-/* ============================================
-   AUTH HEADERS
-============================================ */
+// Get auth headers
 export const getAuthHeaders = () => {
   const headers = { 'Content-Type': 'application/json' };
-  const token =
-    localStorage.getItem('jwt_token') ||
-    localStorage.getItem('accessToken') ||
-    localStorage.getItem('access_token');
-
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const token = localStorage.getItem('jwt_token') || localStorage.getItem('accessToken') || localStorage.getItem('access_token');
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
 };
 
-/* ============================================
-   PUBLIC ENDPOINTS
-============================================ */
-const PUBLIC_ENDPOINT_HINTS = [
-  'login/',
-  'public/',
-  'get-usd-inr-rate/',
-  'finance/quote',
-];
+// Endpoints that do not require auth
+const PUBLIC_ENDPOINT_HINTS = ["login/", "public/", "get-usd-inr-rate/", "finance/quote"];
 
-/* ============================================
-   IMMEDIATE LOGOUT HANDLER
-============================================ */
+// Immediate logout
 export function handleUnauthorized() {
   try {
     if (window.__unauthorizedHandled) return;
     window.__unauthorizedHandled = true;
 
-    ['jwt_token', 'accessToken', 'access_token'].forEach((k) =>
-      localStorage.removeItem(k)
-    );
+    ['jwt_token', 'accessToken', 'access_token'].forEach(k => localStorage.removeItem(k));
+    try { sessionStorage.removeItem('auth_state'); } catch {}
 
-    try {
-      sessionStorage.removeItem('auth_state');
-    } catch {}
-
-    if (typeof triggerCrossTabLogout === 'function') {
-      triggerCrossTabLogout();
+    if (typeof triggerCrossTabLogout === 'function') triggerCrossTabLogout();
+    if (typeof performLogout === 'function') {
+      try { performLogout(); } catch (e) { console.error('performLogout failed:', e); }
     }
 
     setTimeout(() => {
-      if (typeof window.stop === 'function') {
-        try {
-          window.stop();
-        } catch {}
-      }
+      if (typeof window.stop === 'function') try { window.stop(); } catch {}
       window.location.replace('/');
     }, 0);
-  } catch (err) {
-    console.error('Logout failed:', err);
+
+  } catch (error) {
+    console.error('Immediate logout failed:', error);
     window.location.replace('/');
   }
 }
@@ -104,23 +60,20 @@ if (typeof window !== 'undefined') {
   window.handleUnauthorized = handleUnauthorized;
 }
 
-/* ============================================
-   GENERIC API CALL
-============================================ */
+// Generic API call
 export const apiCall = async (endpoint, options = {}) => {
-  const url = endpoint.startsWith('http')
-    ? endpoint
-    : `${API_BASE_URL}${endpoint}`;
-
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
   const headers = { ...getAuthHeaders(), ...(options.headers || {}) };
   const config = { ...options, headers };
 
-  // Handle FormData
-  if (options?.body instanceof FormData) {
-    delete config.headers['Content-Type'];
-  }
+  // Handle FormData correctly
+  try {
+    if (options?.body instanceof FormData && config.headers['Content-Type']) {
+      delete config.headers['Content-Type'];
+    }
+  } catch {}
 
-  // CSRF for write operations
+  // CSRF token for state-changing requests
   const method = (options.method || 'GET').toUpperCase();
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     const csrfToken = getCookie('csrftoken');
@@ -128,15 +81,12 @@ export const apiCall = async (endpoint, options = {}) => {
     config.credentials = 'include';
   }
 
-  // Auth check
+  // Check auth for protected endpoints
   const hasAuth = !!headers.Authorization;
-  const isPublic = PUBLIC_ENDPOINT_HINTS.some((e) =>
-    endpoint.includes(e)
-  );
-
-  if (!hasAuth && !isPublic && !endpoint.startsWith('http')) {
+  const isPublic = PUBLIC_ENDPOINT_HINTS.some(hint => endpoint.includes(hint));
+  if (!hasAuth && !isPublic && !url.startsWith('http')) {
     handleUnauthorized();
-    throw new Error('Missing auth token');
+    throw new Error('No auth token');
   }
 
   try {
@@ -144,7 +94,7 @@ export const apiCall = async (endpoint, options = {}) => {
 
     if (response.status === 401 || response.status === 403) {
       handleUnauthorized();
-      throw new Error('Unauthorized');
+      throw new Error('Unauthorized access');
     }
 
     if (!response.ok) {
@@ -152,24 +102,22 @@ export const apiCall = async (endpoint, options = {}) => {
       throw new Error(`HTTP ${response.status}: ${text}`);
     }
 
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
       return await response.json();
+    } else {
+      const text = await response.text();
+      console.error('Expected JSON but got:', text);
+      throw new Error('API did not return JSON');
     }
 
-    // Prevent HTML being parsed as JSON
-    const text = await response.text();
-    console.error('Expected JSON but received:', text);
-    throw new Error('Invalid API response');
-  } catch (err) {
-    console.error('API error:', err);
-    throw err;
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
   }
 };
 
-/* ============================================
-   LOGIN
-============================================ */
+// Login API
 export const loginUser = async (email, password) => {
   const response = await fetch(`${API_BASE_URL}login/`, {
     method: 'POST',
@@ -177,41 +125,38 @@ export const loginUser = async (email, password) => {
     body: JSON.stringify({ email, password }),
   });
 
-  const contentType = response.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
+  const contentType = response.headers.get('content-type');
+  let data;
+  if (contentType && contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
     const text = await response.text();
     throw new Error(`Login failed: ${text}`);
   }
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || data.detail || 'Login failed');
-  }
+  if (!response.ok) throw new Error(data.error || data.detail || 'Login failed');
 
   return data;
 };
 
-/* ============================================
-   CSRF TOKEN
-============================================ */
+// Fetch CSRF token
 export const getCSRFToken = async () => {
   try {
-    const res = await fetch(`${API_BASE_URL}api/csrf-token/`, {
+    const response = await fetch(`${API_BASE_URL}api/csrf-token/`, {
+      method: 'GET',
       credentials: 'include',
     });
-    if (res.ok) {
-      const data = await res.json();
+    if (response.ok) {
+      const data = await response.json();
       return data.csrfToken;
     }
-  } catch (err) {
-    console.error('CSRF fetch failed:', err);
+  } catch (error) {
+    console.error('Failed to fetch CSRF token:', error);
   }
   return null;
 };
 
-/* ============================================
-   CURRENT PAGE TRACKING
-============================================ */
+// Hook to track current page
 export const useCurrentPage = () => {
   const location = useLocation();
   const currentPage = location.pathname;
@@ -223,9 +168,7 @@ export const useCurrentPage = () => {
   return currentPage;
 };
 
-/* ============================================
-   CROSS TAB SYNC
-============================================ */
+// Cross-tab page changes
 window.addEventListener('storage', (event) => {
   if (event.key === 'current_page') {
     console.log('Page changed in another tab:', event.newValue);
@@ -235,19 +178,12 @@ window.addEventListener('storage', (event) => {
   }
 });
 
-/* ============================================
-   CROSS TAB LOGOUT
-============================================ */
+// Trigger logout across tabs
 export const triggerCrossTabLogout = () => {
   localStorage.setItem('unauthorized_logout', Date.now().toString());
   localStorage.removeItem('unauthorized_logout');
 };
 
-/* ============================================
-   PAGE HELPERS
-============================================ */
-export const getCurrentPage = () =>
-  localStorage.getItem('current_page') || '/dashboard';
-
-export const setCurrentPage = (page) =>
-  localStorage.setItem('current_page', page);
+// Get/set current page
+export const getCurrentPage = () => localStorage.getItem('current_page') || '/dashboard';
+export const setCurrentPage = (page) => localStorage.setItem('current_page', page);

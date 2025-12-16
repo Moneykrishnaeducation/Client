@@ -50,7 +50,7 @@ export default function DepositModal({
   const fetchUsdInrRate = async () => {
     setLoadingRate(true);
     try {
-      const response = await apiCall("get-usd-inr-rate/");
+      const response = await apiCall("api/usd-inr-rate/");
       const data = await response.json();
       setUsdInrRate(data.rate);
       console.log(data.rate)
@@ -188,7 +188,7 @@ export default function DepositModal({
                       const amount_usd = currency === "INR" ? (parseFloat(cheeseAmount) / usdInrRate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
                       const amount_inr = currency === "USD" ? (parseFloat(cheeseAmount) * usdInrRate).toFixed(2) : parseFloat(cheeseAmount).toFixed(2);
 
-                      const data = await apiCall('cheesepay-initiate/', {
+                      const data = await apiCall('api/cheesepay-initiate/', {
                         method: 'POST',
                         body: JSON.stringify({
                           account_id: selectedDepositAccount,
@@ -385,7 +385,7 @@ export default function DepositModal({
                       formData.append('amount', usdtAmount);
                       formData.append('proof', usdtProof);
 
-                      await apiCall('usdt-deposit/', { method: 'POST', body: formData });
+                      await apiCall('api/usdt-deposit/', { method: 'POST', body: formData });
 
                       sharedUtils.showToast("USDT deposit request submitted successfully!", "success");
                       setShowDepositModal(false);

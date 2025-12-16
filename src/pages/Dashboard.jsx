@@ -64,7 +64,7 @@ const DepositModal = ({ onClose, showToast, rate, loadingRate }) => {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const data = await apiCall('user-trading-accounts/');
+        const data = await apiCall('api/user-trading-accounts/');
         // Filter out demo accounts, only show standard/mam accounts for deposits
         const filteredAccounts = (Array.isArray(data) ? data : (data.accounts || [])).filter(account =>
           account.account_type !== 'demo'
@@ -630,7 +630,7 @@ const Dashboard = () => {
       const fetchRate = async () => {
         setLoadingRate(true);
         try {
-          const data = await apiCall('get-usd-inr-rate/');
+          const data = await apiCall('api/usd-inr-rate/');
           setRate(data.rate || 83.25);
         } catch (error) {
           console.error('Failed to fetch USD-INR rate:', error);
