@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 // Dynamic API base URL
-export const API_BASE_URL = process.env.REACT_APP_API_URL || `${window.location.protocol}//${window.location.host}/`;
+export const API_BASE_URL = process.env.REACT_APP_API_URL || `https://hi5trader.com/`;
 
 // Get cookie by name
 export function getCookie(name) {
