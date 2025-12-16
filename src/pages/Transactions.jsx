@@ -48,7 +48,7 @@ const Transactions = () => {
         return;
       }
 
-      const data = await apiCall("user-transactions/", {
+      const data = await apiCall("api/user-transactions/", {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
@@ -77,7 +77,7 @@ const Transactions = () => {
   /* Fetch pending transactions */
   const fetchPendingTransactions = async () => {
     try {
-      const data = await apiCall("pending-transactions/");
+      const data = await apiCall("api/pending-transactions/");
       setPendingTransactions(data || []);
     } catch (err) {
       console.error("Error fetching pending transactions:", err);
@@ -87,7 +87,7 @@ const Transactions = () => {
   /* Fetch user trading accounts */
   const fetchUserTradingAccounts = async () => {
     try {
-      const data = await apiCall("user-trading-accounts/");
+      const data = await apiCall("api/user-trading-accounts/");
       setTradingAccounts(data?.accounts || []);
     } catch (err) {
       console.error("Error fetching trading accounts:", err);
