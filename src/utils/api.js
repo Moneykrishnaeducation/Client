@@ -1,8 +1,8 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-// Dynamic API base URL
-export const API_BASE_URL = process.env.REACT_APP_API_URL || `https://hi5trader.com/`;
+// Dynamic API base URL - hardcoded to backend for production
+export const API_BASE_URL = `https://client.hi5trader.com/`;
 
 // Get cookie by name
 export function getCookie(name) {

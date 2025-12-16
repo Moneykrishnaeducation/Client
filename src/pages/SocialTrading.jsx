@@ -109,7 +109,7 @@ export default function MamDashboard() {
 
         const payload = { mam_id: id, enable_trading: enableTrading };
 
-        const result = await apiCall('api/toggle-mam-account/', {method:'POST',body:JSON.stringify(payload)});
+        const result = await apiCall(`api/toggle-mam-status/${id}/`, {method:'POST',body:JSON.stringify(payload)});
 
         // server may return new state in result.is_enabled or result.enabled
         const newEnabled = (typeof result.is_enabled !== 'undefined') ? Boolean(result.is_enabled) :
@@ -192,7 +192,7 @@ export default function MamDashboard() {
 
   const fetchMamProfitDetails = async (mamId) => {
     try {
-      const data = await apiCall(`api/mam/${mamId}/profits/`);
+      const data = await apiCall(`api/mam-profit-details/${mamId}/`);
 
       // Calculate TOTAL PROFIT = mam + investors
       const investorTotal = data.investor_profits.reduce(
