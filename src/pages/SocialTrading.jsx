@@ -74,27 +74,32 @@ export default function MamDashboard() {
   }, []);
 
   const fetchMAMAccounts = async () => {
-    try {
-      const data = await apiCall("api/user-mam-accounts/");
+  try {
+    // ✅ Correct endpoint (NO api/)
+    const data = await apiCall("user-mam-accounts/");
 
-      const formatted = data.map((acc) => ({
-        account_id: acc.account_id,
-        accountName: acc.account_name,
-        profitPercentage: acc.profit_sharing_percentage || acc.profit_percentage,
-        leverage: acc.leverage,
-        enabled: acc.is_enabled,
-      }));
+    const formatted = data.map((acc) => ({
+      account_id: acc.account_id,
+      accountName: acc.account_name,
+      profitPercentage:
+        acc.profit_sharing_percentage ?? acc.profit_percentage,
+      leverage: acc.leverage,
+      enabled: acc.is_enabled,
+    }));
 
-      setMamAccounts(formatted);
-      localStorage.setItem("mamAccounts", JSON.stringify(formatted));
-    } catch (error) {
-      console.error("Error fetching MAM accounts:", error);
-    }
-  };
+    setMamAccounts(formatted);
+    localStorage.setItem("mamAccounts", JSON.stringify(formatted));
+  } catch (error) {
+    console.error("Error fetching MAM accounts:", error);
+  }
+};
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.id]: e.target.value });
-  };
+const handleChange = (e) => {
+  setForm((prev) => ({
+    ...prev,
+    [e.target.id]: e.target.value,
+  }));
+};
 
   const handleToggleStatus = (id) => {
     // Call server API to toggle MAM account status

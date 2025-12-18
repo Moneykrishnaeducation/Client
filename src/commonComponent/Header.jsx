@@ -39,7 +39,7 @@ useEffect(() => {
         return;
       }
 
-      const response = await apiCall("client/notifications/", {
+      const response = await apiCall("notifications/", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
