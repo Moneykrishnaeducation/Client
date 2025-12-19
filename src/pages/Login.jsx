@@ -161,13 +161,8 @@ export default function Login() {
       const response = await login({ email: signInEmail, password: signInPassword });
 
       if (response && response.verification_required) {
-        // Send OTP since verification is required
-        try {
-          await resendLoginOtp(signInEmail);
-        } catch (e) {
-          console.error('Failed to send initial OTP:', e);
-        }
-        // Get OTP status for cooldown and expiry
+        // Server indicated verification is required. Do NOT auto-resend here
+        // (some servers already send the OTP). Instead query status for cooldown/expiry
         try {
           const status = await getLoginOtpStatus(signInEmail);
           if (status.retry_after) setResendCooldown(status.retry_after);
@@ -369,12 +364,27 @@ export default function Login() {
     setLoading(true);
     try {
       const response = await verifyOtp(signInEmail, verificationCode);
-      if (response && response.success) {
+      // Treat several server response shapes as a successful verification:
+      // - { success: true }
+      // - { verified: true }
+      // - or responses that include access/refresh tokens
+      const verified = !!(
+        (response && response.success) ||
+        (response && response.verified) ||
+        (response && (response.access || response.refresh))
+      );
+
+      if (verified) {
+        // clear any pending login verification flag
+        try {
+          localStorage.removeItem('login_verification_pending');
+        } catch (e) {}
+
         setNotification({ show: true, type: "success", message: "Verification successful! Redirecting to dashboard..." });
         setShowVerificationModal(false);
 
-        // Store auth tokens and user info for auto-login
-        if (response.access && response.refresh) {
+        // Store auth tokens and user info for auto-login (if provided)
+        if (response && response.access && response.refresh) {
           const storage = localStorage; // Use localStorage for login
 
           storage.setItem('jwt_token', response.access);
@@ -388,15 +398,16 @@ export default function Login() {
           const userEmail = (response.user && response.user.email) ? response.user.email.toLowerCase() : '';
           storage.setItem('user_email', userEmail);
           storage.setItem('userEmail', userEmail);
-          storage.setItem('user_name', response.user.name);
-          storage.setItem('userName', response.user.name);
+          storage.setItem('user_name', response.user && response.user.name ? response.user.name : '');
+          storage.setItem('userName', response.user && response.user.name ? response.user.name : '');
         }
 
+        // Redirect regardless of whether tokens were provided; server may set a session cookie.
         setTimeout(() => {
           window.location.href = '/dashboard';
-        }, 2000);
+        }, 1000);
       } else {
-        setVerificationError(response.error || "Verification failed");
+        setVerificationError(response && (response.error || response.detail) ? (response.error || response.detail) : "Verification failed");
       }
     } catch (error) {
       setVerificationError(error.message || "Verification failed");
@@ -415,7 +426,22 @@ export default function Login() {
       setOtpExpiry(60);
       setVerificationError("");
     } catch (error) {
-      setNotification({ show: true, type: "error", message: error.message || "Failed to resend OTP" });
+      // If server rate-limited (429), try to read retry info from status endpoint
+      const msg = error && error.message ? error.message : '';
+      if (msg.includes('429') || msg.toLowerCase().includes('too many requests')) {
+        let cooldown = 60;
+        try {
+          const status = await getLoginOtpStatus(signInEmail);
+          if (status && status.retry_after) cooldown = Number(status.retry_after) || cooldown;
+          if (status && status.otp_expires_in) setOtpExpiry(Number(status.otp_expires_in) || otpExpiry);
+        } catch (e) {
+          console.debug('Failed to get OTP status after 429:', e);
+        }
+        setResendCooldown(cooldown);
+        setNotification({ show: true, type: "error", message: `Too many requests. Please wait ${cooldown}s before retrying.` });
+      } else {
+        setNotification({ show: true, type: "error", message: error.message || "Failed to resend OTP" });
+      }
     } finally {
       setLoading(false);
     }
