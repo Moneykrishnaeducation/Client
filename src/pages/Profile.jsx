@@ -20,7 +20,7 @@ const ProfilePage = () => {
   const [user, setUser] = useState({
     name: "",
     email: "",
-    phone: "",
+    phone_number: "",
     dob: "",
     address: "",
   });
@@ -82,7 +82,7 @@ const fetchBanner = async () => {
         setUser({
           name: data.name || '',
           email: data.email || '',
-          phone: data.phone || '',
+          phone_number: data.phone_number || '',
           dob: data.dob || '',
           address: data.address || '',
         });
@@ -312,7 +312,7 @@ const fetchBanner = async () => {
             </button>
           </div>
           <p className="text-sm"><span className="font-bold text-[#FFD700]">Email:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.email}</span></p>
-          <p className="text-sm"><span className="font-bold text-[#FFD700]">Phone No:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.phone}</span></p>
+          <p className="text-sm"><span className="font-bold text-[#FFD700]">Phone No:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.phone_number}</span></p>
           <p className="text-sm"><span className="font-bold text-[#FFD700]">DOB:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.dob}</span></p>
           <p className="text-sm"><span className="font-bold text-[#FFD700]">Address:</span> <span className={`${isDarkMode ? 'text-gray-300' : 'text-black'}`}>{user.address}</span></p>
         </div>
@@ -749,7 +749,7 @@ const fetchBanner = async () => {
               <input
                 type="text"
                 placeholder="Phone Number"
-                defaultValue={user.phone}
+                defaultValue={user.phone_number}
                 className={inputClass}
                 id="editPhone"
               />
@@ -797,7 +797,7 @@ const fetchBanner = async () => {
                     setUser({
                       name: updatedData.name || '',
                       email: updatedData.email || '',
-                      phone: updatedData.phone || '',
+                      phone_number: updatedData.phone_number || '',
                       dob: updatedData.dob || '',
                       address: updatedData.address || '',
                     });
