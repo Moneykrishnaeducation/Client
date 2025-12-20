@@ -829,3 +829,5 @@ const fetchBanner = async () => {
 };
 
 export default ProfilePage;
+
+
