@@ -49,9 +49,8 @@ if (!window.API_CONFIG) {
         },
 
         getHeaders(includeContentType = true) {
-            const token = localStorage.getItem('jwt_token');
+            // Token is in HttpOnly cookie, automatically sent by browser
             const headers = {
-                'Authorization': token ? `Bearer ${token}` : '',
                 'Accept': 'application/json'
             };
 
@@ -110,8 +109,7 @@ window.getCsrfToken = window.API_CONFIG.getCsrfToken.bind(window.API_CONFIG);
 // Global unauthorized access handler
 window.handleUnauthorized = function() {
     try {
-        // Immediate cleanup
-        localStorage.clear();
+        // Immediate cleanup - server handles HttpOnly cookie cleanup
         sessionStorage.clear();
 
         // Trigger cross-tab logout if available

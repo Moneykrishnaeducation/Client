@@ -19,28 +19,9 @@ tradingUtils.checkAuth = async function() {
 
     try {
         this.authState.checking = true;
-        const token = localStorage.getItem('jwt_token');
-
-        if (!token) {
-            this.authState.authenticated = false;
-            return false;
-        }
-
-        // Try to parse and validate JWT
-        try {
-            const tokenData = JSON.parse(atob(token.split('.')[1]));
-            if (tokenData.exp * 1000 > Date.now()) {
-                this.authState.authenticated = true;
-                return true;
-            }
-        } catch (e) {
-            console.warn('Invalid JWT format:', e);
-        }
-
-        // Token invalid/expired, try refresh
-        const refreshed = await this.refreshToken().catch(() => null);
-        this.authState.authenticated = !!refreshed;
-        return this.authState.authenticated;
+        // Token is in HttpOnly cookie - server validates automatically
+        this.authState.authenticated = true;
+        return true;
 
     } finally {
         this.authState.checking = false;
@@ -55,10 +36,11 @@ Object.assign(tradingUtils, {
      * @returns {Object} Object containing all tokens
      */
     getAuthTokens() {
+        // Tokens are in HttpOnly cookies, not localStorage
         return {
-            jwt: localStorage.getItem('jwt_token'),
-            refresh: localStorage.getItem('refreshToken'),
-            access: localStorage.getItem('accessToken')
+            jwt: null,
+            refresh: null,
+            access: null
         };
     },
 
@@ -67,7 +49,8 @@ Object.assign(tradingUtils, {
      * @returns {string|null} Bearer token or null if not authenticated
      */
     getBearerToken() {
-        return localStorage.getItem('jwt_token') || localStorage.getItem('accessToken');
+        // Token is in HttpOnly cookie, not localStorage
+        return null;
     },
 
 
@@ -182,40 +165,9 @@ Object.assign(tradingUtils, {
      */
     refreshToken: async function() {
         try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (!refreshToken) {
-                throw new Error('No refresh token available');
-            }
-            throw new Error('Token refresh not available');
-
-            if (!response.ok) {
-                // Clear invalid tokens
-                this.clearAuthTokens();
-                throw new Error('Token refresh failed');
-            }
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (e) {
-                throw new Error('Invalid response from authentication server');
-            }
-
-            if (!data.access_token) {
-                throw new Error('Invalid token response');
-            }
-
-            // Update tokens
-            localStorage.setItem('jwt_token', data.access_token);
-            if (data.refresh_token) {
-                localStorage.setItem('refreshToken', data.refresh_token);
-            }
-
-            // Update auth state
-            this.authState.authenticated = true;
-            this.authState.lastCheck = Date.now();
-
-            return data.access_token;
+            // Tokens are in HttpOnly cookies - server handles refresh automatically
+            console.log('Token refresh handled server-side via HttpOnly cookies');
+            return null; // Tokens managed by server
         } catch (error) {
             // Clear tokens on any error
             this.clearAuthTokens();
@@ -227,9 +179,8 @@ Object.assign(tradingUtils, {
      * Clear all authentication tokens
      */
     clearAuthTokens: function() {
-        localStorage.removeItem('jwt_token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('accessToken');
+        // Tokens are in HttpOnly cookies - server handles cleanup
+        // No need to remove from localStorage
         this.authState.authenticated = false;
         this.authState.lastCheck = Date.now();
     },
@@ -404,10 +355,8 @@ Object.assign(sharedUtils, {
      * Handle session expiry
      */
     handleSessionExpiry() {
-        // Clear tokens
-        localStorage.removeItem('jwt_token');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        // Tokens are in HttpOnly cookies - server handles cleanup
+        // No need to remove from localStorage
 
         // Show login dialog
         this.showLoginDialog();
@@ -417,25 +366,9 @@ Object.assign(sharedUtils, {
      * Attempt to refresh the authentication token
      */
     async refreshToken() {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-            throw new Error('No refresh token available');
-        }        try {
-            throw new Error('Token refresh not available');
-
-            if (!response.ok) {
-                throw new Error('Token refresh failed');
-            }
-
-            const data = await response.json();
-            localStorage.setItem('jwt_token', data.access_token);
-            localStorage.setItem('refreshToken', data.refresh_token);
-
-            return data.access_token;
-        } catch (error) {
-            console.error('Token refresh failed:', error);
-            throw error;
-        }
+        // Tokens are in HttpOnly cookies - server handles refresh automatically
+        console.log('Token refresh handled server-side via HttpOnly cookies');
+        return null; // Tokens managed by server
     }
 });
 

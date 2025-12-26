@@ -24,10 +24,7 @@ import Ibrequest from "../pages/Ibrequest";
 const AppRoutes = () => {
   const location = useLocation();
 
-  // Store current page in localStorage for all tabs
-  useEffect(() => {
-    localStorage.setItem('current_page', location.pathname);
-  }, [location.pathname]);
+  // Page tracking now handled by React Router location - no localStorage needed
 
   const hideLayout = location.pathname === "/"; // hide navbar & main on login
 

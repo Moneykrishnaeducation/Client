@@ -4,9 +4,9 @@ class AuthenticatedFetch {
         this.baseURL = baseURL;
     }
 
-    // Get JWT token from localStorage
+    // Token is now in HttpOnly cookie, automatically sent by browser
     getToken() {
-        return localStorage.getItem('jwt_token');
+        return null; // Tokens managed by HttpOnly cookies
     }
 
     // Check if user is authenticated
@@ -63,7 +63,8 @@ class AuthenticatedFetch {
 
         const config = {
             ...options,
-            headers
+            headers,
+            credentials: 'include'  // Include HttpOnly cookies with all requests
         };
 
         try {

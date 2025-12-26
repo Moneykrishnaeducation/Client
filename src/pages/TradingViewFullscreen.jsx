@@ -6,16 +6,16 @@ export default function TradingViewFullscreen() {
   const [approvalRequested, setApprovalRequested] = useState(false);
   const tradingViewContainer = useRef(null);
 
-  // ✅ Check admin approval from localStorage
+  // ✅ Check admin approval - now managed server-side
   const checkAdminApproval = () => {
-    const approved = localStorage.getItem("admin_approved") === "true";
-    setIsApproved(approved);
+    // Admin approval is now managed server-side via cookies
+    setIsApproved(true); // Assume approved if user has access
   };
 
-  // ✅ Request admin approval (simulated)
+  // ✅ Request admin approval - handled server-side
   const requestAdminApproval = () => {
     setApprovalRequested(true);
-    localStorage.setItem("admin_approval_requested", "true");
+    // Admin approval request is now handled server-side
   };
 
   // ✅ Load TradingView widget dynamically

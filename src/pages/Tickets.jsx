@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, X, Plus, ChevronDown } from "lucide-react";
 import { useTheme } from '../context/ThemeContext';
-import { apiCall } from '../utils/api';
+import { apiCall, getCookie } from '../utils/api';
 
 const Tickets = () => {
   const { isDarkMode } = useTheme();
@@ -25,8 +25,8 @@ const Tickets = () => {
 
   useEffect(() => {
     const uid =
-      localStorage.getItem("user_id") ||
-      localStorage.getItem("username") ||
+      getCookie("user_id") ||
+      getCookie("username") ||
       "";
     setUserId(uid);
     fetchTickets();

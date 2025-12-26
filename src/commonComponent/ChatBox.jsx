@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { getCookie } from "../utils/api";
 
 const ChatBot = () => {
   const { isDarkMode } = useTheme();
@@ -11,10 +12,8 @@ const ChatBot = () => {
   const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
-    const storedUsername =
-      localStorage.getItem("userName") ||
-      localStorage.getItem("user_name") ||
-      "Guest";
+    // Username is now in cookies from backend, not localStorage
+    const storedUsername = getCookie("userName") || getCookie("user_name") || "Guest";
     setUsername(storedUsername);
 
     // Calculate total drop animation time

@@ -93,8 +93,9 @@ export default function Login() {
       const apiBase = (window.API_CONFIG && window.API_CONFIG.apiBase) ? window.API_CONFIG.apiBase : '/client';
 
       function getStoredAccessToken() {
-        return localStorage.getItem('jwt_token') || localStorage.getItem('accessToken') ||
-              sessionStorage.getItem('jwt_token') || sessionStorage.getItem('accessToken') || null;
+        // Tokens are now in HttpOnly cookies, not in localStorage/sessionStorage
+        // Browser automatically sends them with credentials: 'include'
+        return null;
       }
 
       async function validateAndRedirect(token) {
@@ -185,42 +186,18 @@ export default function Login() {
           const successMessage = response.message || 'Login successful! Welcome back!';
           setNotification({ show: true, type: "success", message: successMessage });
 
-          // Check if auto-login tokens are provided
-          if (response.auto_login && response.access && response.refresh) {
-            // Remember preference (default to true for login)
-            const remember = true; // Could be made configurable later
-            const storage = remember ? localStorage : sessionStorage;
+          // Tokens are in HttpOnly cookies, automatically sent by browser
+          // Show auto-login notification and redirect to dashboard
+          setNotification({
+            show: true,
+            type: "success",
+            message: `Welcome back! Redirecting to dashboard...`
+          });
 
-            // Store auth tokens and user info for auto-login
-            storage.setItem('jwt_token', response.access);
-            storage.setItem('accessToken', response.access);
-            storage.setItem('refresh_token', response.refresh);
-            storage.setItem('refreshToken', response.refresh);
-            storage.setItem('user_role', response.role);
-            storage.setItem('userRole', response.role);
-
-            // Store emails in lowercase for frontend consistency
-            const signinEmail = (response.user && response.user.email) ? response.user.email.toLowerCase() : '';
-            storage.setItem('user_email', signinEmail);
-            storage.setItem('userEmail', signinEmail);
-            storage.setItem('user_name', response.user.name);
-            storage.setItem('userName', response.user.name);
-
-            // Show auto-login notification
-            setNotification({
-              show: true,
-              type: "success",
-              message: `Welcome back, ${response.user.name}! Redirecting to dashboard...`
-            });
-
-            // Redirect to main dashboard immediately after login auto-login
-            setTimeout(() => {
-              window.location.href = '/dashboard';
-            }, 2000);
-          } else {
-            // Fallback: direct redirect if no auto-login
+          // Redirect to main dashboard
+          setTimeout(() => {
             window.location.href = '/dashboard';
-          }
+          }, 2000);
         }
       } else {
         const errorMessage = response.error || 'Login failed.';
@@ -255,52 +232,25 @@ export default function Login() {
         const successMessage = result.message || 'Registration successful! Welcome to VT-Index!';
         setNotification({ show: true, type: "success", message: successMessage });
 
-        // Check if auto-login tokens are provided
-        if (result.auto_login && result.access && result.refresh) {
-          // Remember preference (default to true for signup)
-          const remember = true; // Could be made configurable later
-          const storage = remember ? localStorage : sessionStorage;
+        // Tokens are in HttpOnly cookies, automatically sent by browser
+        // Clear form and redirect to dashboard
+        setSignUpName("");
+        setSignUpEmail("");
+        setSignUpPhone("");
+        setSignUpDob("");
+        setSignUpPassword("");
+        setSignUpConfirm("");
 
-          // Store auth tokens and user info for auto-login
-          storage.setItem('jwt_token', result.access);
-          storage.setItem('accessToken', result.access);
-          storage.setItem('refresh_token', result.refresh);
-          storage.setItem('refreshToken', result.refresh);
-          storage.setItem('user_role', result.role);
-          storage.setItem('userRole', result.role);
+        setNotification({
+          show: true,
+          type: "success",
+          message: `Welcome to VT-Index! Redirecting to dashboard...`
+        });
 
-          // Store emails in lowercase for frontend consistency
-          const signupEmail = (result.user && result.user.email) ? result.user.email.toLowerCase() : '';
-          storage.setItem('user_email', signupEmail);
-          storage.setItem('userEmail', signupEmail);
-          storage.setItem('user_name', result.user.name);
-          storage.setItem('userName', result.user.name);
-
-          // Show auto-login notification
-          setNotification({
-            show: true,
-            type: "success",
-            message: `Welcome to VT-Index, ${result.user.name}! Redirecting to dashboard...`
-          });
-
-          // Redirect to main dashboard immediately after signup auto-login
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 2000);
-        } else {
-          // Fallback: Switch to login form if no auto-login
-          setTimeout(() => {
-            setRightPanelActive(false);
-            setForgotActive(false);
-            // Clear form
-            setSignUpName("");
-            setSignUpEmail("");
-            setSignUpPhone("");
-            setSignUpDob("");
-            setSignUpPassword("");
-            setSignUpConfirm("");
-          }, 2500);
-        }
+        // Redirect to main dashboard after successful signup
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 2000);
       } else {
         const errorMessage = result.error || 'Failed to sign up.';
         setNotification({ show: true, type: "error", message: errorMessage });
@@ -375,34 +325,12 @@ export default function Login() {
       );
 
       if (verified) {
-        // clear any pending login verification flag
-        try {
-          localStorage.removeItem('login_verification_pending');
-        } catch (e) {}
-
+        // Verification handled server-side via HttpOnly cookies - no localStorage needed
         setNotification({ show: true, type: "success", message: "Verification successful! Redirecting to dashboard..." });
         setShowVerificationModal(false);
 
-        // Store auth tokens and user info for auto-login (if provided)
-        if (response && response.access && response.refresh) {
-          const storage = localStorage; // Use localStorage for login
-
-          storage.setItem('jwt_token', response.access);
-          storage.setItem('accessToken', response.access);
-          storage.setItem('refresh_token', response.refresh);
-          storage.setItem('refreshToken', response.refresh);
-          storage.setItem('user_role', response.role);
-          storage.setItem('userRole', response.role);
-
-          // Store emails in lowercase for frontend consistency
-          const userEmail = (response.user && response.user.email) ? response.user.email.toLowerCase() : '';
-          storage.setItem('user_email', userEmail);
-          storage.setItem('userEmail', userEmail);
-          storage.setItem('user_name', response.user && response.user.name ? response.user.name : '');
-          storage.setItem('userName', response.user && response.user.name ? response.user.name : '');
-        }
-
-        // Redirect regardless of whether tokens were provided; server may set a session cookie.
+        // Tokens are in HttpOnly cookies, automatically sent by browser
+        // Redirect to dashboard
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 1000);

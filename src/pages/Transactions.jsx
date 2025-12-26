@@ -41,16 +41,9 @@ const Transactions = () => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem('accessToken'); // Get access token from localStorage
-      if (!token) {
-        setError("No access token found. Please log in again.");
-        setTransactions([]);
-        return;
-      }
-
+      // Token is in HttpOnly cookie, automatically sent by browser
       const data = await apiCall("api/user-transactions/", {
         headers: {
-          Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         },
       });

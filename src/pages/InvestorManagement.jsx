@@ -17,14 +17,12 @@ export default function InvestorManagement({ showTradesModal, setShowTradesModal
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("Missing auth token. Please log in again.");
-
+      // Token is in HttpOnly cookie, automatically sent by browser
       const url = `${API_BASE_URL}mam/${selectedAccount.account_id}/investors`;
 
       const res = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${token}`
+          // Authorization handled automatically by browser via credentials: 'include'
         }
       });
 

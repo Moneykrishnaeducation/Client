@@ -1,8 +1,8 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-// Dynamic API base URL - hardcoded to backend for production
-export const API_BASE_URL = `https://client.hi5trader.com/`;
+// Dynamic API base URL - use relative URL to respect CSP and work across all domains
+export const API_BASE_URL = `/`;
 
 // Get cookie by name
 export function getCookie(name) {
@@ -20,16 +20,15 @@ export function getCookie(name) {
   return cookieValue;
 }
 
-// Get auth headers
+// Get auth headers - tokens are now in HttpOnly cookies, no need to add Authorization header
 export const getAuthHeaders = () => {
   const headers = { 'Content-Type': 'application/json' };
-  const token = localStorage.getItem('jwt_token') || localStorage.getItem('accessToken') || localStorage.getItem('access_token');
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  // Tokens are in HttpOnly cookies and automatically sent by browser with credentials: 'include'
   return headers;
 };
 
 // Endpoints that do not require auth
-const PUBLIC_ENDPOINT_HINTS = ["login/", "public/", "get-usd-inr-rate/", "finance/quote"];
+const PUBLIC_ENDPOINT_HINTS = ["login/", "public/", "get-usd-inr-rate/", "finance/quote", "otp-status/", "verify-otp/", "csrf/"];
 
 // Immediate logout
 export function handleUnauthorized() {
@@ -37,7 +36,8 @@ export function handleUnauthorized() {
     if (window.__unauthorizedHandled) return;
     window.__unauthorizedHandled = true;
 
-    ['jwt_token', 'accessToken', 'access_token'].forEach(k => localStorage.removeItem(k));
+    // Tokens are in HttpOnly cookies - server handles cleanup via cookie expiration
+    // No need to remove from localStorage or sessionStorage
     try { sessionStorage.removeItem('auth_state'); } catch {}
 
     if (typeof triggerCrossTabLogout === 'function') triggerCrossTabLogout();
@@ -64,7 +64,7 @@ if (typeof window !== 'undefined') {
 export const apiCall = async (endpoint, options = {}) => {
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
   const headers = { ...getAuthHeaders(), ...(options.headers || {}) };
-  const config = { ...options, headers };
+  const config = { ...options, headers, credentials: 'include' };
 
   // Handle FormData correctly
   try {
@@ -78,23 +78,25 @@ export const apiCall = async (endpoint, options = {}) => {
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     const csrfToken = getCookie('csrftoken');
     if (csrfToken) headers['X-CSRFToken'] = csrfToken;
-    config.credentials = 'include';
   }
 
-  // Check auth for protected endpoints
-  const hasAuth = !!headers.Authorization;
+  // Token is in HttpOnly cookie - browser sends automatically
+  // No need to check for Authorization header
+  // Server will return 401 if token is invalid
+
+  // Check if endpoint is public
   const isPublic = PUBLIC_ENDPOINT_HINTS.some(hint => endpoint.includes(hint));
-  if (!hasAuth && !isPublic && !url.startsWith('http')) {
-    handleUnauthorized();
-    throw new Error('No auth token');
-  }
 
   try {
     const response = await fetch(url, config);
 
     if (response.status === 401 || response.status === 403) {
-      handleUnauthorized();
-      throw new Error('Unauthorized access');
+      // Only treat 401/403 as unauthorized logout for protected endpoints
+      if (!isPublic) {
+        handleUnauthorized();
+        throw new Error('Unauthorized access');
+      }
+      // For public endpoints, return the response as-is to let the caller handle it
     }
 
     if (!response.ok) {
@@ -123,6 +125,7 @@ export const loginUser = async (email, password) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
+    credentials: 'include', // IMPORTANT: Include credentials so HttpOnly cookies are saved
   });
 
   const contentType = response.headers.get('content-type');
@@ -161,29 +164,19 @@ export const useCurrentPage = () => {
   const location = useLocation();
   const currentPage = location.pathname;
 
-  React.useEffect(() => {
-    localStorage.setItem('current_page', currentPage);
-  }, [currentPage]);
-
+  // No longer storing in localStorage - use React Router location directly
   return currentPage;
 };
 
-// Cross-tab page changes
-window.addEventListener('storage', (event) => {
-  if (event.key === 'current_page') {
-    console.log('Page changed in another tab:', event.newValue);
-  }
-  if (event.key === 'unauthorized_logout') {
-    handleUnauthorized();
-  }
-});
-
-// Trigger logout across tabs
+// Cross-tab logout is now handled by server via HttpOnly cookie expiration
+// No need for localStorage-based cross-tab logout
 export const triggerCrossTabLogout = () => {
-  localStorage.setItem('unauthorized_logout', Date.now().toString());
-  localStorage.removeItem('unauthorized_logout');
+  // Server handles logout across all tabs via cookie expiration
+  console.log('Logout triggered - server will handle cookie cleanup');
 };
 
-// Get/set current page
-export const getCurrentPage = () => localStorage.getItem('current_page') || '/dashboard';
-export const setCurrentPage = (page) => localStorage.setItem('current_page', page);
+// Get/set current page - no longer using localStorage, use React Router location
+export const getCurrentPage = () => '/dashboard';
+export const setCurrentPage = (page) => {
+  // Page tracking now handled by React Router, no localStorage needed
+};

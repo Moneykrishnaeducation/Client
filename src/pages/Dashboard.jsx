@@ -544,19 +544,8 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
   try {
-    const token = localStorage.getItem('accessToken'); // Use the correct key
-    if (!token) {
-      console.error('No access token found.');
-      return;
-    }
-
-    // Make the API call with the Authorization header
-    const data = await apiCall('api/stats-overview/', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
-    });
+    // Token is in HttpOnly cookie, automatically sent by browser with credentials: 'include'
+    const data = await apiCall('api/stats-overview/', 'GET');
 
     // Check if the response is in the correct format
     if (data) {
@@ -583,20 +572,8 @@ const Dashboard = () => {
 
  const fetchRecentTransactions = async () => {
   try {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      console.error('No access token found.');
-      setRecentTransactions([]);
-      return;
-    }
-
-    const data = await apiCall('api/recent-transactions/', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
-    });
+    // Token is in HttpOnly cookie, automatically sent by browser
+    const data = await apiCall('api/recent-transactions/', 'GET');
 
     console.log('Recent transactions data:', data);
 

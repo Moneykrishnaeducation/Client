@@ -10,8 +10,8 @@ export const login = async (userData) => {
 
     // If server asks for verification (new IP) return verification required flag
     if (result && result.verification_required) {
-      // Persist pending verification so refresh/close cannot bypass
-      try { localStorage.setItem('login_verification_pending', JSON.stringify({ email: (userData.email||'').toLowerCase(), message: result.message || '' })); } catch(e){}
+      // Verification is now handled server-side via HttpOnly cookies
+      // No need to persist verification state in localStorage
       // Return result with verification_required flag for Login.jsx to handle
       return { verification_required: true, message: result.message };
     }

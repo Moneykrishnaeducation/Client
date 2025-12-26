@@ -59,24 +59,19 @@ const PammAccount = () => {
   // Refs
   const panelRef = useRef(null);
 
-  // Theme effect
+  // Theme effect - theme stored in cookies from backend, not localStorage
   useEffect(() => {
     if (isDarkMode) {
       document.body.classList.add("dark");
-      localStorage.setItem("theme", "dark");
     } else {
       document.body.classList.remove("dark");
-      localStorage.setItem("theme", "light");
     }
   }, [isDarkMode]);
 
   // API helpers
   const getHeaders = () => {
     const headers = { 'Content-Type': 'application/json' };
-    const token = localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    // Token is in HttpOnly cookie, automatically sent by browser
     return headers;
   };
 

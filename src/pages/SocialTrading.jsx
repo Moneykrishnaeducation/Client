@@ -66,9 +66,7 @@ export default function MamDashboard() {
 
 
   useEffect(() => {
-    const savedAccounts = localStorage.getItem("mamAccounts");
-    if (savedAccounts) setMamAccounts(JSON.parse(savedAccounts));
-
+    // MAM accounts fetched from API, no localStorage fallback
     // Fetch MAM accounts from API
     fetchMAMAccounts();
   }, []);
@@ -88,7 +86,7 @@ export default function MamDashboard() {
     }));
 
     setMamAccounts(formatted);
-    localStorage.setItem("mamAccounts", JSON.stringify(formatted));
+    // Accounts managed by server state only
   } catch (error) {
     console.error("Error fetching MAM accounts:", error);
   }
@@ -125,7 +123,7 @@ const handleChange = (e) => {
           const updated = prev.map((acc) =>
             acc.account_id === id ? { ...acc, enabled: newEnabled } : acc
           );
-          localStorage.setItem('mamAccounts', JSON.stringify(updated));
+          // Accounts updated on server, no localStorage needed
           return updated;
         });
 
@@ -144,12 +142,7 @@ const handleChange = (e) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      alert("You must log in again — token missing.");
-      return;
-    }
+    // Token is in HttpOnly cookie, automatically sent by browser
 
     // Validate profit_percentage
     const profitPercentage = parseFloat(form.profit_percentage);

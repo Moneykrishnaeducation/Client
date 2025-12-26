@@ -93,18 +93,15 @@ const Maminvestments = () => {
   const [usdtAmount, setUsdtAmount] = useState("");
   const [convertedAmount] = useState("");
 
-  // Load managers and investments: prefer API, fallback to localStorage
+  // Load managers and investments: API only, token in HttpOnly cookie
   useEffect(() => {
     const fetchAvailableManagers = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
+        // Token is in HttpOnly cookie, automatically sent by browser
         const res = await fetch(`${API_BASE_URL}available-mam-managers/`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           credentials: "include",
         });
@@ -147,14 +144,11 @@ const Maminvestments = () => {
       setInvestError(null);
       setInvestLoading(true);
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) throw new Error("Missing auth token");
-
+        // Token is in HttpOnly cookie, automatically sent by browser
         const res = await fetch(`${API_BASE_URL}user-investments/`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           credentials: "include",
         });
@@ -225,9 +219,7 @@ const Maminvestments = () => {
 
     setInvestLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("Missing auth token. Please log in again.");
-
+      // Token is in HttpOnly cookie, automatically sent by browser
       const payload = {
         manager_id: showPopup.account_id || showPopup.id || showPopup.accountId,
         password: investorPassword,
@@ -271,7 +263,7 @@ const Maminvestments = () => {
 
       const updatedInvestments = [...investments, newInvestment];
       setInvestments(updatedInvestments);
-      localStorage.setItem("myInvestments", JSON.stringify(updatedInvestments));
+      // No longer storing investments in localStorage - using server state only
 
       alert(`Investment account created (ID: ${createdAccountId || 'unknown'})`);
       setShowPopup(null);
@@ -290,9 +282,7 @@ const Maminvestments = () => {
     setToggleError(null);
     setToggleLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("Missing auth token. Please log in again.");
-
+      // Token is in HttpOnly cookie, automatically sent by browser
       const endpoint = currentEnabled ? 'pause-copying/' : 'start-copying/';
       const url = `${API_BASE_URL}${endpoint}`;
       const body = { mam_id: accountId };
@@ -301,7 +291,6 @@ const Maminvestments = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         credentials: "include",
         body: JSON.stringify(body),
@@ -893,9 +882,7 @@ const Maminvestments = () => {
               className="w-full py-3 mt-4 bg-yellow-500 text-black font-semibold rounded hover:bg-yellow-400 transition"
               onClick={async () => {
                 try {
-                  const token = localStorage.getItem("accessToken");
-                  if (!token) throw new Error("Missing auth token. Please log in again.");
-  
+                  // Token is in HttpOnly cookie, automatically sent by browser
                   const modeToSend = copyCoefficientMode === "balance" ? "balance_ratio" : "fixed_multiple";
                   const factor = copyCoefficientMode === "fixed" ? (document.getElementById("factorInput")?.value || "1.00") : "1.00";
                   const payload = {

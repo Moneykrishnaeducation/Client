@@ -42,8 +42,7 @@ export default function TradesModal({ showTradesModal, setShowTradesModal, selec
 
       if (roleToUse === 'manager') {
         // Fetch from external URL for manager
-        const token = localStorage.getItem('accessToken');
-        if (!token) throw new Error('Missing auth token.');
+        // Token is in HttpOnly cookie, automatically sent by browser
         const url = `${API_BASE_URL}/open-positions/${acctIdToUse}/`;
         const res = await fetch(url, {
           method: 'GET',

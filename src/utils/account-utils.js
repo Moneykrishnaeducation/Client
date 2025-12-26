@@ -30,7 +30,8 @@ const currentAccountData = {
 };
 
 function getAuthToken() {
-  return localStorage.getItem('jwt_token');
+  // Token is in HttpOnly cookie, not localStorage
+  return null;
 }
 
 function getAuthHeaders() {
@@ -106,7 +107,7 @@ async function initializeAccountData() {
       return;
     }
 
-    const response = await fetch(endpoint, { headers });
+    const response = await fetch(endpoint, { headers, credentials: 'include' });
 
     if (response.status === 401) {
       console.error('Authentication failed - redirecting to login');

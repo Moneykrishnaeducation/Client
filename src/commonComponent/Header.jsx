@@ -33,16 +33,10 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 useEffect(() => {
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        console.error('No access token found.');
-        return;
-      }
-
-      const response = await apiCall("notifications/", {
+      // Token is in HttpOnly cookie, automatically sent with credentials: 'include'
+      const response = await apiCall("api/notifications/", {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
       });
@@ -98,7 +92,7 @@ useEffect(() => {
   // 🔹 Mark single notification as read
   const markAsRead = async (id) => {
   try {
-    const url = `${API_BASE_URL}client/notifications/${id}/mark-read/`;
+    const url = `${API_BASE_URL}api/notifications/${id}/mark-read/`;
 
     const headers = {
       ...getAuthHeaders(),
@@ -148,7 +142,7 @@ useEffect(() => {
   // 🔹 Mark all as read
   const markAllAsRead = async () => {
   try {
-    const data = await apiCall('client/notifications/mark-all-read/', 'POST');
+    const data = await apiCall('api/notifications/mark-all-read/', 'POST');
 
     // Success notification
     sharedUtils.showToast("All notifications marked as read!", "success");
@@ -186,31 +180,20 @@ useEffect(() => {
   const handleLogout = async () => {
     setLogoutLoading(true);
     try {
-      // Get refresh token for logout
-      const refreshToken = localStorage.getItem('refresh_token') || localStorage.getItem('refreshToken');
-
       // Call logout API to log the activity on the server
       const response = await apiCall("logout/", {
         method: "POST",
-        body: JSON.stringify({ refresh: refreshToken })
+        body: JSON.stringify({})
       });
       if (response && (response.message || response.detail)) {
         console.log("Logout successful:", response.message || response.detail);
       }
 
-      // Clear stored tokens and user data
-      const keysToRemove = [
-        'jwt_token', 'accessToken', 'refresh_token', 'refreshToken',
-        'user_role', 'userRole', 'user_email', 'userEmail', 'user_name', 'userName',
-        'current_page'
-      ];
+      // Server handles HttpOnly cookie cleanup - no need to remove from localStorage
+      const keysToRemove = ['login_verification_pending'];
       keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
         sessionStorage.removeItem(key);
       });
-
-      // Clear any pending verification marker
-      localStorage.removeItem('login_verification_pending');
 
       // Trigger cross-tab logout
       import('../utils/api').then(({ triggerCrossTabLogout }) => {
@@ -221,17 +204,11 @@ useEffect(() => {
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
-      // Even if API call fails, clear local data and redirect
-      const keysToRemove = [
-        'jwt_token', 'accessToken', 'refresh_token', 'refreshToken',
-        'user_role', 'userRole', 'user_email', 'userEmail', 'user_name', 'userName',
-        'current_page'
-      ];
+      // Even if API call fails, server will handle cookie cleanup
+      const keysToRemove = ['login_verification_pending'];
       keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
         sessionStorage.removeItem(key);
       });
-      localStorage.removeItem('login_verification_pending');
 
       // Trigger cross-tab logout
       import('../utils/api').then(({ triggerCrossTabLogout }) => {
